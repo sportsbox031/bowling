@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /divisions/{divisionId} {
+        allow read: if true;
+        allow write: if isAdmin();
+
+        match /events/{eventId} {
+          allow read: if true;
+          allow write: if isAdmin();
+
+          match /scores/{scoreId} {
+            allow read: if true;
+            allow write: if isAdmin();
+          }
+
+          match /assignments/{assignmentId} {
+            allow read: if true;
+            allow write: if isAdmin();
+          }
+        }
+      }
+
+      match /players/{playerId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+  }
+}

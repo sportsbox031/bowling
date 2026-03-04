@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-blur: blur(16px);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark: #4f46e5;
+  --color-accent: #8b5cf6;
+
+  --color-text: #1e293b;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --gradient-bg: linear-gradient(135deg, #e0e7ff 0%, #fae8ff 25%, #e0f2fe 50%, #f0e7ff 75%, #dbeafe 100%);
+  --gradient-primary: linear-gradient(135deg, #6366f1, #8b5cf6);
+
+  font-family: "Noto Sans KR", "Apple SD Gothic Neo", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--color-text);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--gradient-bg);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+/* Animated background orbs */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  z-index: -1;
+  animation: float 20s ease-in-out infinite;
+}
+
+body::before {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3), transparent);
+  top: -100px;
+  right: -100px;
+}
+
+body::after {
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.25), transparent);
+  bottom: -200px;
+  left: -150px;
+  animation-delay: -10s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -40px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 30px) scale(1.02); }
+}
+
+main {
+  width: min(1200px, 100% - 2rem);
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Selection color */
+::selection {
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--color-text);
+}
+
+/* Link defaults */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+}
+
+/* Loading pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
