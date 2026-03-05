@@ -61,6 +61,7 @@ export interface Player {
   number: number;
   name: string;
   hand: Hand;
+  eventKinds: EventType[];
   createdAt: string;
 }
 

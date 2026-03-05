@@ -65,6 +65,7 @@ export async function GET(req: NextRequest) {
           number: data.number,
           name: data.name,
           hand: data.hand,
+          eventKinds: Array.isArray(data.eventKinds) ? data.eventKinds : [],
           createdAt: data.createdAt ?? new Date().toISOString(),
         };
       })

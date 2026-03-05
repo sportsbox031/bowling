@@ -39,6 +39,7 @@ type Player = {
   affiliation: string;
   region: string;
   divisionId: string;
+  eventKinds?: string[];
 };
 
 type EventInfo = {
@@ -221,7 +222,12 @@ export default function AdminScoreboardPage() {
     const res = await fetch(`/api/admin/tournaments/${tournamentId}/players?divisionId=${encodeURIComponent(divisionId)}`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
     const data = await res.json() as ApiList<Player>;
-    setPlayers(data.items ?? []);
+    const all = data.items ?? [];
+    const kind = event?.kind;
+    const filtered = kind
+      ? all.filter((p) => !p.eventKinds || p.eventKinds.length === 0 || p.eventKinds.includes(kind))
+      : all;
+    setPlayers(filtered);
   };
 
   const loadAssignments = async (signal?: AbortSignal) => {
@@ -330,7 +336,18 @@ export default function AdminScoreboardPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "random" }) });
-      if (!res.ok) throw new Error(await parseError(res));
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const msg = body?.message ?? "랜덤 배정 실패";
+        if (msg === "LANE_CAPACITY_EXCEEDED") {
+          const d = body?.detail;
+          throw new Error(`레인 수용 초과: 선수 ${d?.playerCount ?? "?"}명이지만 ${d?.laneCount ?? "?"}레인(최대 ${d?.maxCapacity ?? "?"}명)만 있습니다. 레인 범위를 넓혀주세요.`);
+        }
+        if (msg === "INVALID_EVENT_LANE_RANGE") throw new Error("이벤트의 레인 범위 설정이 올바르지 않습니다. 이벤트 설정을 확인해 주세요.");
+        if (msg === "INVALID_EVENT_GAME_COUNT") throw new Error("이벤트의 게임 수 설정이 올바르지 않습니다. (1~20)");
+        if (msg === "INVALID_EVENT_TABLE_SHIFT") throw new Error("이벤트의 테이블 이동값이 올바르지 않습니다.");
+        throw new Error(msg);
+      }
       await loadAssignments();
       showMsg("랜덤 배정이 완료되었습니다.");
     } catch (err) { showMsg((err as Error).message || "랜덤 배정 실패", "error"); }

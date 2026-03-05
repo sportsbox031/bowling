@@ -131,7 +131,7 @@ const validateManualItems = (items: AssignmentItem[], eventData: {
   return result;
 };
 
-const normalizePlayersInDivision = async (tournamentId: string, divisionId: string) => {
+const normalizePlayersInDivision = async (tournamentId: string, divisionId: string, eventKind?: string) => {
   if (!adminDb) {
     return null;
   }
@@ -143,7 +143,15 @@ const normalizePlayersInDivision = async (tournamentId: string, divisionId: stri
     .where("divisionId", "==", divisionId)
     .get();
 
-  return new Set(playersSnap.docs.map((doc) => doc.id));
+  const docs = eventKind
+    ? playersSnap.docs.filter((doc) => {
+        const data = doc.data();
+        const kinds: string[] = Array.isArray(data.eventKinds) ? data.eventKinds : [];
+        return kinds.length === 0 || kinds.includes(eventKind);
+      })
+    : playersSnap.docs;
+
+  return new Set(docs.map((doc) => doc.id));
 };
 
 export async function GET(
@@ -197,7 +205,8 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   const laneEnd = Number(eventData.laneEnd ?? laneStart);
   const gameCount = Number(eventData.gameCount ?? 0);
   const tableShift = Number(eventData.tableShift ?? 0);
-  const eventPlayerIds = await normalizePlayersInDivision(ctx.params.tournamentId, ctx.params.divisionId);
+  const eventKind = typeof eventData.kind === "string" ? eventData.kind : undefined;
+  const eventPlayerIds = await normalizePlayersInDivision(ctx.params.tournamentId, ctx.params.divisionId, eventKind);
   if (!eventPlayerIds) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
@@ -231,15 +240,18 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   if (!Number.isFinite(laneStart) || !Number.isFinite(laneEnd) || laneStart < 1 || laneEnd < laneStart) {
-    return NextResponse.json({ message: "INVALID_EVENT_LANE_RANGE" }, { status: 400 });
+    console.error("[assignments] INVALID_EVENT_LANE_RANGE", { laneStart, laneEnd, raw: eventData });
+    return NextResponse.json({ message: "INVALID_EVENT_LANE_RANGE", detail: { laneStart, laneEnd } }, { status: 400 });
   }
 
   if (!Number.isFinite(gameCount) || gameCount < 1 || gameCount > MAX_GAME_NUMBER) {
-    return NextResponse.json({ message: "INVALID_EVENT_GAME_COUNT" }, { status: 400 });
+    console.error("[assignments] INVALID_EVENT_GAME_COUNT", { gameCount, raw: eventData });
+    return NextResponse.json({ message: "INVALID_EVENT_GAME_COUNT", detail: { gameCount } }, { status: 400 });
   }
 
   if (!Number.isFinite(tableShift) || Math.abs(tableShift) > MAX_TABLE_SHIFT) {
-    return NextResponse.json({ message: "INVALID_EVENT_TABLE_SHIFT" }, { status: 400 });
+    console.error("[assignments] INVALID_EVENT_TABLE_SHIFT", { tableShift, raw: eventData });
+    return NextResponse.json({ message: "INVALID_EVENT_TABLE_SHIFT", detail: { tableShift } }, { status: 400 });
   }
 
   const playerIds = Array.from(eventPlayerIds.values());
@@ -250,8 +262,9 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
   const laneCount = laneEnd - laneStart + 1;
   if (playerIds.length > laneCount * MAX_PLAYERS_PER_LANE) {
+    console.error("[assignments] LANE_CAPACITY_EXCEEDED", { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * MAX_PLAYERS_PER_LANE });
     return NextResponse.json(
-      { message: "LANE_CAPACITY_EXCEEDED" },
+      { message: "LANE_CAPACITY_EXCEEDED", detail: { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * MAX_PLAYERS_PER_LANE } },
       { status: 400 },
     );
   }

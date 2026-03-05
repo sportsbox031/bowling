@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
 
+const VALID_EVENT_KINDS = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
+
+const normalizeEventKinds = (raw: unknown): string[] | undefined => {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.filter((k) => typeof k === "string" && VALID_EVENT_KINDS.includes(k as any));
+};
+
 const normalizePlayerInput = (body: any) => ({
   divisionId: typeof body?.divisionId === "string" ? body.divisionId.trim() : undefined,
   group: typeof body?.group === "string" ? body.group.trim() : undefined,
@@ -9,6 +16,7 @@ const normalizePlayerInput = (body: any) => ({
   affiliation: typeof body?.affiliation === "string" ? body.affiliation.trim() : undefined,
   name: typeof body?.name === "string" ? body.name.trim() : undefined,
   hand: typeof body?.hand === "string" ? body.hand.toLowerCase() : undefined,
+  eventKinds: normalizeEventKinds(body?.eventKinds),
 });
 
 const getPlayerRef = (db: NonNullable<typeof adminDb>, tournamentId: string, playerId: string) =>
@@ -59,6 +67,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   if (input.affiliation) updateData.affiliation = input.affiliation;
   if (input.name) updateData.name = input.name;
   if (input.hand === "left" || input.hand === "right") updateData.hand = input.hand;
+  if (input.eventKinds !== undefined) (updateData as any).eventKinds = input.eventKinds;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ message: "NO_FIELDS" }, { status: 400 });

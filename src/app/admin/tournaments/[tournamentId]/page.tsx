@@ -40,6 +40,7 @@ type Player = {
   number: number;
   name: string;
   hand: "left" | "right";
+  eventKinds: string[];
 };
 
 type TournamentDetail = {
@@ -111,16 +112,25 @@ export default function TournamentDetailPage() {
     affiliation: "",
     name: "",
     hand: "right" as Player["hand"],
+    eventKinds: [] as string[],
   });
 
+  const [playerSearch, setPlayerSearch] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [busy, setBusy] = useState(false);
 
-  const selectedDivisionPlayers = useMemo(
-    () => players.filter((p) => !activeDivisionId || p.divisionId === activeDivisionId),
-    [players, activeDivisionId],
-  );
+  const selectedDivisionPlayers = useMemo(() => {
+    const base = players.filter((p) => !activeDivisionId || p.divisionId === activeDivisionId);
+    if (!playerSearch.trim()) return base;
+    const q = playerSearch.trim().toLowerCase();
+    return base.filter((p) =>
+      p.name.toLowerCase().includes(q) ||
+      p.affiliation.toLowerCase().includes(q) ||
+      p.region.toLowerCase().includes(q) ||
+      String(p.number).includes(q)
+    );
+  }, [players, activeDivisionId, playerSearch]);
 
   const showMessage = (msg: string, type: "success" | "error" = "success") => {
     setMessage(msg);
@@ -165,7 +175,7 @@ export default function TournamentDetailPage() {
   // --- Reset helpers ---
   const resetDivisionForm = () => { setDivisionForm({ title: "", gender: "M" }); setEditingDivisionId(""); };
   const resetEventForm = () => { setEventForm({ title: "", kind: "SINGLE", gameCount: 1, scheduleDate: "", laneStart: 1, laneEnd: 1, tableShift: 1 }); setEditingEventId(""); };
-  const resetPlayerForm = () => { setPlayerForm({ group: "A", region: "", affiliation: "", name: "", hand: "right" }); setEditingPlayerId(""); };
+  const resetPlayerForm = () => { setPlayerForm({ group: "A", region: "", affiliation: "", name: "", hand: "right", eventKinds: [] }); setEditingPlayerId(""); };
 
   useEffect(() => { loadTournament(); }, [tournamentId]);
   useEffect(() => { loadDivisions().catch(() => showMessage("종별을 불러올 수 없습니다.", "error")); }, [tournamentId]);
@@ -533,6 +543,43 @@ export default function TournamentDetailPage() {
                     <option value="left">왼손</option>
                   </GlassSelect>
                 </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8 }}>
+                    참가 종목 (미선택 시 전체 참가)
+                  </label>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {(["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const).map((kind) => {
+                      const checked = playerForm.eventKinds.includes(kind);
+                      return (
+                        <button
+                          key={kind}
+                          type="button"
+                          onClick={() => setPlayerForm((p) => ({
+                            ...p,
+                            eventKinds: checked
+                              ? p.eventKinds.filter((k) => k !== kind)
+                              : [...p.eventKinds, kind],
+                          }))}
+                          style={{
+                            padding: "7px 16px", borderRadius: 20, cursor: "pointer",
+                            fontSize: 13, fontWeight: checked ? 700 : 500,
+                            fontFamily: "inherit",
+                            background: checked
+                              ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                              : "rgba(255, 255, 255, 0.3)",
+                            border: checked
+                              ? "1px solid rgba(255, 255, 255, 0.3)"
+                              : "1px solid rgba(203, 213, 225, 0.4)",
+                            color: checked ? "#fff" : "#64748b",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          {KIND_LABELS[kind]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <GlassButton type="submit" disabled={busy}>
                     {busy ? "저장중..." : editingPlayerId ? "선수 수정" : "선수 등록"}
@@ -542,7 +589,30 @@ export default function TournamentDetailPage() {
               </form>
 
               <div style={{ marginTop: 24 }}>
-                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "작업"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                  <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
+                    <input
+                      type="text"
+                      value={playerSearch}
+                      onChange={(e) => setPlayerSearch(e.target.value)}
+                      placeholder="이름, 소속, 시군, 번호로 검색..."
+                      style={{
+                        width: "100%", padding: "9px 14px 9px 36px", borderRadius: 10,
+                        fontSize: 13, fontFamily: "inherit", color: "#1e293b",
+                        background: "rgba(255, 255, 255, 0.5)",
+                        border: "1px solid rgba(203, 213, 225, 0.5)",
+                        outline: "none",
+                      }}
+                    />
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#94a3b8", pointerEvents: "none" }}>
+                      🔍
+                    </span>
+                  </div>
+                  <span style={{ fontSize: 13, color: "#64748b" }}>
+                    {selectedDivisionPlayers.length}명{playerSearch.trim() ? ` (전체 ${players.filter((p) => !activeDivisionId || p.divisionId === activeDivisionId).length}명)` : ""}
+                  </span>
+                </div>
+                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "참가종목", "작업"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
                   {selectedDivisionPlayers.map((p) => (
                     <tr key={p.id} {...glassTrHoverProps}>
                       <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 600 }}>{p.number}</td>
@@ -552,10 +622,18 @@ export default function TournamentDetailPage() {
                       <td style={glassTdStyle}>{p.hand === "left" ? "왼손" : "오른손"}</td>
                       <td style={{ ...glassTdStyle, textAlign: "center" }}><GlassBadge>{p.group}</GlassBadge></td>
                       <td style={glassTdStyle}>
+                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                          {(p.eventKinds?.length ? p.eventKinds : []).map((k) => (
+                            <GlassBadge key={k} variant="info">{KIND_LABELS[k] ?? k}</GlassBadge>
+                          ))}
+                          {(!p.eventKinds || p.eventKinds.length === 0) && <span style={{ color: "#94a3b8", fontSize: 12 }}>전체</span>}
+                        </div>
+                      </td>
+                      <td style={glassTdStyle}>
                         <div style={{ display: "flex", gap: 6 }}>
                           <GlassButton variant="secondary" size="sm" onClick={() => {
                             setEditingPlayerId(p.id);
-                            setPlayerForm({ group: p.group, region: p.region, affiliation: p.affiliation, name: p.name, hand: p.hand });
+                            setPlayerForm({ group: p.group, region: p.region, affiliation: p.affiliation, name: p.name, hand: p.hand, eventKinds: p.eventKinds ?? [] });
                           }}>수정</GlassButton>
                           <GlassButton variant="danger" size="sm" onClick={() => deletePlayer(p.id)}>삭제</GlassButton>
                         </div>
