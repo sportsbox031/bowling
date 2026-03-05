@@ -3,7 +3,7 @@
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { GlassCard, GlassTable, GlassBadge, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventRow = {
@@ -11,6 +11,7 @@ type EventRow = {
   tieRank: number;
   attempts: number;
   playerId: string;
+  region: string;
   affiliation: string;
   number: number;
   name: string;
@@ -71,6 +72,7 @@ const EventScoreBoardPage = () => {
   const [detail, setDetail] = useState<TournamentDetailResponse | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const load = async () => {
     if (!tournamentId || !eventId) return;
@@ -123,6 +125,17 @@ const EventScoreBoardPage = () => {
     return "";
   }, [eventInfo]);
 
+  const filteredRows = useMemo(() => {
+    const kw = searchKeyword.trim().toLowerCase();
+    if (!kw) return rows;
+    return rows.filter(
+      (row) =>
+        row.name.toLowerCase().includes(kw) ||
+        row.affiliation.toLowerCase().includes(kw) ||
+        row.region.toLowerCase().includes(kw),
+    );
+  }, [rows, searchKeyword]);
+
   return (
     <main>
       {/* Breadcrumb */}
@@ -154,9 +167,7 @@ const EventScoreBoardPage = () => {
             <GlassBadge variant="info">{eventInfo.scheduleDate}</GlassBadge>
           )}
           {loading && (
-            <span style={{ color: "#94a3b8", fontSize: 13 }} className="loading-pulse">
-              실시간 갱신 중...
-            </span>
+            <span style={{ color: "#94a3b8", fontSize: 13 }}>실시간 갱신 중...</span>
           )}
         </div>
         <div style={{ marginTop: 12 }}>
@@ -180,6 +191,40 @@ const EventScoreBoardPage = () => {
         </div>
       </div>
 
+      {/* Search */}
+      <GlassCard variant="strong" style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>🔍</span>
+          <GlassInput
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="선수명, 소속, 시도로 검색..."
+            style={{ flex: 1 }}
+          />
+          {searchKeyword && (
+            <button
+              onClick={() => setSearchKeyword("")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#94a3b8",
+                fontSize: 18,
+                lineHeight: 1,
+                padding: "0 4px",
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {searchKeyword && (
+          <p style={{ margin: "8px 0 0", fontSize: 13, color: "#6366f1" }}>
+            "{searchKeyword}" 검색 결과: {filteredRows.length}명
+          </p>
+        )}
+      </GlassCard>
+
       {message && (
         <GlassCard variant="subtle" style={{ marginBottom: 16, color: "#ef4444", padding: "12px 16px" }}>
           {message}
@@ -189,13 +234,13 @@ const EventScoreBoardPage = () => {
       {/* Scoreboard Table */}
       <GlassTable
         headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차"]}
-        rowCount={rows.length}
-        emptyMessage="등록된 점수가 없습니다."
+        rowCount={filteredRows.length}
+        emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "등록된 점수가 없습니다."}
       >
-        {rows.map((row) => (
+        {filteredRows.map((row) => (
           <tr key={row.playerId} {...glassTrHoverProps}>
             <td style={{ ...glassTdStyle, ...rankStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.attempts}</td>
+            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
             <td style={glassTdStyle}>{row.affiliation}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
             <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>

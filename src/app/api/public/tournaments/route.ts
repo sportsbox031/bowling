@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
 
   const query = new URL(req.url).searchParams;
   const keyword = (query.get("q") ?? "").toLowerCase().trim();
-  const year = Number(query.get("year"));
+  const yearParam = query.get("year");
+  const year = yearParam ? Number(yearParam) : null;
   const region = (query.get("region") ?? "").toLowerCase().trim();
 
   const snapshot = await adminDb
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
   });
 
   const filtered = all.filter((t: any) => {
-    if (Number.isFinite(year) && t.seasonYear !== year) {
+    if (year !== null && Number.isFinite(year) && t.seasonYear !== year) {
       return false;
     }
     if (region && typeof t.region === "string" && !t.region.toLowerCase().includes(region)) {

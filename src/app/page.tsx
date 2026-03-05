@@ -146,9 +146,36 @@ const HomePage = () => {
         </GlassCard>
       )}
 
+      {/* Loading Indicator */}
+      {loading && (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "5rem 1rem",
+            gap: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              border: "4px solid rgba(99, 102, 241, 0.15)",
+              borderTopColor: "#6366f1",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <p style={{ color: "#6366f1", fontSize: 15, fontWeight: 500 }}>대회 목록 불러오는 중...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       {/* Tournament Grid */}
       <section style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-        {items.map((tournament) => (
+        {!loading && items.map((tournament) => (
           <Link key={tournament.id} href={`/tournaments/${tournament.id}`} style={{ textDecoration: "none" }}>
             <GlassCard hover>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
@@ -186,7 +213,7 @@ const HomePage = () => {
         ))}
       </section>
 
-      {!loading && items.length === 0 && (
+      {!loading && items.length === 0 && !message && (
         <GlassCard variant="subtle" style={{ textAlign: "center", padding: "3rem 1rem", marginTop: 16 }}>
           <p style={{ fontSize: 48, marginBottom: 12 }}>🎳</p>
           <p style={{ color: "#94a3b8", fontSize: 16 }}>조회된 대회가 없습니다</p>

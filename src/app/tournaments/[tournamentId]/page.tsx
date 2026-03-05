@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { adminDb } from "@/lib/firebase/admin";
+import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -11,58 +13,65 @@ const formatEventKind = (kind: string) => {
     FIVES: "5인조",
     OVERALL: "개인종합",
   };
-
   return map[kind] ?? kind;
 };
 
-type DivisionInfo = {
-  id: string;
-  title: string;
-  code: string;
-};
-
-type EventInfo = {
-  id: string;
-  divisionId: string;
-  title: string;
-  kind: string;
-  gameCount: number;
-  scheduleDate: string;
-};
-
-type TournamentDetail = {
-  id: string;
-  title: string;
-  region: string;
-  startsAt: string;
-  endsAt: string;
-};
-
-type DivisionSection = {
-  divisionId: string;
-  events: EventInfo[];
-};
-
-const getTournamentData = async (tournamentId: string) => {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/public/tournaments/${tournamentId}`, {
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    throw new Error("대회 정보를 가져오지 못했습니다.");
+export default async function PublicTournamentDetailPage({ params }: { params: { tournamentId: string } }) {
+  if (!adminDb) {
+    return (
+      <main>
+        <p style={{ color: "#ef4444", textAlign: "center", padding: "4rem" }}>서버 초기화 오류가 발생했습니다.</p>
+      </main>
+    );
   }
 
-  const raw = await res.json();
-  return raw as {
-    tournament: TournamentDetail;
-    divisions: DivisionInfo[];
-    eventsByDivision: DivisionSection[];
-  };
-};
+  const tournamentId = params.tournamentId;
+  const tournamentDoc = await adminDb.collection("tournaments").doc(tournamentId).get();
+  if (!tournamentDoc.exists) {
+    notFound();
+  }
 
-export default async function PublicTournamentDetailPage({ params }: { params: { tournamentId: string } }) {
-  const { tournament, divisions, eventsByDivision } = await getTournamentData(params.tournamentId);
-  const eventMap = new Map<string, EventInfo[]>(eventsByDivision.map((item) => [item.divisionId, item.events]));
+  const tournament = { id: tournamentDoc.id, ...(tournamentDoc.data() as Record<string, unknown>) } as {
+    id: string;
+    title: string;
+    region: string;
+    startsAt: string;
+    endsAt: string;
+  };
+
+  const divisionsSnap = await adminDb
+    .collection("tournaments")
+    .doc(tournamentId)
+    .collection("divisions")
+    .orderBy("title")
+    .get();
+
+  const divisions = divisionsSnap.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as { title: string; code: string }),
+  }));
+
+  const eventsByDivision = await Promise.all(
+    divisions.map(async (division) => {
+      const eventsSnap = await adminDb!
+        .collection("tournaments")
+        .doc(tournamentId)
+        .collection("divisions")
+        .doc(division.id)
+        .collection("events")
+        .orderBy("scheduleDate")
+        .get();
+
+      const events = eventsSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as { title: string; kind: string; gameCount: number; scheduleDate: string }),
+      }));
+
+      return { divisionId: division.id, events };
+    }),
+  );
+
+  const eventMap = new Map(eventsByDivision.map((item) => [item.divisionId, item.events]));
 
   return (
     <main>
@@ -93,6 +102,19 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
 
       {/* Divisions Grid */}
       <section style={{ display: "grid", gap: 16 }}>
+        {divisions.length === 0 && (
+          <div
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              borderRadius: 16,
+              padding: "3rem",
+              textAlign: "center",
+              color: "#94a3b8",
+            }}
+          >
+            등록된 부문이 없습니다.
+          </div>
+        )}
         {divisions.map((division) => (
           <div
             key={division.id}
@@ -136,7 +158,6 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
                     borderRadius: 10,
                     textDecoration: "none",
                     color: "#1e293b",
-                    transition: "background 0.2s ease",
                     border: "1px solid rgba(255, 255, 255, 0.2)",
                     fontSize: 14,
                   }}
@@ -161,28 +182,30 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
       </section>
 
       {/* Overall Link */}
-      <div style={{ marginTop: 24, textAlign: "center" }}>
-        <Link
-          href={`/tournaments/${tournament.id}/overall?divisionId=${divisions[0]?.id ?? ""}`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "12px 28px",
-            background: "linear-gradient(135deg, rgba(99, 102, 241, 0.85), rgba(139, 92, 246, 0.85))",
-            color: "#fff",
-            borderRadius: 12,
-            fontWeight: 600,
-            fontSize: 15,
-            textDecoration: "none",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255, 255, 255, 0.3)",
-            boxShadow: "0 4px 16px rgba(99, 102, 241, 0.3)",
-          }}
-        >
-          📊 종합성적 보기
-        </Link>
-      </div>
+      {divisions.length > 0 && (
+        <div style={{ marginTop: 24, textAlign: "center" }}>
+          <Link
+            href={`/tournaments/${tournament.id}/overall?divisionId=${divisions[0].id}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "12px 28px",
+              background: "linear-gradient(135deg, rgba(99, 102, 241, 0.85), rgba(139, 92, 246, 0.85))",
+              color: "#fff",
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: 15,
+              textDecoration: "none",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(255, 255, 255, 0.3)",
+              boxShadow: "0 4px 16px rgba(99, 102, 241, 0.3)",
+            }}
+          >
+            📊 종합성적 보기
+          </Link>
+        </div>
+      )}
     </main>
   );
 }

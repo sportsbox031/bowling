@@ -164,7 +164,7 @@ export async function GET(
     return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
   }
 
-  const snap = await event.ref.collection("assignments").orderBy("gameNumber").orderBy("laneNumber").get();
+  const snap = await event.ref.collection("assignments").orderBy("gameNumber").get();
   const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   return NextResponse.json({ items });
 }

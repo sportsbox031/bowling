@@ -76,6 +76,7 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
     return {
       playerId: player.id,
       attempts,
+      region: player.region,
       affiliation: player.affiliation,
       number: player.number,
       name: player.name,
@@ -108,12 +109,13 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
 
 export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRankingResult => {
   const merged: Map<string, OverallRankingRow> = new Map();
-  const playerMeta = new Map<string, { affiliation: string; number: number; name: string }>();
+  const playerMeta = new Map<string, { region: string; affiliation: string; number: number; name: string }>();
 
   for (const eventRows of Object.values(input.eventRowsByEventId)) {
     for (const row of eventRows) {
       if (!playerMeta.has(row.playerId)) {
         playerMeta.set(row.playerId, {
+          region: row.region,
           affiliation: row.affiliation,
           number: row.number,
           name: row.name,
@@ -128,7 +130,7 @@ export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRank
   ]);
 
   for (const playerId of candidatePlayerIds) {
-    const meta = playerMeta.get(playerId) ?? { affiliation: "", number: 0, name: "" };
+    const meta = playerMeta.get(playerId) ?? { region: "", affiliation: "", number: 0, name: "" };
     const gameScores: ScoreColumn[] = emptyScoreColumns();
     let total = 0;
     let attempts = 0;
@@ -160,6 +162,7 @@ export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRank
       rank: 0,
       tieRank: 0,
       attempts,
+      region: meta.region,
       affiliation: meta.affiliation,
       number: meta.number,
       name: meta.name,

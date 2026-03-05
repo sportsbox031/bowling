@@ -95,6 +95,7 @@ export interface EventRankingRow {
   rank: number;
   tieRank: number;
   attempts: number;
+  region: string;
   affiliation: string;
   number: number;
   name: string;
@@ -109,6 +110,7 @@ export interface OverallRankingRow {
   rank: number;
   tieRank: number;
   attempts: number;
+  region: string;
   affiliation: string;
   number: number;
   name: string;

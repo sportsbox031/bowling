@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { GlassCard, GlassTable, GlassBadge, GlassButton, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import { useEffect, useMemo, useState } from "react";
+import { GlassCard, GlassTable, GlassBadge, GlassButton, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type OverallRow = {
@@ -11,6 +11,7 @@ type OverallRow = {
   rank: number;
   tieRank: number;
   attempts: number;
+  region: string;
   affiliation: string;
   number: number;
   name: string;
@@ -69,6 +70,7 @@ export default function TournamentOverallPage() {
   const [rows, setRows] = useState<OverallRow[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const load = async () => {
     if (!tournamentId) return;
@@ -91,6 +93,17 @@ export default function TournamentOverallPage() {
     const timer = window.setInterval(load, 5000);
     return () => window.clearInterval(timer);
   }, [tournamentId, divisionId]);
+
+  const filteredRows = useMemo(() => {
+    const kw = searchKeyword.trim().toLowerCase();
+    if (!kw) return rows;
+    return rows.filter(
+      (row) =>
+        row.name.toLowerCase().includes(kw) ||
+        row.affiliation.toLowerCase().includes(kw) ||
+        row.region.toLowerCase().includes(kw),
+    );
+  }, [rows, searchKeyword]);
 
   return (
     <main>
@@ -125,9 +138,7 @@ export default function TournamentOverallPage() {
             <GlassBadge variant="success">전체 종별</GlassBadge>
           )}
           {loading && (
-            <span style={{ color: "#94a3b8", fontSize: 13 }} className="loading-pulse">
-              실시간 갱신 중...
-            </span>
+            <span style={{ color: "#94a3b8", fontSize: 13 }}>실시간 갱신 중...</span>
           )}
         </div>
         {divisionId && (
@@ -141,6 +152,40 @@ export default function TournamentOverallPage() {
         )}
       </div>
 
+      {/* Search */}
+      <GlassCard variant="strong" style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>🔍</span>
+          <GlassInput
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="선수명, 소속, 시도로 검색..."
+            style={{ flex: 1 }}
+          />
+          {searchKeyword && (
+            <button
+              onClick={() => setSearchKeyword("")}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#94a3b8",
+                fontSize: 18,
+                lineHeight: 1,
+                padding: "0 4px",
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        {searchKeyword && (
+          <p style={{ margin: "8px 0 0", fontSize: 13, color: "#6366f1" }}>
+            "{searchKeyword}" 검색 결과: {filteredRows.length}명
+          </p>
+        )}
+      </GlassCard>
+
       {message && (
         <GlassCard variant="subtle" style={{ marginBottom: 16, color: "#ef4444", padding: "12px 16px" }}>
           {message}
@@ -150,13 +195,13 @@ export default function TournamentOverallPage() {
       {/* Overall Table */}
       <GlassTable
         headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차이", "게임수"]}
-        rowCount={rows.length}
-        emptyMessage="아직 성적 데이터가 없습니다."
+        rowCount={filteredRows.length}
+        emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "아직 성적 데이터가 없습니다."}
       >
-        {rows.map((row) => (
+        {filteredRows.map((row) => (
           <tr key={row.playerId} {...glassTrHoverProps}>
             <td style={{ ...glassTdStyle, ...rankStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.attempts}</td>
+            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
             <td style={glassTdStyle}>{row.affiliation}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
             <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>
