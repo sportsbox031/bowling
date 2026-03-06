@@ -40,7 +40,6 @@ type Player = {
   number: number;
   name: string;
   hand: "left" | "right";
-  eventKinds: string[];
 };
 
 type TournamentDetail = {
@@ -68,7 +67,7 @@ const GENDER_LABELS: Record<string, string> = {
   MIXED: "혼합",
 };
 
-type Tab = "divisions" | "events" | "players";
+type Tab = "events" | "players";
 
 const api = async <T,>(input: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(input, init);
@@ -86,9 +85,10 @@ export default function TournamentDetailPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [activeDivisionId, setActiveDivisionId] = useState("");
-  const [activeTab, setActiveTab] = useState<Tab>("divisions");
+  const [activeTab, setActiveTab] = useState<Tab>("events");
 
   // Division form
+  const [divisionFormOpen, setDivisionFormOpen] = useState(false);
   const [editingDivisionId, setEditingDivisionId] = useState("");
   const [divisionForm, setDivisionForm] = useState({ title: "", gender: "M" });
 
@@ -112,7 +112,6 @@ export default function TournamentDetailPage() {
     affiliation: "",
     name: "",
     hand: "right" as Player["hand"],
-    eventKinds: [] as string[],
   });
 
   const [playerSearch, setPlayerSearch] = useState("");
@@ -175,7 +174,7 @@ export default function TournamentDetailPage() {
   // --- Reset helpers ---
   const resetDivisionForm = () => { setDivisionForm({ title: "", gender: "M" }); setEditingDivisionId(""); };
   const resetEventForm = () => { setEventForm({ title: "", kind: "SINGLE", gameCount: 1, scheduleDate: "", laneStart: 1, laneEnd: 1, tableShift: 1 }); setEditingEventId(""); };
-  const resetPlayerForm = () => { setPlayerForm({ group: "A", region: "", affiliation: "", name: "", hand: "right", eventKinds: [] }); setEditingPlayerId(""); };
+  const resetPlayerForm = () => { setPlayerForm({ group: "A", region: "", affiliation: "", name: "", hand: "right" }); setEditingPlayerId(""); };
 
   useEffect(() => { loadTournament(); }, [tournamentId]);
   useEffect(() => { loadDivisions().catch(() => showMessage("종별을 불러올 수 없습니다.", "error")); }, [tournamentId]);
@@ -195,6 +194,7 @@ export default function TournamentDetailPage() {
         showMessage("종별이 등록되었습니다.");
       }
       resetDivisionForm();
+      setDivisionFormOpen(false);
       await loadDivisions();
     } catch { showMessage("종별 저장 실패", "error"); }
     finally { setBusy(false); }
@@ -323,11 +323,11 @@ export default function TournamentDetailPage() {
         </GlassCard>
       )}
 
-      {/* Division Selector */}
+      {/* Division Selector + Management */}
       <GlassCard variant="strong" style={{ padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>종별 선택</span>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: divisions.length > 0 ? 0 : 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#475569" }}>종별</span>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1 }}>
             {divisions.map((d) => (
               <button
                 key={d.id}
@@ -356,83 +356,66 @@ export default function TournamentDetailPage() {
                 {d.title} ({GENDER_LABELS[d.gender] ?? d.gender})
               </button>
             ))}
-            {divisions.length === 0 && (
-              <span style={{ color: "#94a3b8", fontSize: 13 }}>등록된 종별이 없습니다. 아래에서 먼저 종별을 등록하세요.</span>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
+            <GlassButton size="sm" onClick={() => { setDivisionFormOpen((v) => !v); resetDivisionForm(); }}>
+              {divisionFormOpen ? "닫기" : "+ 종별 추가"}
+            </GlassButton>
+            {activeDivisionId && (
+              <>
+                <GlassButton variant="secondary" size="sm" onClick={() => {
+                  const d = divisions.find((div) => div.id === activeDivisionId);
+                  if (d) {
+                    setEditingDivisionId(d.id);
+                    setDivisionForm({ title: d.title, gender: d.gender });
+                    setDivisionFormOpen(true);
+                  }
+                }}>수정</GlassButton>
+                <GlassButton variant="danger" size="sm" onClick={() => deleteDivision(activeDivisionId)}>삭제</GlassButton>
+              </>
             )}
           </div>
         </div>
+        {divisions.length === 0 && !divisionFormOpen && (
+          <span style={{ color: "#94a3b8", fontSize: 13 }}>등록된 종별이 없습니다. 종별을 먼저 추가하세요.</span>
+        )}
+
+        {/* Division form (inline) */}
+        {divisionFormOpen && (
+          <form onSubmit={saveDivision} style={{ display: "flex", gap: 12, alignItems: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
+            <GlassInput label="종별명" required value={divisionForm.title}
+              onChange={(e) => setDivisionForm((p) => ({ ...p, title: e.target.value }))} placeholder="예: 초등부 남자" />
+            <GlassSelect label="성별" value={divisionForm.gender}
+              onChange={(e) => setDivisionForm((p) => ({ ...p, gender: e.target.value }))}>
+              <option value="M">남자</option>
+              <option value="F">여자</option>
+              <option value="MIXED">혼합</option>
+            </GlassSelect>
+            <GlassButton type="submit" size="sm" disabled={busy}>
+              {editingDivisionId ? "수정" : "등록"}
+            </GlassButton>
+            <GlassButton type="button" variant="secondary" size="sm" onClick={() => { setDivisionFormOpen(false); resetDivisionForm(); }}>취소</GlassButton>
+          </form>
+        )}
       </GlassCard>
 
-      {/* Tabs */}
-      <div style={{
-        display: "flex", gap: 0,
-        borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
-        background: "rgba(255, 255, 255, 0.15)",
-        borderRadius: "12px 12px 0 0",
-        overflow: "hidden",
-      }}>
-        <button style={tabStyle("divisions")} onClick={() => setActiveTab("divisions")}>종별 관리</button>
-        <button style={tabStyle("events")} onClick={() => setActiveTab("events")}>세부종목 관리</button>
-        <button style={tabStyle("players")} onClick={() => setActiveTab("players")}>선수 등록</button>
-      </div>
-
-      {/* ===== Tab: Divisions ===== */}
-      {activeTab === "divisions" && (
-        <GlassCard>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>
-            {editingDivisionId ? "종별 수정" : "종별 등록"}
-          </h2>
-          <form onSubmit={saveDivision} style={{ display: "grid", gap: 14, maxWidth: 560 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-              <GlassInput label="종별명" required value={divisionForm.title}
-                onChange={(e) => setDivisionForm((p) => ({ ...p, title: e.target.value }))} placeholder="예: 초등부 남자, 중등부 혼합" />
-              <GlassSelect label="성별" value={divisionForm.gender}
-                onChange={(e) => setDivisionForm((p) => ({ ...p, gender: e.target.value }))}>
-                <option value="M">남자</option>
-                <option value="F">여자</option>
-                <option value="MIXED">혼합</option>
-              </GlassSelect>
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <GlassButton type="submit" disabled={busy}>
-                {busy ? "저장중..." : editingDivisionId ? "종별 수정" : "종별 등록"}
-              </GlassButton>
-              {editingDivisionId && <GlassButton type="button" variant="secondary" onClick={resetDivisionForm}>취소</GlassButton>}
-            </div>
-          </form>
-
-          <div style={{ marginTop: 24 }}>
-            <GlassTable headers={["종별명", "성별", "작업"]} rowCount={divisions.length} emptyMessage="등록된 종별이 없습니다.">
-              {divisions.map((d) => (
-                <tr key={d.id} {...glassTrHoverProps}>
-                  <td style={{ ...glassTdStyle, fontWeight: 600 }}>{d.title}</td>
-                  <td style={glassTdStyle}>{GENDER_LABELS[d.gender] ?? d.gender}</td>
-                  <td style={glassTdStyle}>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <GlassButton variant="secondary" size="sm" onClick={() => {
-                        setEditingDivisionId(d.id);
-                        setDivisionForm({ title: d.title, gender: d.gender });
-                      }}>수정</GlassButton>
-                      <GlassButton variant="danger" size="sm" onClick={() => deleteDivision(d.id)}>삭제</GlassButton>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </GlassTable>
+      {/* Tabs - only show when division selected */}
+      {activeDivisionId && (
+        <>
+          <div style={{
+            display: "flex", gap: 0,
+            borderBottom: "1px solid rgba(255, 255, 255, 0.3)",
+            background: "rgba(255, 255, 255, 0.15)",
+            borderRadius: "12px 12px 0 0",
+            overflow: "hidden",
+          }}>
+            <button style={tabStyle("events")} onClick={() => setActiveTab("events")}>세부종목 관리</button>
+            <button style={tabStyle("players")} onClick={() => setActiveTab("players")}>선수 등록</button>
           </div>
-        </GlassCard>
-      )}
 
-      {/* ===== Tab: Events ===== */}
-      {activeTab === "events" && (
-        <GlassCard>
-          {!activeDivisionId ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-              <p style={{ fontSize: 36, marginBottom: 8 }}>📋</p>
-              <p>종별을 먼저 선택해주세요</p>
-            </div>
-          ) : (
-            <>
+          {/* ===== Tab: Events ===== */}
+          {activeTab === "events" && (
+            <GlassCard>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>
                 {editingEventId ? "세부종목 수정" : "세부종목 등록"}
               </h2>
@@ -502,21 +485,12 @@ export default function TournamentDetailPage() {
                   ))}
                 </GlassTable>
               </div>
-            </>
+            </GlassCard>
           )}
-        </GlassCard>
-      )}
 
-      {/* ===== Tab: Players ===== */}
-      {activeTab === "players" && (
-        <GlassCard>
-          {!activeDivisionId ? (
-            <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-              <p style={{ fontSize: 36, marginBottom: 8 }}>👥</p>
-              <p>종별을 먼저 선택해주세요</p>
-            </div>
-          ) : (
-            <>
+          {/* ===== Tab: Players ===== */}
+          {activeTab === "players" && (
+            <GlassCard>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>
                 {editingPlayerId ? "선수 수정" : "선수 등록"}
               </h2>
@@ -542,43 +516,6 @@ export default function TournamentDetailPage() {
                     <option value="right">오른손</option>
                     <option value="left">왼손</option>
                   </GlassSelect>
-                </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8 }}>
-                    참가 종목 (미선택 시 전체 참가)
-                  </label>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {(["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const).map((kind) => {
-                      const checked = playerForm.eventKinds.includes(kind);
-                      return (
-                        <button
-                          key={kind}
-                          type="button"
-                          onClick={() => setPlayerForm((p) => ({
-                            ...p,
-                            eventKinds: checked
-                              ? p.eventKinds.filter((k) => k !== kind)
-                              : [...p.eventKinds, kind],
-                          }))}
-                          style={{
-                            padding: "7px 16px", borderRadius: 20, cursor: "pointer",
-                            fontSize: 13, fontWeight: checked ? 700 : 500,
-                            fontFamily: "inherit",
-                            background: checked
-                              ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                              : "rgba(255, 255, 255, 0.3)",
-                            border: checked
-                              ? "1px solid rgba(255, 255, 255, 0.3)"
-                              : "1px solid rgba(203, 213, 225, 0.4)",
-                            color: checked ? "#fff" : "#64748b",
-                            transition: "all 0.15s ease",
-                          }}
-                        >
-                          {KIND_LABELS[kind]}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
                   <GlassButton type="submit" disabled={busy}>
@@ -612,7 +549,7 @@ export default function TournamentDetailPage() {
                     {selectedDivisionPlayers.length}명{playerSearch.trim() ? ` (전체 ${players.filter((p) => !activeDivisionId || p.divisionId === activeDivisionId).length}명)` : ""}
                   </span>
                 </div>
-                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "참가종목", "작업"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
+                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "작업"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
                   {selectedDivisionPlayers.map((p) => (
                     <tr key={p.id} {...glassTrHoverProps}>
                       <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 600 }}>{p.number}</td>
@@ -622,18 +559,10 @@ export default function TournamentDetailPage() {
                       <td style={glassTdStyle}>{p.hand === "left" ? "왼손" : "오른손"}</td>
                       <td style={{ ...glassTdStyle, textAlign: "center" }}><GlassBadge>{p.group}</GlassBadge></td>
                       <td style={glassTdStyle}>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {(p.eventKinds?.length ? p.eventKinds : []).map((k) => (
-                            <GlassBadge key={k} variant="info">{KIND_LABELS[k] ?? k}</GlassBadge>
-                          ))}
-                          {(!p.eventKinds || p.eventKinds.length === 0) && <span style={{ color: "#94a3b8", fontSize: 12 }}>전체</span>}
-                        </div>
-                      </td>
-                      <td style={glassTdStyle}>
                         <div style={{ display: "flex", gap: 6 }}>
                           <GlassButton variant="secondary" size="sm" onClick={() => {
                             setEditingPlayerId(p.id);
-                            setPlayerForm({ group: p.group, region: p.region, affiliation: p.affiliation, name: p.name, hand: p.hand, eventKinds: p.eventKinds ?? [] });
+                            setPlayerForm({ group: p.group, region: p.region, affiliation: p.affiliation, name: p.name, hand: p.hand });
                           }}>수정</GlassButton>
                           <GlassButton variant="danger" size="sm" onClick={() => deletePlayer(p.id)}>삭제</GlassButton>
                         </div>
@@ -642,9 +571,9 @@ export default function TournamentDetailPage() {
                   ))}
                 </GlassTable>
               </div>
-            </>
+            </GlassCard>
           )}
-        </GlassCard>
+        </>
       )}
     </div>
   );

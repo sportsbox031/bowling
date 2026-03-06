@@ -53,8 +53,8 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
   const scoreMap = new Map<string, ScoreRow[]>();
 
   for (const score of input.scores) {
-    const list = scoreMap.get(score.playerId) ?? [];
-    scoreMap.set(score.playerId, [...list, score]);
+    const list = scoreMap.get(score.playerId);
+    if (list) { list.push(score); } else { scoreMap.set(score.playerId, [score]); }
   }
 
   const baseRows: Omit<EventRankingRow, "rank" | "tieRank">[] = input.players.map((player) => {

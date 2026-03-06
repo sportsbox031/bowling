@@ -67,6 +67,7 @@ export default function TournamentManagerPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [busy, setBusy] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const load = async () => {
     const result = await api<{ items: Tournament[] }>("/api/admin/tournaments");
@@ -115,6 +116,7 @@ export default function TournamentManagerPage() {
   };
 
   const startEdit = (item: Tournament) => {
+    setFormOpen(true);
     setEditingId(item.id);
     setForm({
       title: item.title,
@@ -181,10 +183,21 @@ export default function TournamentManagerPage() {
 
       {/* Form Section */}
       <GlassCard variant="strong">
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 20 }}>
-          {editingId ? "대회 수정" : "대회 등록"}
-        </h2>
-        <form onSubmit={saveTournament} style={{ display: "grid", gap: 16, maxWidth: 640 }}>
+        <button
+          type="button"
+          onClick={() => setFormOpen((v) => !v)}
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            width: "100%", background: "none", border: "none", cursor: "pointer",
+            padding: 0, fontFamily: "inherit",
+          }}
+        >
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+            {editingId ? "대회 수정" : "대회 등록"}
+          </h2>
+          <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: formOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+        </button>
+        {formOpen && <form onSubmit={saveTournament} style={{ display: "grid", gap: 16, maxWidth: 640, marginTop: 20 }}>
           <GlassInput
             label="대회명"
             required
@@ -273,7 +286,7 @@ export default function TournamentManagerPage() {
               </GlassButton>
             )}
           </div>
-        </form>
+        </form>}
       </GlassCard>
 
       {/* Tournament List */}

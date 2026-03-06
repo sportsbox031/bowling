@@ -8,6 +8,7 @@ interface AssignmentItem {
   playerId: string;
   gameNumber: number;
   laneNumber: number;
+  squadId?: string;
 }
 
 const MAX_PLAYERS_PER_LANE = 4;
@@ -22,14 +23,16 @@ const writeAssignments = async (eventRef: any, assignments: AssignmentItem[]) =>
   const batch = eventRef.parent.firestore.batch();
   for (const item of assignments) {
     const docId = `${item.playerId}_${item.gameNumber}`;
+    const data: Record<string, string | number> = {
+      playerId: item.playerId,
+      gameNumber: item.gameNumber,
+      laneNumber: item.laneNumber,
+      updatedAt: new Date().toISOString(),
+    };
+    if (item.squadId) data.squadId = item.squadId;
     batch.set(
       eventRef.collection("assignments").doc(docId),
-      {
-        playerId: item.playerId,
-        gameNumber: item.gameNumber,
-        laneNumber: item.laneNumber,
-        updatedAt: new Date().toISOString(),
-      },
+      data,
       { merge: true },
     );
   }
@@ -131,27 +134,39 @@ const validateManualItems = (items: AssignmentItem[], eventData: {
   return result;
 };
 
-const normalizePlayersInDivision = async (tournamentId: string, divisionId: string, eventKind?: string) => {
+const getParticipantIds = async (tournamentId: string, divisionId: string, eventId: string, squadId?: string) => {
   if (!adminDb) {
     return null;
   }
 
-  const playersSnap = await adminDb
+  const participantsSnap = await adminDb
     .collection("tournaments")
     .doc(tournamentId)
-    .collection("players")
-    .where("divisionId", "==", divisionId)
+    .collection("divisions")
+    .doc(divisionId)
+    .collection("events")
+    .doc(eventId)
+    .collection("participants")
     .get();
 
-  const docs = eventKind
-    ? playersSnap.docs.filter((doc) => {
-        const data = doc.data();
-        const kinds: string[] = Array.isArray(data.eventKinds) ? data.eventKinds : [];
-        return kinds.length === 0 || kinds.includes(eventKind);
-      })
-    : playersSnap.docs;
+  if (!squadId) {
+    return new Set(participantsSnap.docs.map((doc) => doc.id));
+  }
 
-  return new Set(docs.map((doc) => doc.id));
+  return new Set(
+    participantsSnap.docs
+      .filter((doc) => doc.data().squadId === squadId)
+      .map((doc) => doc.id),
+  );
+};
+
+const clearAssignmentsBySquad = async (eventRef: any, squadId: string) => {
+  const snap = await eventRef.collection("assignments").get();
+  const targets = snap.docs.filter((doc: any) => doc.data().squadId === squadId);
+  if (targets.length === 0) return;
+  const batch = eventRef.parent.firestore.batch();
+  for (const doc of targets) batch.delete(doc.ref);
+  await batch.commit();
 };
 
 export async function GET(
@@ -172,8 +187,10 @@ export async function GET(
     return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
   }
 
+  const squadId = new URL(_req.url).searchParams.get("squadId") ?? undefined;
   const snap = await event.ref.collection("assignments").orderBy("gameNumber").get();
-  const items = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const allItems = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
+  const items = squadId ? allItems.filter((item: any) => item.squadId === squadId) : allItems;
   return NextResponse.json({ items });
 }
 
@@ -194,6 +211,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
   const body = await req.json();
   const mode = body?.mode ?? "random";
+  const squadId = typeof body?.squadId === "string" ? body.squadId.trim() : undefined;
 
   if (mode !== "random" && mode !== "manual") {
     return NextResponse.json({ message: "INVALID_MODE" }, { status: 400 });
@@ -205,8 +223,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   const laneEnd = Number(eventData.laneEnd ?? laneStart);
   const gameCount = Number(eventData.gameCount ?? 0);
   const tableShift = Number(eventData.tableShift ?? 0);
-  const eventKind = typeof eventData.kind === "string" ? eventData.kind : undefined;
-  const eventPlayerIds = await normalizePlayersInDivision(ctx.params.tournamentId, ctx.params.divisionId, eventKind);
+  const eventPlayerIds = await getParticipantIds(ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId, squadId);
   if (!eventPlayerIds) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
@@ -285,7 +302,11 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }));
   const all: AssignmentItem[] = [];
 
-  await clearAssignments(event.ref);
+  if (squadId) {
+    await clearAssignmentsBySquad(event.ref, squadId);
+  } else {
+    await clearAssignments(event.ref);
+  }
 
   for (const gameNumber of Object.keys(result.gameBoard).map((item) => Number(item))) {
     const board = result.gameBoard[gameNumber];
@@ -294,6 +315,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
         playerId: slot.playerId,
         gameNumber,
         laneNumber: slot.laneNumber,
+        squadId,
       });
     }
   }

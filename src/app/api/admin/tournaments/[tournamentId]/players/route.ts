@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
 
-const VALID_EVENT_KINDS = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
-
-const normalizeEventKinds = (raw: unknown): string[] => {
-  if (!Array.isArray(raw)) return [];
-  return raw.filter((k) => typeof k === "string" && VALID_EVENT_KINDS.includes(k as any));
-};
-
 const normalizePlayerInput = (body: any) => ({
   divisionId: typeof body?.divisionId === "string" ? body.divisionId.trim() : "",
   group: typeof body?.group === "string" ? body.group.trim() : "",
@@ -16,7 +9,6 @@ const normalizePlayerInput = (body: any) => ({
   affiliation: typeof body?.affiliation === "string" ? body.affiliation.trim() : "",
   name: typeof body?.name === "string" ? body.name.trim() : "",
   hand: typeof body?.hand === "string" ? body.hand.toLowerCase() : "",
-  eventKinds: normalizeEventKinds(body?.eventKinds),
 });
 
 const getPlayersRef = (db: NonNullable<typeof adminDb>, tournamentId: string) =>
@@ -95,7 +87,6 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     number,
     name: input.name,
     hand: input.hand,
-    eventKinds: input.eventKinds,
     createdAt: now,
     updatedAt: now,
   };

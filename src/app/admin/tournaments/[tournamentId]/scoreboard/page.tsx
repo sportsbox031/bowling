@@ -39,7 +39,6 @@ type Player = {
   affiliation: string;
   region: string;
   divisionId: string;
-  eventKinds?: string[];
 };
 
 type EventInfo = {
@@ -58,13 +57,27 @@ type Assignment = {
   playerId: string;
   gameNumber: number;
   laneNumber: number;
+  squadId?: string;
+};
+
+type Squad = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+type Participant = {
+  id: string;
+  playerId: string;
+  squadId?: string;
 };
 
 type ApiList<T> = { items: T[] };
 type ApiError = { message?: string };
-type ScoreboardTab = "lane" | "score" | "event-rank" | "overall-rank";
+type ScoreboardTab = "participants" | "lane" | "score" | "event-rank" | "overall-rank";
 
 const TAB_LABELS: Record<ScoreboardTab, string> = {
+  participants: "📋 출전선수등록",
   lane: "🎳 레인 배정",
   score: "📝 점수 입력",
   "event-rank": "🏆 세부순위",
@@ -168,10 +181,16 @@ export default function AdminScoreboardPage() {
   const divisionId = searchParams.get("divisionId") ?? "";
   const eventId = searchParams.get("eventId") ?? "";
 
-  const [activeTab, setActiveTab] = useState<ScoreboardTab>("lane");
+  const [activeTab, setActiveTab] = useState<ScoreboardTab>("participants");
   const [event, setEvent] = useState<EventInfo | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
+  const [participantList, setParticipantList] = useState<Participant[]>([]);
+  const [squads, setSquads] = useState<Squad[]>([]);
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
+  const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantNumberInput, setParticipantNumberInput] = useState("");
   const [eventRows, setEventRows] = useState<EventLeaderboardRow[]>([]);
   const [overallRows, setOverallRows] = useState<OverallLeaderboardRow[]>([]);
   const [selectedGame, setSelectedGame] = useState(1);
@@ -181,17 +200,41 @@ export default function AdminScoreboardPage() {
   const [scoreDraft, setScoreDraft] = useState<Record<string, string>>({});
   const [selectedScoreLane, setSelectedScoreLane] = useState<number>(0);
   const pollerRef = useRef<number | null>(null);
+  const msgTimerRef = useRef<number | null>(null);
 
   const showMsg = (msg: string, type: "success" | "error" = "success") => {
     setMessage(msg); setMessageType(type);
-    setTimeout(() => setMessage(""), 4000);
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current);
+    msgTimerRef.current = window.setTimeout(() => setMessage(""), 4000);
   };
+
+  const hasSquads = squads.length > 0;
+
+  const participantIds = useMemo(
+    () => new Set(participantList.map((p) => p.id)),
+    [participantList],
+  );
+
+  const participantMap = useMemo(
+    () => new Map(participantList.map((p) => [p.id, p])),
+    [participantList],
+  );
+
+  const squadParticipantIds = useMemo(() => {
+    if (!hasSquads || !selectedSquadId) return participantIds;
+    return new Set(participantList.filter((p) => p.squadId === selectedSquadId).map((p) => p.id));
+  }, [participantList, selectedSquadId, hasSquads, participantIds]);
+
+  const players = useMemo(
+    () => allPlayers.filter((p) => squadParticipantIds.has(p.id)),
+    [allPlayers, squadParticipantIds],
+  );
 
   const playerById = useMemo(() => {
     const m = new Map<string, Player>();
-    players.forEach((p) => m.set(p.id, p));
+    allPlayers.forEach((p) => m.set(p.id, p));
     return m;
-  }, [players]);
+  }, [allPlayers]);
 
   const lanes = useMemo(() => event ? range(event.laneStart, event.laneEnd) : [], [event]);
 
@@ -222,12 +265,66 @@ export default function AdminScoreboardPage() {
     const res = await fetch(`/api/admin/tournaments/${tournamentId}/players?divisionId=${encodeURIComponent(divisionId)}`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
     const data = await res.json() as ApiList<Player>;
-    const all = data.items ?? [];
-    const kind = event?.kind;
-    const filtered = kind
-      ? all.filter((p) => !p.eventKinds || p.eventKinds.length === 0 || p.eventKinds.includes(kind))
-      : all;
-    setPlayers(filtered);
+    setAllPlayers(data.items ?? []);
+  };
+
+  const loadParticipants = async (signal?: AbortSignal) => {
+    if (!tournamentId || !divisionId || !eventId) return;
+    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/participants`, { cache: "no-store", signal });
+    if (!res.ok) throw new Error(await parseError(res));
+    const data = await res.json() as ApiList<Participant>;
+    setParticipantList(data.items ?? []);
+  };
+
+  const loadSquads = async (signal?: AbortSignal) => {
+    if (!tournamentId || !divisionId || !eventId) return;
+    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/squads`, { cache: "no-store", signal });
+    if (!res.ok) throw new Error(await parseError(res));
+    const data = await res.json() as ApiList<Squad>;
+    setSquads(data.items ?? []);
+  };
+
+  const participantsUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/participants`;
+
+  const handleAddParticipant = async (playerId: string) => {
+    try {
+      const res = await fetch(participantsUrl, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerIds: [playerId], squadId: hasSquads ? selectedSquadId : undefined }),
+      });
+      if (!res.ok) throw new Error(await parseError(res));
+      setParticipantList((prev) => [...prev, { id: playerId, playerId, squadId: hasSquads ? selectedSquadId ?? undefined : undefined }]);
+      return true;
+    } catch (err) { showMsg((err as Error).message || "등록 실패", "error"); return false; }
+  };
+
+  const handleRemoveParticipant = async (playerId: string) => {
+    try {
+      const res = await fetch(participantsUrl, {
+        method: "DELETE", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId }),
+      });
+      if (!res.ok) throw new Error(await parseError(res));
+      setParticipantList((prev) => prev.filter((pt) => pt.id !== playerId));
+      return true;
+    } catch (err) { showMsg((err as Error).message || "해제 실패", "error"); return false; }
+  };
+
+  const handleCreateSquad = async () => {
+    const name = newSquadName.trim();
+    if (!name) return;
+    try {
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/squads`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error(await parseError(res));
+      const created = await res.json();
+      setSquads((prev) => [...prev, created]);
+      setNewSquadName("");
+      if (!selectedSquadId) setSelectedSquadId(created.id);
+      showMsg(`스쿼드 "${created.name}" 생성됨`);
+    } catch (err) { showMsg((err as Error).message || "스쿼드 생성 실패", "error"); }
   };
 
   const loadAssignments = async (signal?: AbortSignal) => {
@@ -244,12 +341,6 @@ export default function AdminScoreboardPage() {
     if (!res.ok) throw new Error(await parseError(res));
     const data = await res.json() as { rows: EventLeaderboardRow[] };
     setEventRows(data.rows ?? []);
-    const next: Record<string, string> = {};
-    data.rows?.forEach((row) => {
-      const v = row.gameScores?.[selectedGame - 1]?.score;
-      next[row.playerId] = typeof v === "number" ? String(v) : "";
-    });
-    setScoreDraft(next);
   };
 
   const loadOverall = async (signal?: AbortSignal) => {
@@ -265,7 +356,7 @@ export default function AdminScoreboardPage() {
     setLoading(true);
     const controller = new AbortController();
     try {
-      await Promise.all([loadEvent(controller.signal), loadPlayers(controller.signal), loadAssignments(controller.signal), loadLeaderboard(controller.signal), loadOverall(controller.signal)]);
+      await Promise.all([loadEvent(controller.signal), loadPlayers(controller.signal), loadParticipants(controller.signal), loadSquads(controller.signal), loadAssignments(controller.signal), loadLeaderboard(controller.signal), loadOverall(controller.signal)]);
     } catch (err) {
       if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "조회 실패", "error");
     } finally { setLoading(false); }
@@ -277,17 +368,25 @@ export default function AdminScoreboardPage() {
     (async () => { ctrl = await loadAll() ?? null; })();
     if (pollerRef.current) clearInterval(pollerRef.current);
     pollerRef.current = window.setInterval(() => {
-      void loadAssignments();
-      void loadLeaderboard();
-      void loadOverall();
+      if (activeTab === "lane") { void loadAssignments(); }
+      else if (activeTab === "score" || activeTab === "event-rank") { void loadLeaderboard(); }
+      else if (activeTab === "overall-rank") { void loadOverall(); }
     }, 4000) as unknown as number;
     return () => {
       ctrl?.abort();
       if (pollerRef.current) clearInterval(pollerRef.current);
     };
-  }, [tournamentId, divisionId, eventId]);
+  }, [tournamentId, divisionId, eventId, activeTab]);
 
-  useEffect(() => { void loadLeaderboard(); }, [selectedGame]);
+  // Derive scoreDraft from existing eventRows when game changes (no re-fetch needed)
+  useEffect(() => {
+    const next: Record<string, string> = {};
+    eventRows.forEach((row) => {
+      const v = row.gameScores?.[selectedGame - 1]?.score;
+      next[row.playerId] = typeof v === "number" ? String(v) : "";
+    });
+    setScoreDraft(next);
+  }, [selectedGame, eventRows]);
 
   // --- Lane assignment ---
   const encodeDrag = (playerId: string, sourceLane?: number) => JSON.stringify({ playerId, sourceLane });
@@ -335,7 +434,7 @@ export default function AdminScoreboardPage() {
     if (!tournamentId || !divisionId || !eventId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "random" }) });
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "random", squadId: hasSquads ? selectedSquadId : undefined }) });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         const msg = body?.message ?? "랜덤 배정 실패";
@@ -359,7 +458,7 @@ export default function AdminScoreboardPage() {
     setLoading(true);
     const items = assignments.map((a) => ({ playerId: a.playerId, gameNumber: a.gameNumber, laneNumber: a.laneNumber }));
     try {
-      const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "manual", items, replaceAll: true }) });
+      const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "manual", items, replaceAll: true, squadId: hasSquads ? selectedSquadId : undefined }) });
       if (!res.ok) throw new Error(await parseError(res));
       await loadAssignments();
       showMsg("수동 배정이 저장되었습니다.");
@@ -385,26 +484,27 @@ export default function AdminScoreboardPage() {
 
   const handleSaveAllInLane = async (laneNum: number) => {
     const playerIds = currentBoard[laneNum] ?? [];
-    if (playerIds.length === 0) return;
+    if (playerIds.length === 0 || !event || !tournamentId || !divisionId || !eventId) return;
     setLoading(true);
-    let saved = 0;
-    let failed = 0;
+    const tasks: Promise<boolean>[] = [];
     for (const pid of playerIds) {
       const draft = scoreDraft[pid];
       if (draft === undefined || draft === "") continue;
       const score = Number(draft);
-      if (!Number.isFinite(score) || !Number.isInteger(score) || score < 0 || score > MAX_SCORE) { failed++; continue; }
-      if (!event || !tournamentId || !divisionId || !eventId) continue;
-      try {
-        const res = await fetch("/api/admin/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tournamentId, divisionId, eventId, playerId: pid, gameNumber: selectedGame, score, laneNumber: laneNum }) });
-        if (res.ok) saved++;
-        else failed++;
-      } catch { failed++; }
+      if (!Number.isFinite(score) || !Number.isInteger(score) || score < 0 || score > MAX_SCORE) continue;
+      tasks.push(
+        fetch("/api/admin/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tournamentId, divisionId, eventId, playerId: pid, gameNumber: selectedGame, score, laneNumber: laneNum }) })
+          .then((res) => res.ok)
+          .catch(() => false),
+      );
     }
+    if (tasks.length === 0) { setLoading(false); showMsg("입력된 점수가 없습니다.", "error"); return; }
+    const results = await Promise.all(tasks);
+    const saved = results.filter(Boolean).length;
+    const failed = results.length - saved;
     setLoading(false);
     if (failed > 0) showMsg(`${saved}명 저장됨, ${failed}명 실패`, "error");
-    else if (saved > 0) showMsg(`Lane ${laneNum} 전체 ${saved}명 저장 완료!`);
-    else showMsg("입력된 점수가 없습니다.", "error");
+    else showMsg(`Lane ${laneNum} 전체 ${saved}명 저장 완료!`);
     await Promise.all([loadLeaderboard(), loadOverall()]);
   };
 
@@ -497,12 +597,223 @@ export default function AdminScoreboardPage() {
         ))}
       </div>
 
+      {/* ===== Tab: 출전선수등록 ===== */}
+      {activeTab === "participants" && (
+        <GlassCard>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+              출전선수 등록
+            </h2>
+            <GlassBadge variant="info">등록됨: {participantIds.size}명 / 전체: {allPlayers.length}명</GlassBadge>
+          </div>
+
+          {/* 스쿼드 관리 */}
+          <div style={{ marginBottom: 18, padding: "14px 16px", background: "rgba(255,255,255,0.15)", borderRadius: 12, border: "1px solid rgba(99,102,241,0.1)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasSquads ? 10 : 0, flexWrap: "wrap", gap: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "#475569" }}>스쿼드 (조 편성)</span>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <input
+                  type="text"
+                  placeholder="스쿼드명 (예: A조)"
+                  value={newSquadName}
+                  onChange={(e) => setNewSquadName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") void handleCreateSquad(); }}
+                  style={{
+                    width: 130, padding: "6px 10px", borderRadius: 7, fontSize: 13,
+                    background: "rgba(255,255,255,0.6)", border: "1px solid rgba(99,102,241,0.2)",
+                    outline: "none", fontFamily: "inherit", color: "#1e293b",
+                  }}
+                />
+                <GlassButton size="sm" onClick={() => void handleCreateSquad()}>+ 추가</GlassButton>
+              </div>
+            </div>
+            {hasSquads && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {squads.map((sq) => {
+                  const isSelected = selectedSquadId === sq.id;
+                  const count = participantList.filter((p) => p.squadId === sq.id).length;
+                  return (
+                    <div key={sq.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                      <button
+                        onClick={() => setSelectedSquadId(sq.id)}
+                        style={{
+                          padding: "7px 14px", borderRadius: "8px 0 0 8px", fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                          color: isSelected ? "#fff" : "#475569",
+                          background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
+                          border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                          borderRight: "none", cursor: "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        {sq.name} ({count}명)
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!confirm(`"${sq.name}" 스쿼드를 삭제하시겠습니까?`)) return;
+                          void (async () => {
+                            try {
+                              const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/squads/${sq.id}`, { method: "DELETE" });
+                              if (!res.ok) throw new Error(await parseError(res));
+                              setSquads((prev) => prev.filter((s) => s.id !== sq.id));
+                              if (selectedSquadId === sq.id) setSelectedSquadId(squads.find((s) => s.id !== sq.id)?.id ?? null);
+                              showMsg(`스쿼드 "${sq.name}" 삭제됨`);
+                            } catch (err) { showMsg((err as Error).message || "삭제 실패", "error"); }
+                          })();
+                        }}
+                        style={{
+                          padding: "7px 8px", borderRadius: "0 8px 8px 0", fontSize: 11,
+                          color: "#94a3b8", background: "rgba(255,255,255,0.3)",
+                          border: "1px solid rgba(203,213,225,0.4)", cursor: "pointer", fontFamily: "inherit",
+                        }}
+                        title="스쿼드 삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {!hasSquads && (
+              <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0" }}>
+                스쿼드 없이 운영하면 모든 출전선수가 동일 레인 배정에 포함됩니다. 선수가 레인 수용량을 초과하면 스쿼드를 추가하세요.
+              </p>
+            )}
+          </div>
+
+          {/* 선수번호로 빠른 등록 */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
+            <input
+              type="number"
+              placeholder="선수번호 입력"
+              value={participantNumberInput}
+              onChange={(e) => setParticipantNumberInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const num = Number(participantNumberInput);
+                  const player = allPlayers.find((p) => p.number === num);
+                  if (!player) { showMsg(`선수번호 ${num}번을 찾을 수 없습니다.`, "error"); return; }
+                  if (participantIds.has(player.id)) { showMsg(`${player.name} 선수는 이미 등록되어 있습니다.`, "error"); return; }
+                  void (async () => {
+                    if (await handleAddParticipant(player.id)) {
+                      setParticipantNumberInput("");
+                      showMsg(`${player.name} 선수가 등록되었습니다.`);
+                    }
+                  })();
+                }
+              }}
+              style={{
+                width: 140, padding: "8px 12px", borderRadius: 8, fontSize: 14,
+                background: "rgba(255,255,255,0.7)", border: "1.5px solid rgba(99,102,241,0.25)",
+                outline: "none", fontFamily: "inherit", color: "#1e293b",
+              }}
+            />
+            <span style={{ fontSize: 12, color: "#94a3b8" }}>번호 입력 후 Enter{hasSquads && selectedSquadId ? ` → ${squads.find((s) => s.id === selectedSquadId)?.name}` : ""}</span>
+          </div>
+
+          {/* 검색 */}
+          <input
+            type="text"
+            placeholder="선수 이름 또는 소속으로 검색..."
+            value={participantSearch}
+            onChange={(e) => setParticipantSearch(e.target.value)}
+            style={{
+              width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 14,
+              background: "rgba(255,255,255,0.5)", border: "1.5px solid rgba(99,102,241,0.15)",
+              outline: "none", fontFamily: "inherit", color: "#1e293b", marginBottom: 16,
+              boxSizing: "border-box",
+            }}
+          />
+
+          {/* 선수 목록 */}
+          <div style={{ display: "grid", gap: 6, maxHeight: 500, overflowY: "auto" }}>
+            {allPlayers
+              .filter((p) => {
+                if (!participantSearch) return true;
+                const q = participantSearch.toLowerCase();
+                return p.name.toLowerCase().includes(q) || p.affiliation.toLowerCase().includes(q) || String(p.number).includes(q);
+              })
+              .map((p) => {
+                const isRegistered = participantIds.has(p.id);
+                const participant = participantMap.get(p.id);
+                const playerSquad = participant?.squadId ? squads.find((s) => s.id === participant.squadId) : null;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => {
+                      void (isRegistered ? handleRemoveParticipant(p.id) : handleAddParticipant(p.id));
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      padding: "10px 14px", borderRadius: 10, cursor: "pointer",
+                      background: isRegistered ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.25)",
+                      border: isRegistered ? "1.5px solid rgba(99,102,241,0.3)" : "1.5px solid rgba(203,213,225,0.3)",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    <span style={{
+                      width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+                      borderRadius: 8, fontSize: 13, fontWeight: 700,
+                      background: isRegistered ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(203,213,225,0.3)",
+                      color: isRegistered ? "#fff" : "#64748b",
+                    }}>
+                      {p.number}
+                    </span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#1e293b" }}>{p.name}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{p.region} · {p.affiliation}</p>
+                    </div>
+                    {hasSquads && isRegistered && playerSquad && (
+                      <span style={{
+                        padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
+                        background: "rgba(99,102,241,0.08)", color: "#6366f1",
+                      }}>
+                        {playerSquad.name}
+                      </span>
+                    )}
+                    <span style={{
+                      padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                      background: isRegistered ? "rgba(99,102,241,0.15)" : "rgba(203,213,225,0.2)",
+                      color: isRegistered ? "#6366f1" : "#94a3b8",
+                    }}>
+                      {isRegistered ? "등록됨 ✓" : "미등록"}
+                    </span>
+                  </div>
+                );
+              })}
+          </div>
+        </GlassCard>
+      )}
+
       {/* ===== Tab: 레인 배정 ===== */}
       {activeTab === "lane" && (
         <GlassCard>
+          {/* 스쿼드 선택 (스쿼드 있을 때만) */}
+          {hasSquads && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
+              {squads.map((sq) => {
+                const isSelected = selectedSquadId === sq.id;
+                return (
+                  <button
+                    key={sq.id}
+                    onClick={() => setSelectedSquadId(sq.id)}
+                    style={{
+                      padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                      color: isSelected ? "#fff" : "#475569",
+                      background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
+                      border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    {sq.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
             <GlassButton onClick={handleRandomAssign} disabled={loading}>
-              🔀 랜덤 배정
+              🔀 랜덤 배정{hasSquads && selectedSquadId ? ` (${squads.find((s) => s.id === selectedSquadId)?.name})` : ""}
             </GlassButton>
             <GlassButton variant="secondary" onClick={handleSaveManual} disabled={loading}>
               💾 수동 배정 저장
