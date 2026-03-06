@@ -134,7 +134,7 @@ const HomePage = () => {
               ))}
             </GlassSelect>
           </div>
-          <GlassButton type="submit" disabled={loading} size="md">
+          <GlassButton type="submit" isLoading={loading} size="md">
             {loading ? "검색 중..." : "검색"}
           </GlassButton>
         </form>
@@ -146,72 +146,71 @@ const HomePage = () => {
         </GlassCard>
       )}
 
-      {/* Loading Indicator */}
-      {loading && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "5rem 1rem",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              border: "4px solid rgba(99, 102, 241, 0.15)",
-              borderTopColor: "#6366f1",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-          <p style={{ color: "#6366f1", fontSize: 15, fontWeight: 500 }}>대회 목록 불러오는 중...</p>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      )}
-
       {/* Tournament Grid */}
       <section style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-        {!loading && items.map((tournament) => (
-          <Link key={tournament.id} href={`/tournaments/${tournament.id}`} style={{ textDecoration: "none" }}>
-            <GlassCard hover>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                <h2
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 700,
-                    color: "#1e293b",
-                    margin: 0,
-                    lineHeight: 1.4,
-                    flex: 1,
-                    marginRight: 8,
-                  }}
-                >
-                  {tournament.title}
-                </h2>
-                {statusBadge(tournament.status)}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: 14 }}>
-                  <span>📅</span>
-                  <span>{tournament.startsAt} ~ {tournament.endsAt}</span>
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "rgba(255, 255, 255, 0.25)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255, 255, 255, 0.35)",
+                  borderRadius: 16,
+                  padding: "1.25rem",
+                  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+                  <div className="skeleton" style={{ height: 22, width: "62%", borderRadius: 6 }} />
+                  <div className="skeleton" style={{ height: 22, width: "22%", borderRadius: 20 }} />
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: 14 }}>
-                  <span>📍</span>
-                  <span>{tournament.region}</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>🎳</span>
-                  <span style={{ color: "#6366f1", fontWeight: 600, fontSize: 14 }}>{tournament.seasonYear}년 시즌</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div className="skeleton" style={{ height: 14, width: "78%", borderRadius: 4 }} />
+                  <div className="skeleton" style={{ height: 14, width: "52%", borderRadius: 4 }} />
+                  <div className="skeleton" style={{ height: 14, width: "38%", borderRadius: 4 }} />
                 </div>
               </div>
-            </GlassCard>
-          </Link>
-        ))}
+            ))
+          : items.map((tournament) => (
+              <Link key={tournament.id} href={`/tournaments/${tournament.id}`} style={{ textDecoration: "none" }}>
+                <GlassCard hover>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <h2
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        margin: 0,
+                        lineHeight: 1.4,
+                        flex: 1,
+                        marginRight: 8,
+                      }}
+                    >
+                      {tournament.title}
+                    </h2>
+                    {statusBadge(tournament.status)}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: 14 }}>
+                      <span>📅</span>
+                      <span>{tournament.startsAt} ~ {tournament.endsAt}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#64748b", fontSize: 14 }}>
+                      <span>📍</span>
+                      <span>{tournament.region}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span>🎳</span>
+                      <span style={{ color: "#6366f1", fontWeight: 600, fontSize: 14 }}>{tournament.seasonYear}년 시즌</span>
+                    </div>
+                  </div>
+                </GlassCard>
+              </Link>
+            ))}
       </section>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {!loading && items.length === 0 && !message && (
         <GlassCard variant="subtle" style={{ textAlign: "center", padding: "3rem 1rem", marginTop: 16 }}>

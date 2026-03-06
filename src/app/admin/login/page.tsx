@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
               type="password"
               placeholder="비밀번호를 입력하세요"
             />
-            <GlassButton type="submit" disabled={busy} size="lg" style={{ width: "100%", marginTop: 4 }}>
+            <GlassButton type="submit" isLoading={busy} size="lg" style={{ width: "100%", marginTop: 4 }}>
               {busy ? "로그인 중..." : "로그인"}
             </GlassButton>
           </form>

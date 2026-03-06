@@ -15,7 +15,7 @@ const selectStyle: CSSProperties = {
   fontSize: 14,
   color: "#1e293b",
   outline: "none",
-  transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+  transition: "border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
   fontFamily: "inherit",
   cursor: "pointer",
   appearance: "none",

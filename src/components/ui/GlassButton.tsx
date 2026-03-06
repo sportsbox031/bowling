@@ -3,6 +3,7 @@ import { ButtonHTMLAttributes, CSSProperties } from "react";
 type GlassButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
+  isLoading?: boolean;
 };
 
 const variantStyles: Record<string, CSSProperties> = {
@@ -34,14 +35,29 @@ const sizeStyles: Record<string, CSSProperties> = {
   lg: { padding: "12px 28px", fontSize: 16 },
 };
 
+const spinnerStyle: CSSProperties = {
+  display: "inline-block",
+  width: 14,
+  height: 14,
+  borderRadius: "50%",
+  border: "2px solid rgba(255, 255, 255, 0.35)",
+  borderTopColor: "currentColor",
+  animation: "spin 0.7s linear infinite",
+  verticalAlign: "middle",
+  marginRight: 6,
+  flexShrink: 0,
+};
+
 export default function GlassButton({
   variant = "primary",
   size = "md",
   style,
   disabled,
+  isLoading,
   children,
   ...rest
 }: GlassButtonProps) {
+  const isDisabled = disabled || isLoading;
   const base: CSSProperties = {
     ...variantStyles[variant],
     ...sizeStyles[size],
@@ -49,20 +65,23 @@ export default function GlassButton({
     WebkitBackdropFilter: "blur(12px)",
     borderRadius: 10,
     fontWeight: 600,
-    cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.5 : 1,
-    transition: "all 0.2s ease",
+    cursor: isDisabled ? "not-allowed" : "pointer",
+    opacity: isDisabled ? 0.6 : 1,
+    transition: "transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s ease, opacity 0.12s ease",
     fontFamily: "inherit",
     letterSpacing: "-0.01em",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
     ...style,
   };
 
   return (
     <button
       style={base}
-      disabled={disabled}
+      disabled={isDisabled}
       onMouseEnter={(e) => {
-        if (!disabled) {
+        if (!isDisabled) {
           e.currentTarget.style.transform = "translateY(-1px)";
           e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.15)";
         }
@@ -71,8 +90,21 @@ export default function GlassButton({
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.boxShadow = "none";
       }}
+      onMouseDown={(e) => {
+        if (!isDisabled) {
+          e.currentTarget.style.transform = "scale(0.97)";
+          e.currentTarget.style.boxShadow = "none";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (!isDisabled) {
+          e.currentTarget.style.transform = "translateY(-1px)";
+          e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.15)";
+        }
+      }}
       {...rest}
     >
+      {isLoading && <span style={spinnerStyle} aria-hidden="true" />}
       {children}
     </button>
   );

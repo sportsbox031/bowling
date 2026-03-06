@@ -38,7 +38,7 @@ export default function GlassCard({
     borderRadius: 16,
     padding: "1.25rem",
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    transition: "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease",
     cursor: onClick ? "pointer" : undefined,
     ...style,
   };
