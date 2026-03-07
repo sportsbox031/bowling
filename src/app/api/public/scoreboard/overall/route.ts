@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard, buildOverallLeaderboard } from "@/lib/scoring";
+import { getCached, setCache } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   if (!adminDb) {
@@ -15,22 +16,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "INVALID_QUERY" }, { status: 400 });
   }
 
-  const divisionSnap = await adminDb
-    .collection("tournaments")
-    .doc(tournamentId)
-    .collection("divisions")
-    .get();
+  const cacheKey = `overall:${tournamentId}:${divisionId}`;
+  const cached = getCached<object>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
+  const [divisionSnap, playersSnap] = await Promise.all([
+    adminDb
+      .collection("tournaments")
+      .doc(tournamentId)
+      .collection("divisions")
+      .get(),
+    adminDb
+      .collection("tournaments")
+      .doc(tournamentId)
+      .collection("players")
+      .get(),
+  ]);
 
   let divisionIds = divisionSnap.docs.map((doc) => doc.id);
   if (divisionId) {
     divisionIds = divisionIds.filter((item) => item === divisionId);
   }
-
-  const playersSnap = await adminDb
-    .collection("tournaments")
-    .doc(tournamentId)
-    .collection("players")
-    .get();
 
   const allPlayers = playersSnap.docs
     .map((doc) => ({ id: doc.id, ...doc.data() } as any))
@@ -78,6 +86,8 @@ export async function GET(req: NextRequest) {
     playerIds: allPlayers.map((player) => player.id),
     eventRowsByEventId,
   });
+
+  setCache(cacheKey, overall, 5000);
 
   return NextResponse.json(overall);
 }

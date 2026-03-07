@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import PlayerProfileModal from "@/components/PlayerProfileModal";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventRow = {
@@ -73,6 +74,7 @@ const EventScoreBoardPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
 
   const load = async () => {
     if (!tournamentId || !eventId) return;
@@ -108,7 +110,7 @@ const EventScoreBoardPage = () => {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(load, 5000);
+    const timer = window.setInterval(() => { if (!document.hidden) load(); }, 30000);
     return () => window.clearInterval(timer);
   }, [tournamentId, eventId, divisionId]);
 
@@ -170,7 +172,24 @@ const EventScoreBoardPage = () => {
             <span style={{ color: "#94a3b8", fontSize: 13 }}>실시간 갱신 중...</span>
           )}
         </div>
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link
+            href={`/tournaments/${tournamentId}/events/${eventId}/lanes?divisionId=${divisionId}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 14px",
+              background: "rgba(245, 158, 11, 0.1)",
+              borderRadius: 8,
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#d97706",
+              border: "1px solid rgba(245, 158, 11, 0.15)",
+            }}
+          >
+            &#x1F3B3; 레인 배정표
+          </Link>
           <Link
             href={`/tournaments/${tournamentId}/overall?divisionId=${divisionId}`}
             style={{
@@ -243,7 +262,12 @@ const EventScoreBoardPage = () => {
             <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
             <td style={glassTdStyle}>{row.affiliation}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-            <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>
+            <td
+              style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
+              onClick={() => setSelectedPlayer(row.name)}
+            >
+              {row.name}
+            </td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[0]?.score ?? ""}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[1]?.score ?? ""}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[2]?.score ?? ""}</td>
@@ -256,6 +280,13 @@ const EventScoreBoardPage = () => {
           </tr>
         ))}
       </GlassTable>
+
+      {selectedPlayer && (
+        <PlayerProfileModal
+          playerName={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </main>
   );
 };

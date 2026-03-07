@@ -13,6 +13,7 @@ import {
   glassTdStyle,
   glassTrHoverProps,
 } from "@/components/ui";
+import PlayerProfileModal from "@/components/PlayerProfileModal";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventLeaderboardRow = {
@@ -139,29 +140,11 @@ const buildBoardForGame = (board: Board, gameNumber: number, event: EventInfo | 
   const laneEnd = event?.laneEnd ?? laneStart;
   const result: GameBoard = Object.fromEntries(range(laneStart, laneEnd).map((l) => [l, []]));
   const baseBoard = board[gameNumber] ?? {};
-  const manualSet = new Set<string>();
 
   for (const [laneText, playerIds] of Object.entries(baseBoard)) {
     result[Number(laneText)] = [...playerIds];
-    playerIds.forEach((id) => manualSet.add(id));
   }
 
-  if (!event || gameNumber <= 1) return result;
-  const firstGame = board[1] ?? {};
-  if (!Object.keys(firstGame).length) return result;
-
-  for (const [laneText, playerIds] of Object.entries(firstGame)) {
-    const targetLane = getLaneForGame({
-      initialLane: Number(laneText), gameNumber,
-      shift: event.tableShift, range: { start: event.laneStart, end: event.laneEnd },
-    });
-    for (const id of playerIds) {
-      if (!manualSet.has(id)) {
-        result[targetLane] ??= [];
-        result[targetLane].push(id);
-      }
-    }
-  }
   return result;
 };
 
@@ -182,11 +165,13 @@ export default function AdminScoreboardPage() {
   const eventId = searchParams.get("eventId") ?? "";
 
   const [activeTab, setActiveTab] = useState<ScoreboardTab>("participants");
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [participantList, setParticipantList] = useState<Participant[]>([]);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
+  const selectedSquadIdRef = useRef<string | null>(null);
   const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [participantSearch, setParticipantSearch] = useState("");
@@ -201,6 +186,9 @@ export default function AdminScoreboardPage() {
   const [selectedScoreLane, setSelectedScoreLane] = useState<number>(0);
   const pollerRef = useRef<number | null>(null);
   const msgTimerRef = useRef<number | null>(null);
+  const dirtyRef = useRef(false);
+  const scoreDirtyRef = useRef<Set<string>>(new Set());
+  const scoreEditingRef = useRef(false);
 
   const showMsg = (msg: string, type: "success" | "error" = "success") => {
     setMessage(msg); setMessageType(type);
@@ -209,6 +197,7 @@ export default function AdminScoreboardPage() {
   };
 
   const hasSquads = squads.length > 0;
+  selectedSquadIdRef.current = hasSquads ? selectedSquadId : null;
 
   const participantIds = useMemo(
     () => new Set(participantList.map((p) => p.id)),
@@ -329,7 +318,9 @@ export default function AdminScoreboardPage() {
 
   const loadAssignments = async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { cache: "no-store", signal });
+    const sqId = selectedSquadIdRef.current;
+    const squadParam = sqId ? `?squadId=${encodeURIComponent(sqId)}` : "";
+    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments${squadParam}`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
     const data = await res.json() as ApiList<Assignment>;
     setAssignments(data.items ?? []);
@@ -368,24 +359,48 @@ export default function AdminScoreboardPage() {
     (async () => { ctrl = await loadAll() ?? null; })();
     if (pollerRef.current) clearInterval(pollerRef.current);
     pollerRef.current = window.setInterval(() => {
-      if (activeTab === "lane") { void loadAssignments(); }
-      else if (activeTab === "score" || activeTab === "event-rank") { void loadLeaderboard(); }
+      if (document.hidden) return;
+      if (activeTab === "lane" && !dirtyRef.current) { void loadAssignments(); }
+      else if (activeTab === "score") {
+        if (!scoreEditingRef.current) { void loadLeaderboard(); }
+      }
+      else if (activeTab === "event-rank") { void loadLeaderboard(); }
       else if (activeTab === "overall-rank") { void loadOverall(); }
-    }, 4000) as unknown as number;
+    }, 15000) as unknown as number;
     return () => {
       ctrl?.abort();
       if (pollerRef.current) clearInterval(pollerRef.current);
     };
   }, [tournamentId, divisionId, eventId, activeTab]);
 
-  // Derive scoreDraft from existing eventRows when game changes (no re-fetch needed)
+  // 스쿼드 변경 시 배정 데이터 재로드
   useEffect(() => {
-    const next: Record<string, string> = {};
-    eventRows.forEach((row) => {
-      const v = row.gameScores?.[selectedGame - 1]?.score;
-      next[row.playerId] = typeof v === "number" ? String(v) : "";
+    if (hasSquads) {
+      void loadAssignments();
+    }
+  }, [selectedSquadId]);
+
+  // Derive scoreDraft from existing eventRows — preserve user-edited (dirty) values
+  const prevGameRef = useRef(selectedGame);
+  useEffect(() => {
+    const gameChanged = prevGameRef.current !== selectedGame;
+    prevGameRef.current = selectedGame;
+
+    setScoreDraft((prev) => {
+      const next: Record<string, string> = {};
+      eventRows.forEach((row) => {
+        const v = row.gameScores?.[selectedGame - 1]?.score;
+        const serverVal = typeof v === "number" ? String(v) : "";
+        // On game change: always reset all. On poll update: keep dirty entries.
+        if (gameChanged || !scoreDirtyRef.current.has(row.playerId)) {
+          next[row.playerId] = serverVal;
+        } else {
+          next[row.playerId] = prev[row.playerId] ?? serverVal;
+        }
+      });
+      if (gameChanged) scoreDirtyRef.current.clear();
+      return next;
     });
-    setScoreDraft(next);
   }, [selectedGame, eventRows]);
 
   // --- Lane assignment ---
@@ -395,43 +410,95 @@ export default function AdminScoreboardPage() {
     catch { return null; }
   };
 
-  const movePlayer = (playerId: string, toLane?: number, sourceLane?: number) => {
+  // 1G 배정 기준으로 나머지 게임 배정을 table shift로 재생성
+  const rebuildAllGames = (cur: Assignment[]): Assignment[] => {
+    if (!event || event.gameCount <= 1) return cur;
+    const game1 = cur.filter((a) => a.gameNumber === 1);
+    const nonLane = cur.filter((a) => a.gameNumber < 1); // 혹시 있을 수 있는 기타
+    const generated: Assignment[] = [];
+    for (let g = 2; g <= event.gameCount; g++) {
+      for (const a of game1) {
+        const newLane = getLaneForGame({
+          initialLane: a.laneNumber,
+          gameNumber: g,
+          shift: event.tableShift,
+          range: { start: event.laneStart, end: event.laneEnd },
+        });
+        generated.push({ ...a, gameNumber: g, laneNumber: newLane, id: `${a.playerId}_${g}_${newLane}` });
+      }
+    }
+    return [...game1, ...nonLane, ...generated];
+  };
+
+  const movePlayer = (playerId: string, toLane?: number, sourceLane?: number, swapTargetId?: string) => {
     const actualSource = getLaneForPlayerInBoard(board, selectedGame, playerId);
     const source = actualSource > 0 ? actualSource : sourceLane ?? 0;
     const isAssigned = actualSource > 0;
 
     if (!toLane) {
       if (!isAssigned) return;
-      setAssignments((cur) => cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)));
+      dirtyRef.current = true;
+      setAssignments((cur) => {
+        const next = cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame));
+        return selectedGame === 1 ? rebuildAllGames(next) : next;
+      });
       return;
     }
-    if (source === toLane) return;
+    if (source === toLane && !swapTargetId) return;
+
+    // 선수 위에 드롭 → 스왑
+    if (swapTargetId && swapTargetId !== playerId) {
+      const swapSource = getLaneForPlayerInBoard(board, selectedGame, swapTargetId);
+      if (swapSource <= 0) return;
+      dirtyRef.current = true;
+      setAssignments((cur) => {
+        const next = [
+          ...cur.filter((a) => a.gameNumber !== selectedGame || (a.playerId !== playerId && a.playerId !== swapTargetId)),
+          { playerId, gameNumber: selectedGame, laneNumber: swapSource, id: `${playerId}_${selectedGame}_${swapSource}` } as Assignment,
+          { playerId: swapTargetId, gameNumber: selectedGame, laneNumber: source, id: `${swapTargetId}_${selectedGame}_${source}` } as Assignment,
+        ];
+        return selectedGame === 1 ? rebuildAllGames(next) : next;
+      });
+      return;
+    }
 
     const targetPlayers = currentBoard[toLane] ?? [];
-    const sourcePlayers = currentBoard[source] ?? [];
-    const swapId = targetPlayers.find((id) => id !== playerId);
 
     if (!isAssigned) {
       if (targetPlayers.length >= MAX_PER_LANE) { showMsg("한 레인은 최대 4명까지만 배정할 수 있습니다.", "error"); return; }
-      setAssignments((cur) => [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { id: `${playerId}_${selectedGame}_${toLane}`, playerId, gameNumber: selectedGame, laneNumber: toLane }]);
+      dirtyRef.current = true;
+      setAssignments((cur) => {
+        const next = [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { id: `${playerId}_${selectedGame}_${toLane}`, playerId, gameNumber: selectedGame, laneNumber: toLane } as Assignment];
+        return selectedGame === 1 ? rebuildAllGames(next) : next;
+      });
       return;
     }
 
     if (targetPlayers.length < MAX_PER_LANE) {
-      setAssignments((cur) => [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` }]);
+      dirtyRef.current = true;
+      setAssignments((cur) => {
+        const next = [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` } as Assignment];
+        return selectedGame === 1 ? rebuildAllGames(next) : next;
+      });
       return;
     }
 
-    if (!swapId || !sourcePlayers.length) { showMsg("스왑할 수 없는 상태입니다.", "error"); return; }
-    setAssignments((cur) => [
-      ...cur.filter((a) => a.gameNumber !== selectedGame || (a.playerId !== playerId && a.playerId !== swapId)),
-      { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` },
-      { playerId: swapId, gameNumber: selectedGame, laneNumber: source, id: `${swapId}_${selectedGame}_${source}` },
-    ]);
+    showMsg("레인이 가득 찼습니다. 교환하려면 선수 위에 드롭하세요.", "error");
   };
 
   const handleRandomAssign = async () => {
     if (!tournamentId || !divisionId || !eventId) return;
+    if (hasSquads && !selectedSquadId) {
+      showMsg("스쿼드를 선택한 후 랜덤 배정해 주세요.", "error");
+      return;
+    }
+    const currentSquadAssignments = hasSquads && selectedSquadId
+      ? assignments.filter((a) => a.squadId === selectedSquadId)
+      : assignments;
+    if (currentSquadAssignments.length > 0) {
+      const ok = window.confirm("이미 레인 배정이 되어 있습니다. 기존 배정을 삭제하고 새로 랜덤 배정하시겠습니까?");
+      if (!ok) return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "random", squadId: hasSquads ? selectedSquadId : undefined }) });
@@ -447,6 +514,7 @@ export default function AdminScoreboardPage() {
         if (msg === "INVALID_EVENT_TABLE_SHIFT") throw new Error("이벤트의 테이블 이동값이 올바르지 않습니다.");
         throw new Error(msg);
       }
+      dirtyRef.current = false;
       await loadAssignments();
       showMsg("랜덤 배정이 완료되었습니다.");
     } catch (err) { showMsg((err as Error).message || "랜덤 배정 실패", "error"); }
@@ -460,6 +528,7 @@ export default function AdminScoreboardPage() {
     try {
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "manual", items, replaceAll: true, squadId: hasSquads ? selectedSquadId : undefined }) });
       if (!res.ok) throw new Error(await parseError(res));
+      dirtyRef.current = false;
       await loadAssignments();
       showMsg("수동 배정이 저장되었습니다.");
     } catch (err) { showMsg((err as Error).message || "수동 배정 저장 실패", "error"); }
@@ -477,6 +546,7 @@ export default function AdminScoreboardPage() {
     try {
       const res = await fetch("/api/admin/score", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tournamentId, divisionId, eventId, playerId, gameNumber: selectedGame, score, laneNumber }) });
       if (!res.ok) throw new Error(await parseError(res));
+      scoreDirtyRef.current.delete(playerId);
       showMsg(`저장됨: ${playerById.get(playerId)?.name ?? playerId} - ${score}점`);
       await Promise.all([loadLeaderboard(), loadOverall()]);
     } catch (err) { showMsg((err as Error).message || "점수 저장 실패", "error"); }
@@ -502,6 +572,8 @@ export default function AdminScoreboardPage() {
     const results = await Promise.all(tasks);
     const saved = results.filter(Boolean).length;
     const failed = results.length - saved;
+    // Clear dirty flags for all players in this lane
+    for (const pid of playerIds) scoreDirtyRef.current.delete(pid);
     setLoading(false);
     if (failed > 0) showMsg(`${saved}명 저장됨, ${failed}명 실패`, "error");
     else showMsg(`Lane ${laneNum} 전체 ${saved}명 저장 완료!`);
@@ -860,6 +932,13 @@ export default function AdminScoreboardPage() {
                             key={pid}
                             draggable
                             onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeDrag(pid, laneNum))}
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const payload = decodeDrag(e.dataTransfer.getData("text/plain"));
+                              if (payload && payload.playerId !== pid) movePlayer(payload.playerId, laneNum, payload.sourceLane, pid);
+                            }}
                             style={{
                               padding: "5px 10px", borderRadius: 7, fontSize: 13,
                               background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)",
@@ -1073,9 +1152,12 @@ export default function AdminScoreboardPage() {
                               max={MAX_SCORE}
                               step={1}
                               value={scoreDraft[row.playerId] ?? ""}
-                              onChange={(e) => setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value }))}
+                              onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
+                              onFocus={() => { scoreEditingRef.current = true; }}
+                              onBlur={() => { scoreEditingRef.current = false; }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
+                                  scoreDirtyRef.current.delete(row.playerId);
                                   void handleSaveScore(row.playerId);
                                   // 다음 선수로 포커스 이동
                                   const inputs = document.querySelectorAll<HTMLInputElement>("input[type=number]");
@@ -1119,8 +1201,10 @@ export default function AdminScoreboardPage() {
                         <input
                           type="number" min={0} max={MAX_SCORE}
                           value={scoreDraft[row.playerId] ?? ""}
-                          onChange={(e) => setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value }))}
-                          onKeyDown={(e) => { if (e.key === "Enter") void handleSaveScore(row.playerId); }}
+                          onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
+                          onFocus={() => { scoreEditingRef.current = true; }}
+                          onBlur={() => { scoreEditingRef.current = false; }}
+                          onKeyDown={(e) => { if (e.key === "Enter") { scoreDirtyRef.current.delete(row.playerId); void handleSaveScore(row.playerId); } }}
                           placeholder="점수"
                           style={{ width: 70, padding: "5px 8px", borderRadius: 7, fontSize: 13, textAlign: "center", background: "rgba(255,255,255,0.4)", border: "1px solid rgba(203,213,225,0.4)", outline: "none", fontFamily: "inherit" }}
                         />
@@ -1150,7 +1234,12 @@ export default function AdminScoreboardPage() {
                 <td style={{ ...glassTdStyle, color: "#64748b", textAlign: "center" }}>{row.region}</td>
                 <td style={glassTdStyle}>{row.affiliation}</td>
                 <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-                <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>
+                <td
+                  style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
+                  onClick={() => setSelectedPlayer(row.name)}
+                >
+                  {row.name}
+                </td>
                 {row.gameScores.map((g) => (
                   <td key={g.gameNumber} style={{ ...glassTdStyle, textAlign: "center" }}>{g.score ?? ""}</td>
                 ))}
@@ -1178,7 +1267,12 @@ export default function AdminScoreboardPage() {
                 <td style={{ ...glassTdStyle, color: "#64748b", textAlign: "center" }}>{row.region}</td>
                 <td style={glassTdStyle}>{row.affiliation}</td>
                 <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-                <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>
+                <td
+                  style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
+                  onClick={() => setSelectedPlayer(row.name)}
+                >
+                  {row.name}
+                </td>
                 <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700 }}>{row.total}</td>
                 <td style={{ ...glassTdStyle, textAlign: "center", color: "#6366f1", fontWeight: 600 }}>{row.average}</td>
                 <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.pinDiff}</td>
@@ -1187,6 +1281,13 @@ export default function AdminScoreboardPage() {
             ))}
           </GlassTable>
         </GlassCard>
+      )}
+
+      {selectedPlayer && (
+        <PlayerProfileModal
+          playerName={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
       )}
     </div>
   );

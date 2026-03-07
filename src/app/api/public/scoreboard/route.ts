@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard } from "@/lib/scoring";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
+import { getCached, setCache } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,26 +18,34 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const cacheKey = `scoreboard:${tournamentId}:${divisionId}:${eventId}`;
+    const cached = getCached<object>(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const event = await resolveEventRef(adminDb, tournamentId, eventId, divisionId);
     if (!event) {
       return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
     }
     const eventDoc = (await event.ref.get()).data() ?? {};
 
-    const scoreSnap = await adminDb
-      .collection("tournaments")
-      .doc(tournamentId)
-      .collection("divisions")
-      .doc(event.divisionId)
-      .collection("events")
-      .doc(eventId)
-      .collection("scores")
-      .get();
-    const playersSnap = await adminDb
-      .collection("tournaments")
-      .doc(tournamentId)
-      .collection("players")
-      .get();
+    const [scoreSnap, playersSnap] = await Promise.all([
+      adminDb
+        .collection("tournaments")
+        .doc(tournamentId)
+        .collection("divisions")
+        .doc(event.divisionId)
+        .collection("events")
+        .doc(eventId)
+        .collection("scores")
+        .get(),
+      adminDb
+        .collection("tournaments")
+        .doc(tournamentId)
+        .collection("players")
+        .get(),
+    ]);
 
     const scores = scoreSnap.docs.map((doc) => {
       const data = doc.data();
@@ -72,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     const leaderboard = buildEventLeaderboard({ players, scores });
 
-    return NextResponse.json({
+    const result = {
       ...leaderboard,
       event: {
         id: eventId,
@@ -82,8 +91,13 @@ export async function GET(req: NextRequest) {
         scheduleDate: eventDoc.scheduleDate,
         laneStart: eventDoc.laneStart,
         laneEnd: eventDoc.laneEnd,
+        tableShift: eventDoc.tableShift,
       },
-    });
+    };
+
+    setCache(cacheKey, result, 5000);
+
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { message: "LEADERBOARD_FAILED", error: String((error as Error).message) },

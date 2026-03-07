@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { GlassCard, GlassTable, GlassBadge, GlassButton, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import PlayerProfileModal from "@/components/PlayerProfileModal";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type OverallRow = {
@@ -71,6 +72,7 @@ export default function TournamentOverallPage() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
 
   const load = async () => {
     if (!tournamentId) return;
@@ -90,7 +92,7 @@ export default function TournamentOverallPage() {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(load, 5000);
+    const timer = window.setInterval(() => { if (!document.hidden) load(); }, 30000);
     return () => window.clearInterval(timer);
   }, [tournamentId, divisionId]);
 
@@ -204,7 +206,12 @@ export default function TournamentOverallPage() {
             <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
             <td style={glassTdStyle}>{row.affiliation}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-            <td style={{ ...glassTdStyle, fontWeight: 600 }}>{row.name}</td>
+            <td
+              style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
+              onClick={() => setSelectedPlayer(row.name)}
+            >
+              {row.name}
+            </td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[0]?.score ?? ""}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[1]?.score ?? ""}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[2]?.score ?? ""}</td>
@@ -218,6 +225,13 @@ export default function TournamentOverallPage() {
           </tr>
         ))}
       </GlassTable>
+
+      {selectedPlayer && (
+        <PlayerProfileModal
+          playerName={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </main>
   );
 }

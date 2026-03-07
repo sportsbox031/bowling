@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { calculateRandomAssignments } from "@/lib/services/competitionService";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
+import { getCached, setCache, invalidateCache } from "@/lib/api-cache";
 
 interface AssignmentItem {
   playerId: string;
@@ -188,10 +189,18 @@ export async function GET(
   }
 
   const squadId = new URL(_req.url).searchParams.get("squadId") ?? undefined;
+  const cacheKey = `assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}:${squadId}`;
+  const cached = getCached<object>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
   const snap = await event.ref.collection("assignments").orderBy("gameNumber").get();
   const allItems = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
   const items = squadId ? allItems.filter((item: any) => item.squadId === squadId) : allItems;
-  return NextResponse.json({ items });
+  const result = { items };
+  setCache(cacheKey, result, 5000);
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest, ctx: { params: { tournamentId: string; divisionId: string; eventId: string } }) {
@@ -247,12 +256,19 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     }
 
     if (replaceAll) {
-      await clearAssignments(event.ref);
-      await writeAssignments(event.ref, normalized);
+      if (squadId) {
+        await clearAssignmentsBySquad(event.ref, squadId);
+      } else {
+        await clearAssignments(event.ref);
+      }
+      const itemsWithSquad = squadId ? normalized.map((item) => ({ ...item, squadId })) : normalized;
+      await writeAssignments(event.ref, itemsWithSquad);
     } else {
       await replaceAssignmentsByGame(event.ref, normalized);
     }
 
+    invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
+    invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
     return NextResponse.json({ message: "ASSIGNMENTS_SAVED", mode: "manual" });
   }
 
@@ -321,5 +337,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   await writeAssignments(event.ref, all);
+  invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
+  invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
   return NextResponse.json({ mode: "random", firstGame, gameBoard: result.gameBoard });
 }

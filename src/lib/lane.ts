@@ -94,7 +94,6 @@ export const assignRandomLanes = (
   const normalized = toLaneRange(range);
   const totalLanes = getLaneCount(normalized);
   const players = [...playerIds];
-  const maxPlayers = totalLanes * 4;
 
   if (players.length === 0) {
     return [];
@@ -104,33 +103,27 @@ export const assignRandomLanes = (
     throw new Error("사용할 레인이 존재하지 않습니다.");
   }
 
-  if (players.length > maxPlayers) {
-    throw new Error("선수 수가 레인당 최대 4명 제약(2~4명/레인)에 맞지 않습니다.");
-  }
-
   const seed = options?.seed ?? Date.now();
   const shuffled = shuffleWithRandom(players, hashSeededRandom(seed));
 
-  // 사용 레인을 최대한 2~4명/레인 규모로 운영. 부족한 경우 마지막 1인레인은 허용.
-  const activeLaneCount = Math.min(totalLanes, Math.max(1, Math.ceil(shuffled.length / 4)));
-  const activeLanes = Array.from({ length: activeLaneCount }, (_, index) => normalized.start + index);
-  const laneBuckets = activeLanes.reduce<Record<number, string[]>>((acc, lane) => {
+  // 전체 레인에 균등 분배: 선수수 / 레인수로 기본 인원 계산
+  const allLanes = Array.from({ length: totalLanes }, (_, index) => normalized.start + index);
+  const basePerLane = Math.floor(shuffled.length / totalLanes);
+  const remainder = shuffled.length % totalLanes;
+
+  const laneBuckets = allLanes.reduce<Record<number, string[]>>((acc, lane) => {
     acc[lane] = [];
     return acc;
   }, {});
 
-  let lanePointer = 0;
-  for (const playerId of shuffled) {
-    let loop = 0;
-    while (laneBuckets[activeLanes[lanePointer]].length >= 4 && loop < activeLanes.length) {
-      lanePointer = (lanePointer + 1) % activeLanes.length;
-      loop += 1;
+  let playerIndex = 0;
+  for (let i = 0; i < allLanes.length; i++) {
+    // 앞쪽 레인부터 나머지 1명씩 추가 배정
+    const count = basePerLane + (i < remainder ? 1 : 0);
+    for (let j = 0; j < count; j++) {
+      laneBuckets[allLanes[i]].push(shuffled[playerIndex]);
+      playerIndex++;
     }
-
-    // 모든 레인에 4명 꽉 찬 경우는 이론상 불가하므로 마지막 안전 가드
-    const selectedLane = activeLanes[lanePointer];
-    laneBuckets[selectedLane].push(playerId);
-    lanePointer = (lanePointer + 1) % activeLanes.length;
   }
 
   return Object.entries(laneBuckets).flatMap(([lane, assigned]) =>
