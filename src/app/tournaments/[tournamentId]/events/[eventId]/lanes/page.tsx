@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import { cachedFetch } from "@/lib/client-cache";
 
 type AssignmentRow = {
   playerId: string;
@@ -73,12 +74,8 @@ const LaneAssignmentPage = () => {
     try {
       const sqId = selectedSquadIdRef.current;
       const squadParam = sqId ? `&squadId=${encodeURIComponent(sqId)}` : "";
-      const res = await fetch(
-        `/api/public/assignments?tournamentId=${encodeURIComponent(tournamentId)}&eventId=${encodeURIComponent(eventId)}&divisionId=${encodeURIComponent(divisionId)}${squadParam}`,
-        { cache: "no-store" },
-      );
-      if (!res.ok) throw new Error("레인 배정 정보를 불러오지 못했습니다.");
-      const data = (await res.json()) as AssignmentResponse;
+      const assignUrl = `/api/public/assignments?tournamentId=${encodeURIComponent(tournamentId)}&eventId=${encodeURIComponent(eventId)}&divisionId=${encodeURIComponent(divisionId)}${squadParam}`;
+      const data = await cachedFetch<AssignmentResponse>(assignUrl, 300000);
       setAssignments(data.assignments ?? []);
       setSquads(data.squads ?? []);
       setEventInfo(data.event ?? null);
@@ -90,11 +87,10 @@ const LaneAssignmentPage = () => {
       }
 
       if (!tournamentTitle) {
-        const detailRes = await fetch(`/api/public/tournaments/${tournamentId}`, { cache: "no-store" });
-        if (detailRes.ok) {
-          const detail = await detailRes.json();
-          setTournamentTitle(detail.tournament?.title ?? "");
-        }
+        const detail = await cachedFetch<{ tournament?: { title?: string } }>(
+          `/api/public/tournaments/${tournamentId}`, 600000,
+        );
+        setTournamentTitle(detail.tournament?.title ?? "");
       }
     } catch (error) {
       setMessage((error as Error).message || "조회 실패");
@@ -105,10 +101,6 @@ const LaneAssignmentPage = () => {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(() => {
-      if (!document.hidden) load();
-    }, 15000);
-    return () => window.clearInterval(timer);
   }, [tournamentId, eventId, divisionId]);
 
   // 스쿼드 변경 시 재로드

@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { GlassCard, GlassTable, GlassBadge, GlassButton, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import { cachedFetch } from "@/lib/client-cache";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type OverallRow = {
@@ -42,17 +43,19 @@ const getOverallData = async (tournamentId: string, divisionId?: string) => {
   const query = new URLSearchParams();
   query.set("tournamentId", tournamentId);
   if (divisionId) query.set("divisionId", divisionId);
-
-  const response = await fetch(`/api/public/scoreboard/overall?${query.toString()}`, { cache: "no-store" });
-  if (!response.ok) throw new Error("종합성적을 불러오지 못했습니다.");
-  return (await response.json()) as OverallResponse;
+  return cachedFetch<OverallResponse>(`/api/public/scoreboard/overall?${query.toString()}`, 180000);
 };
 
 const getTournament = async (tournamentId: string) => {
-  const response = await fetch(`/api/public/tournaments/${tournamentId}`, { cache: "no-store" });
-  if (!response.ok) return { id: tournamentId, title: "대회명 미확인" };
-  const data = (await response.json()) as TournamentDetailResponse;
-  return data.tournament as TournamentInfo;
+  try {
+    const data = await cachedFetch<TournamentDetailResponse>(
+      `/api/public/tournaments/${tournamentId}`,
+      600000,
+    );
+    return data.tournament as TournamentInfo;
+  } catch {
+    return { id: tournamentId, title: "대회명 미확인" };
+  }
 };
 
 const rankStyle = (rank: number) => {
@@ -92,8 +95,6 @@ export default function TournamentOverallPage() {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(() => { if (!document.hidden) load(); }, 30000);
-    return () => window.clearInterval(timer);
   }, [tournamentId, divisionId]);
 
   const filteredRows = useMemo(() => {
@@ -139,9 +140,7 @@ export default function TournamentOverallPage() {
           ) : (
             <GlassBadge variant="success">전체 종별</GlassBadge>
           )}
-          {loading && (
-            <span style={{ color: "#94a3b8", fontSize: 13 }}>실시간 갱신 중...</span>
-          )}
+          {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
         </div>
         {divisionId && (
           <div style={{ marginTop: 12 }}>

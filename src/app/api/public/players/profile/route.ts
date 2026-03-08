@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard } from "@/lib/scoring";
-import { getCached, setCache } from "@/lib/api-cache";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 const KIND_LABELS: Record<string, string> = {
   SINGLE: "개인전",
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
   const cacheKey = `player-profile:${name}`;
   const cached = getCached<ProfileResponse>(cacheKey);
   if (cached) {
-    return NextResponse.json(cached);
+    return jsonCached(cached, 300);
   }
 
   const tournamentsSnap = await adminDb.collection("tournaments").orderBy("startsAt", "desc").get();
@@ -83,157 +83,156 @@ export async function GET(req: NextRequest) {
   let eventCount = 0;
   const kindAgg = new Map<string, { games: number; totalScore: number }>();
 
-  for (const tDoc of tournamentsSnap.docs) {
-    const tournamentId = tDoc.id;
-    const tData = tDoc.data();
+  // Process all tournaments in parallel instead of sequential loop
+  const tournamentResults = await Promise.all(
+    tournamentsSnap.docs.map(async (tDoc) => {
+      const tournamentId = tDoc.id;
+      const tData = tDoc.data();
 
-    const playersSnap = await adminDb
-      .collection("tournaments")
-      .doc(tournamentId)
-      .collection("players")
-      .where("name", "==", name)
-      .get();
-
-    if (playersSnap.empty) continue;
-
-    // Player might be in multiple divisions of the same tournament
-    const playerEntries = playersSnap.docs.map((d) => ({
-      id: d.id,
-      divisionId: d.data().divisionId as string,
-    }));
-
-    const divisionIds = [...new Set(playerEntries.map((p) => p.divisionId))];
-
-    for (const divisionId of divisionIds) {
-      const divDoc = await adminDb
-        .collection("tournaments")
-        .doc(tournamentId)
-        .collection("divisions")
-        .doc(divisionId)
-        .get();
-
-      const divisionTitle = divDoc.exists ? (divDoc.data()?.title ?? "") : "";
-
-      const eventsSnap = await adminDb
-        .collection("tournaments")
-        .doc(tournamentId)
-        .collection("divisions")
-        .doc(divisionId)
-        .collection("events")
-        .get();
-
-      const playerIdsInDiv = playerEntries
-        .filter((p) => p.divisionId === divisionId)
-        .map((p) => p.id);
-
-      const events: EventRecord[] = [];
-      let tournamentTotal = 0;
-      let tournamentGames = 0;
-
-      // Fetch all players in this division for ranking context
-      const allDivPlayersSnap = await adminDb
+      // 1. Find player in this tournament
+      const playersSnap = await adminDb!
         .collection("tournaments")
         .doc(tournamentId)
         .collection("players")
+        .where("name", "==", name)
         .get();
 
-      const allDivPlayers = allDivPlayersSnap.docs
-        .filter((d) => d.data().divisionId === divisionId)
-        .map((d) => ({
-          id: d.id,
-          tournamentId,
-          divisionId,
-          group: d.data().group ?? "",
-          region: d.data().region ?? "",
-          affiliation: d.data().affiliation ?? "",
-          number: d.data().number ?? 0,
-          name: d.data().name ?? "",
-          hand: d.data().hand ?? "right",
-          createdAt: d.data().createdAt ?? "",
-        }));
+      if (playersSnap.empty) return null;
 
-      for (const eventDoc of eventsSnap.docs) {
-        const eData = eventDoc.data();
-        const scoresSnap = await eventDoc.ref.collection("scores").get();
+      const playerEntries = playersSnap.docs.map((d) => ({
+        id: d.id,
+        divisionId: d.data().divisionId as string,
+      }));
+      const divisionIds = [...new Set(playerEntries.map((p) => p.divisionId))];
 
-        const allScores = scoresSnap.docs.map((sd) => {
-          const s = sd.data();
-          return {
-            id: sd.id,
-            tournamentId,
-            eventId: eventDoc.id,
-            playerId: s.playerId as string,
-            gameNumber: s.gameNumber as number,
-            laneNumber: (s.laneNumber ?? 0) as number,
-            score: s.score as number,
-            createdAt: (s.updatedAt ?? "") as string,
-          };
+      // 2. Fetch all needed data in parallel: divisions + all players + all events per division
+      const [allPlayersSnap, ...divResults] = await Promise.all([
+        adminDb!.collection("tournaments").doc(tournamentId)
+          .collection("players").where("divisionId", "in", divisionIds).get(),
+        ...divisionIds.map((divId) =>
+          Promise.all([
+            adminDb!.collection("tournaments").doc(tournamentId)
+              .collection("divisions").doc(divId).get(),
+            adminDb!.collection("tournaments").doc(tournamentId)
+              .collection("divisions").doc(divId)
+              .collection("events").get(),
+          ]).then(([divDoc, eventsSnap]) => ({ divId, divDoc, eventsSnap })),
+        ),
+      ]);
+
+      const allPlayersByDiv = new Map<string, any[]>();
+      for (const pDoc of allPlayersSnap.docs) {
+        const divId = pDoc.data().divisionId;
+        const arr = allPlayersByDiv.get(divId) ?? [];
+        arr.push({
+          id: pDoc.id, tournamentId, divisionId: divId,
+          group: pDoc.data().group ?? "", region: pDoc.data().region ?? "",
+          affiliation: pDoc.data().affiliation ?? "", number: pDoc.data().number ?? 0,
+          name: pDoc.data().name ?? "", hand: pDoc.data().hand ?? "right",
+          createdAt: pDoc.data().createdAt ?? "",
         });
-
-        // Check if our player has scores in this event
-        const playerScores = allScores.filter((s) => playerIdsInDiv.includes(s.playerId));
-        if (playerScores.length === 0) continue;
-
-        // Build leaderboard for ranking context
-        const leaderboard = buildEventLeaderboard({
-          players: allDivPlayers,
-          scores: allScores,
-        });
-
-        const playerRow = leaderboard.rows.find((r) => playerIdsInDiv.includes(r.playerId));
-        if (!playerRow) continue;
-
-        const kind = (eData.kind ?? "SINGLE") as string;
-        const gameScores = playerRow.gameScores;
-
-        events.push({
-          eventId: eventDoc.id,
-          eventTitle: eData.title ?? "",
-          kind,
-          kindLabel: KIND_LABELS[kind] ?? kind,
-          gameScores,
-          total: playerRow.total,
-          average: playerRow.average,
-          rank: playerRow.rank,
-          playerCount: leaderboard.rows.length,
-        });
-
-        tournamentTotal += playerRow.total;
-        const gamesPlayed = gameScores.filter((g) => g.score !== null).length;
-        tournamentGames += gamesPlayed;
-        eventCount += 1;
-
-        // Kind stats
-        const ka = kindAgg.get(kind) ?? { games: 0, totalScore: 0 };
-        ka.games += gamesPlayed;
-        ka.totalScore += playerRow.total;
-        kindAgg.set(kind, ka);
-
-        // High game
-        for (const g of gameScores) {
-          if (g.score !== null && g.score > highGame) {
-            highGame = g.score;
-          }
-        }
-
-        totalScore += playerRow.total;
-        totalGames += gamesPlayed;
+        allPlayersByDiv.set(divId, arr);
       }
 
-      if (events.length > 0) {
-        tournaments.push({
-          tournamentId,
-          tournamentTitle: tData.title ?? "",
-          startsAt: tData.startsAt ?? "",
-          region: tData.region ?? "",
-          divisionTitle,
-          overallTotal: tournamentTotal,
-          overallAverage: tournamentGames > 0
-            ? Math.round((tournamentTotal / tournamentGames + Number.EPSILON) * 10) / 10
-            : 0,
-          overallGames: tournamentGames,
-          events,
-        });
+      // 3. Fetch all scores across all events in parallel
+      const allEventDocs = divResults.flatMap((dr) =>
+        dr.eventsSnap.docs.map((ed) => ({ eventDoc: ed, divId: dr.divId, divTitle: dr.divDoc.exists ? (dr.divDoc.data()?.title ?? "") : "" })),
+      );
+
+      const scoresResults = await Promise.all(
+        allEventDocs.map((e) =>
+          e.eventDoc.ref.collection("scores").get().then((snap) => ({ ...e, scoresSnap: snap })),
+        ),
+      );
+
+      // 4. Process results
+      const divisionRecords: { divisionId: string; divisionTitle: string; events: EventRecord[]; tournamentTotal: number; tournamentGames: number }[] = [];
+
+      for (const divId of divisionIds) {
+        const playerIdsInDiv = playerEntries.filter((p) => p.divisionId === divId).map((p) => p.id);
+        const allDivPlayers = allPlayersByDiv.get(divId) ?? [];
+        const divScoreResults = scoresResults.filter((sr) => sr.divId === divId);
+        const divTitle = divScoreResults[0]?.divTitle ?? "";
+        const events: EventRecord[] = [];
+        let tournamentTotal = 0;
+        let tournamentGames = 0;
+
+        for (const { eventDoc, scoresSnap } of divScoreResults) {
+          const eData = eventDoc.data();
+          const allScores = scoresSnap.docs.map((sd) => {
+            const s = sd.data();
+            return {
+              id: sd.id, tournamentId, eventId: eventDoc.id,
+              playerId: s.playerId as string, gameNumber: s.gameNumber as number,
+              laneNumber: (s.laneNumber ?? 0) as number, score: s.score as number,
+              createdAt: (s.updatedAt ?? "") as string,
+            };
+          });
+
+          const playerScores = allScores.filter((s) => playerIdsInDiv.includes(s.playerId));
+          if (playerScores.length === 0) continue;
+
+          const leaderboard = buildEventLeaderboard({ players: allDivPlayers, scores: allScores });
+          const playerRow = leaderboard.rows.find((r) => playerIdsInDiv.includes(r.playerId));
+          if (!playerRow) continue;
+
+          const kind = (eData.kind ?? "SINGLE") as string;
+          const gameScores = playerRow.gameScores;
+          events.push({
+            eventId: eventDoc.id, eventTitle: eData.title ?? "", kind,
+            kindLabel: KIND_LABELS[kind] ?? kind, gameScores,
+            total: playerRow.total, average: playerRow.average,
+            rank: playerRow.rank, playerCount: leaderboard.rows.length,
+          });
+
+          tournamentTotal += playerRow.total;
+          const gamesPlayed = gameScores.filter((g) => g.score !== null).length;
+          tournamentGames += gamesPlayed;
+        }
+
+        if (events.length > 0) {
+          divisionRecords.push({ divisionId: divId, divisionTitle: divTitle, events, tournamentTotal, tournamentGames });
+        }
+      }
+
+      return divisionRecords.length > 0
+        ? { tournamentId, tData, divisionRecords }
+        : null;
+    }),
+  );
+
+  // Aggregate results
+  for (const tr of tournamentResults) {
+    if (!tr) continue;
+    for (const dr of tr.divisionRecords) {
+      tournaments.push({
+        tournamentId: tr.tournamentId,
+        tournamentTitle: tr.tData.title ?? "",
+        startsAt: tr.tData.startsAt ?? "",
+        region: tr.tData.region ?? "",
+        divisionTitle: dr.divisionTitle,
+        overallTotal: dr.tournamentTotal,
+        overallAverage: dr.tournamentGames > 0
+          ? Math.round((dr.tournamentTotal / dr.tournamentGames + Number.EPSILON) * 10) / 10
+          : 0,
+        overallGames: dr.tournamentGames,
+        events: dr.events,
+      });
+
+      for (const ev of dr.events) {
+        eventCount += 1;
+        totalScore += ev.total;
+        const gamesPlayed = ev.gameScores.filter((g) => g.score !== null).length;
+        totalGames += gamesPlayed;
+
+        const ka = kindAgg.get(ev.kind) ?? { games: 0, totalScore: 0 };
+        ka.games += gamesPlayed;
+        ka.totalScore += ev.total;
+        kindAgg.set(ev.kind, ka);
+
+        for (const g of ev.gameScores) {
+          if (g.score !== null && g.score > highGame) highGame = g.score;
+        }
       }
     }
   }
@@ -264,7 +263,7 @@ export async function GET(req: NextRequest) {
     tournaments,
   };
 
-  setCache(cacheKey, result, 10000);
+  setCache(cacheKey, result, 300000);
 
-  return NextResponse.json(result);
+  return jsonCached(result, 300);
 }

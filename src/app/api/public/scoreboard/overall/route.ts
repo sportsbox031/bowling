@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard, buildOverallLeaderboard } from "@/lib/scoring";
-import { getCached, setCache } from "@/lib/api-cache";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   if (!adminDb) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const cacheKey = `overall:${tournamentId}:${divisionId}`;
   const cached = getCached<object>(cacheKey);
   if (cached) {
-    return NextResponse.json(cached);
+    return jsonCached(cached, 60);
   }
 
   const [divisionSnap, playersSnap] = await Promise.all([
@@ -46,48 +46,44 @@ export async function GET(req: NextRequest) {
 
   const eventRowsByEventId: Record<string, ReturnType<typeof buildEventLeaderboard>["rows"]> = {};
 
-  for (const targetDivisionId of divisionIds) {
-      const eventsSnap = await adminDb
-        .collection("tournaments")
-        .doc(tournamentId)
-        .collection("divisions")
-        .doc(targetDivisionId)
-        .collection("events")
-        .get();
+  // Fetch all events across divisions in parallel
+  const eventsSnapPromises = divisionIds.map((targetDivId) =>
+    adminDb!
+      .collection("tournaments").doc(tournamentId)
+      .collection("divisions").doc(targetDivId)
+      .collection("events").get()
+      .then((snap) => snap.docs.map((doc) => ({ doc, divisionId: targetDivId }))),
+  );
+  const eventsResults = (await Promise.all(eventsSnapPromises)).flat();
 
-      for (const eventDoc of eventsSnap.docs) {
-        const scoresSnap = await eventDoc.ref.collection("scores").get();
-        const playersForEvent = allPlayers.filter((player) => player.divisionId === targetDivisionId);
-
+  // Fetch all scores across all events in parallel
+  const scorePromises = eventsResults.map(({ doc: eventDoc, divisionId: targetDivId }) =>
+    eventDoc.ref.collection("scores").get().then((scoresSnap) => {
+      const playersForEvent = allPlayers.filter((player: any) => player.divisionId === targetDivId);
       const scores = scoresSnap.docs.map((scoreDoc) => {
         const data = scoreDoc.data();
         return {
-          id: scoreDoc.id,
-          tournamentId,
-          eventId: eventDoc.id,
-          playerId: data.playerId,
-          gameNumber: data.gameNumber,
-          laneNumber: data.laneNumber ?? 0,
-          score: data.score,
+          id: scoreDoc.id, tournamentId, eventId: eventDoc.id,
+          playerId: data.playerId, gameNumber: data.gameNumber,
+          laneNumber: data.laneNumber ?? 0, score: data.score,
           createdAt: data.updatedAt ?? new Date().toISOString(),
         };
       });
-
-      const leaderboard = buildEventLeaderboard({
-        players: playersForEvent,
-        scores,
-      });
-
-      eventRowsByEventId[eventDoc.id] = leaderboard.rows;
-    }
+      const leaderboard = buildEventLeaderboard({ players: playersForEvent, scores });
+      return { eventId: eventDoc.id, rows: leaderboard.rows };
+    }),
+  );
+  const scoreResults = await Promise.all(scorePromises);
+  for (const { eventId, rows } of scoreResults) {
+    eventRowsByEventId[eventId] = rows;
   }
 
   const overall = buildOverallLeaderboard({
-    playerIds: allPlayers.map((player) => player.id),
+    playerIds: allPlayers.map((player: any) => player.id),
     eventRowsByEventId,
   });
 
-  setCache(cacheKey, overall, 5000);
+  setCache(cacheKey, overall, 60000);
 
-  return NextResponse.json(overall);
+  return jsonCached(overall, 60);
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard } from "@/lib/scoring";
-import { getCached, setCache } from "@/lib/api-cache";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 interface PlayerAgg {
   name: string;
@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest) {
   const cacheKey = "players-rankings-all";
   const cached = getCached<{ players: PlayerAgg[] }>(cacheKey);
   if (cached) {
-    return NextResponse.json(cached);
+    return jsonCached(cached, 300);
   }
 
   const tournamentsSnap = await adminDb.collection("tournaments").get();
@@ -39,32 +39,44 @@ export async function GET(_req: NextRequest) {
     tournamentIds: Set<string>;
   }>();
 
-  for (const tDoc of tournamentsSnap.docs) {
-    const tournamentId = tDoc.id;
+  // Process all tournaments in parallel
+  await Promise.all(
+    tournamentsSnap.docs.map(async (tDoc) => {
+      const tournamentId = tDoc.id;
 
-    const [divisionsSnap, playersSnap] = await Promise.all([
-      adminDb.collection("tournaments").doc(tournamentId).collection("divisions").get(),
-      adminDb.collection("tournaments").doc(tournamentId).collection("players").get(),
-    ]);
+      const [divisionsSnap, playersSnap] = await Promise.all([
+        adminDb!.collection("tournaments").doc(tournamentId).collection("divisions").get(),
+        adminDb!.collection("tournaments").doc(tournamentId).collection("players").get(),
+      ]);
 
-    const playerMap = new Map<string, { name: string; region: string; affiliation: string; divisionId: string }>();
-    for (const pDoc of playersSnap.docs) {
-      const d = pDoc.data();
-      playerMap.set(pDoc.id, {
-        name: d.name,
-        region: d.region ?? "",
-        affiliation: d.affiliation ?? "",
-        divisionId: d.divisionId ?? "",
-      });
-    }
+      const playerMap = new Map<string, { name: string; region: string; affiliation: string }>();
+      for (const pDoc of playersSnap.docs) {
+        const d = pDoc.data();
+        playerMap.set(pDoc.id, {
+          name: d.name,
+          region: d.region ?? "",
+          affiliation: d.affiliation ?? "",
+        });
+      }
 
-    for (const divDoc of divisionsSnap.docs) {
-      const eventsSnap = await divDoc.ref.collection("events").get();
+      // Fetch all events across all divisions in parallel
+      const allEventDocs = (
+        await Promise.all(
+          divisionsSnap.docs.map((divDoc) =>
+            divDoc.ref.collection("events").get().then((snap) => snap.docs),
+          ),
+        )
+      ).flat();
 
-      for (const eventDoc of eventsSnap.docs) {
-        const scoresSnap = await eventDoc.ref.collection("scores").get();
-        if (scoresSnap.empty) continue;
+      // Fetch all scores across all events in parallel
+      const allScoreSnaps = await Promise.all(
+        allEventDocs.map((eventDoc) =>
+          eventDoc.ref.collection("scores").get(),
+        ),
+      );
 
+      // Process scores (single-threaded aggregation to avoid Map race conditions)
+      for (const scoresSnap of allScoreSnaps) {
         for (const scoreDoc of scoresSnap.docs) {
           const sd = scoreDoc.data();
           const player = playerMap.get(sd.playerId);
@@ -95,8 +107,8 @@ export async function GET(_req: NextRequest) {
           }
         }
       }
-    }
-  }
+    }),
+  );
 
   const players: PlayerAgg[] = Array.from(agg.values())
     .filter((e) => e.totalGames > 0)
@@ -118,7 +130,7 @@ export async function GET(_req: NextRequest) {
   });
 
   const result = { players };
-  setCache(cacheKey, result, 10000);
+  setCache(cacheKey, result, 300000);
 
-  return NextResponse.json(result);
+  return jsonCached(result, 300);
 }

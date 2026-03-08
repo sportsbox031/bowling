@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   if (!adminDb) {
@@ -11,6 +12,12 @@ export async function GET(req: NextRequest) {
   const yearParam = query.get("year");
   const year = yearParam ? Number(yearParam) : null;
   const region = (query.get("region") ?? "").toLowerCase().trim();
+
+  const cacheKey = `pub-tournaments:${keyword}:${year}:${region}`;
+  const cached = getCached<object>(cacheKey);
+  if (cached) {
+    return jsonCached(cached, 60);
+  }
 
   const snapshot = await adminDb
     .collection("tournaments")
@@ -35,5 +42,7 @@ export async function GET(req: NextRequest) {
     return true;
   });
 
-  return NextResponse.json({ items: filtered });
+  const result = { items: filtered };
+  setCache(cacheKey, result, 60000);
+  return jsonCached(result, 60);
 }

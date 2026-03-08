@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { buildEventLeaderboard } from "@/lib/scoring";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
-import { getCached, setCache } from "@/lib/api-cache";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const cacheKey = `scoreboard:${tournamentId}:${divisionId}:${eventId}`;
     const cached = getCached<object>(cacheKey);
     if (cached) {
-      return NextResponse.json(cached);
+      return jsonCached(cached, 60);
     }
 
     const event = await resolveEventRef(adminDb, tournamentId, eventId, divisionId);
@@ -95,9 +95,9 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    setCache(cacheKey, result, 5000);
+    setCache(cacheKey, result, 60000);
 
-    return NextResponse.json(result);
+    return jsonCached(result, 60);
   } catch (error) {
     return NextResponse.json(
       { message: "LEADERBOARD_FAILED", error: String((error as Error).message) },

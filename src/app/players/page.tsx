@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { GlassCard, GlassTable, GlassInput, GlassBadge, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import { cachedFetch } from "@/lib/client-cache";
 
 type PlayerRanking = {
   name: string;
@@ -34,9 +35,7 @@ export default function PlayersRankingPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/public/players/rankings", { cache: "no-store" });
-        if (!res.ok) throw new Error("선수 랭킹을 불러오지 못했습니다.");
-        const data = await res.json();
+        const data = await cachedFetch<{ players: PlayerRanking[] }>("/api/public/players/rankings", 600000);
         setPlayers(data.players ?? []);
         setMessage("");
       } catch (err) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
-import { getCached, setCache } from "@/lib/api-cache";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     const cacheKey = `pub-assignments:${tournamentId}:${divisionId}:${eventId}:${squadId ?? "all"}`;
     const cached = getCached<object>(cacheKey);
     if (cached) {
-      return NextResponse.json(cached);
+      return jsonCached(cached, 30);
     }
 
     const event = await resolveEventRef(adminDb, tournamentId, eventId, divisionId);
@@ -85,8 +85,8 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    setCache(cacheKey, result, 5000);
-    return NextResponse.json(result);
+    setCache(cacheKey, result, 60000);
+    return jsonCached(result, 30);
   } catch (error) {
     return NextResponse.json(
       { message: "ASSIGNMENTS_FETCH_FAILED", error: String((error as Error).message) },

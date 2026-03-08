@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import { cachedFetch } from "@/lib/client-cache";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventRow = {
@@ -81,25 +82,16 @@ const EventScoreBoardPage = () => {
 
     setLoading(true);
     try {
-      const scoreRes = await fetch(
-        `/api/public/scoreboard?tournamentId=${encodeURIComponent(tournamentId)}&eventId=${encodeURIComponent(
-          eventId,
-        )}&divisionId=${encodeURIComponent(divisionId)}`,
-        { cache: "no-store" },
-      );
+      const scoreboardUrl = `/api/public/scoreboard?tournamentId=${encodeURIComponent(tournamentId)}&eventId=${encodeURIComponent(eventId)}&divisionId=${encodeURIComponent(divisionId)}`;
+      const [scoreboard, tournamentDetail] = await Promise.all([
+        cachedFetch<ScoreboardResponse>(scoreboardUrl, 180000),
+        cachedFetch<TournamentDetailResponse>(`/api/public/tournaments/${tournamentId}`, 600000),
+      ]);
 
-      if (!scoreRes.ok) throw new Error("점수표를 불러오지 못했습니다.");
-      const scoreboard = (await scoreRes.json()) as ScoreboardResponse;
       setRows(scoreboard.rows ?? []);
       setEventInfo(scoreboard.event ?? null);
-
-      const detailRes = await fetch(`/api/public/tournaments/${tournamentId}`, { cache: "no-store" });
-      if (detailRes.ok) {
-        const next = (await detailRes.json()) as TournamentDetailResponse;
-        setTournament(next.tournament);
-        setDetail(next);
-      }
-
+      setTournament(tournamentDetail.tournament);
+      setDetail(tournamentDetail);
       setMessage("");
     } catch (error) {
       setMessage((error as Error).message || "조회 실패");
@@ -110,8 +102,6 @@ const EventScoreBoardPage = () => {
 
   useEffect(() => {
     load();
-    const timer = window.setInterval(() => { if (!document.hidden) load(); }, 30000);
-    return () => window.clearInterval(timer);
   }, [tournamentId, eventId, divisionId]);
 
   const eventLabel = useMemo(() => {
@@ -168,9 +158,7 @@ const EventScoreBoardPage = () => {
           {eventInfo?.scheduleDate && (
             <GlassBadge variant="info">{eventInfo.scheduleDate}</GlassBadge>
           )}
-          {loading && (
-            <span style={{ color: "#94a3b8", fontSize: 13 }}>실시간 갱신 중...</span>
-          )}
+          {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
         </div>
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
+import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 type DivisionDoc = {
   id: string;
@@ -28,6 +29,12 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
   const tournamentId = ctx.params.tournamentId;
   if (!tournamentId?.trim()) {
     return NextResponse.json({ message: "INVALID_TOURNAMENT_ID" }, { status: 400 });
+  }
+
+  const cacheKey = `pub-tournament:${tournamentId}`;
+  const cached = getCached<object>(cacheKey);
+  if (cached) {
+    return jsonCached(cached, 60);
   }
 
   const tournamentDoc = await adminDb.collection("tournaments").doc(tournamentId).get();
@@ -67,10 +74,12 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
     }),
   );
 
-  return NextResponse.json({
+  const result = {
     tournament: { id: tournamentDoc.id, ...(tournamentDoc.data() as Record<string, unknown>) },
     divisions: divisionDocs,
     eventsByDivision,
-  });
+  };
+  setCache(cacheKey, result, 60000);
+  return jsonCached(result, 60);
 }
 

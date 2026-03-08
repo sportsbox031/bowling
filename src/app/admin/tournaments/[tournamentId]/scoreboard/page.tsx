@@ -171,7 +171,6 @@ export default function AdminScoreboardPage() {
   const [participantList, setParticipantList] = useState<Participant[]>([]);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
-  const selectedSquadIdRef = useRef<string | null>(null);
   const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [participantSearch, setParticipantSearch] = useState("");
@@ -184,11 +183,9 @@ export default function AdminScoreboardPage() {
   const [loading, setLoading] = useState(false);
   const [scoreDraft, setScoreDraft] = useState<Record<string, string>>({});
   const [selectedScoreLane, setSelectedScoreLane] = useState<number>(0);
-  const pollerRef = useRef<number | null>(null);
   const msgTimerRef = useRef<number | null>(null);
   const dirtyRef = useRef(false);
   const scoreDirtyRef = useRef<Set<string>>(new Set());
-  const scoreEditingRef = useRef(false);
 
   const showMsg = (msg: string, type: "success" | "error" = "success") => {
     setMessage(msg); setMessageType(type);
@@ -197,8 +194,6 @@ export default function AdminScoreboardPage() {
   };
 
   const hasSquads = squads.length > 0;
-  selectedSquadIdRef.current = hasSquads ? selectedSquadId : null;
-
   const participantIds = useMemo(
     () => new Set(participantList.map((p) => p.id)),
     [participantList],
@@ -239,40 +234,9 @@ export default function AdminScoreboardPage() {
     [currentBoard, players],
   );
 
+  const bundleUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/bundle`;
+
   // --- API loaders ---
-  const loadEvent = async (signal?: AbortSignal) => {
-    if (!tournamentId || !divisionId || !eventId) return;
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}`, { cache: "no-store", signal });
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as EventInfo;
-    setEvent(data);
-    setSelectedGame((prev) => (prev < 1 || prev > data.gameCount ? 1 : prev));
-  };
-
-  const loadPlayers = async (signal?: AbortSignal) => {
-    if (!tournamentId || !divisionId) return;
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/players?divisionId=${encodeURIComponent(divisionId)}`, { cache: "no-store", signal });
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as ApiList<Player>;
-    setAllPlayers(data.items ?? []);
-  };
-
-  const loadParticipants = async (signal?: AbortSignal) => {
-    if (!tournamentId || !divisionId || !eventId) return;
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/participants`, { cache: "no-store", signal });
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as ApiList<Participant>;
-    setParticipantList(data.items ?? []);
-  };
-
-  const loadSquads = async (signal?: AbortSignal) => {
-    if (!tournamentId || !divisionId || !eventId) return;
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/squads`, { cache: "no-store", signal });
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as ApiList<Squad>;
-    setSquads(data.items ?? []);
-  };
-
   const participantsUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/participants`;
 
   const handleAddParticipant = async (playerId: string) => {
@@ -316,30 +280,22 @@ export default function AdminScoreboardPage() {
     } catch (err) { showMsg((err as Error).message || "스쿼드 생성 실패", "error"); }
   };
 
+  // Consolidated loaders using bundle API
   const loadAssignments = async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
-    const sqId = selectedSquadIdRef.current;
-    const squadParam = sqId ? `?squadId=${encodeURIComponent(sqId)}` : "";
-    const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments${squadParam}`, { cache: "no-store", signal });
+    const res = await fetch(`${bundleUrl}?only=assignments`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as ApiList<Assignment>;
-    setAssignments(data.items ?? []);
+    const data = await res.json() as { assignments: Assignment[] };
+    setAssignments(data.assignments ?? []);
   };
 
-  const loadLeaderboard = async (signal?: AbortSignal) => {
+  const loadScores = async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
-    const res = await fetch(`/api/public/scoreboard?tournamentId=${encodeURIComponent(tournamentId)}&eventId=${encodeURIComponent(eventId)}&divisionId=${encodeURIComponent(divisionId)}`, { cache: "no-store", signal });
+    const res = await fetch(`${bundleUrl}?only=scores`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as { rows: EventLeaderboardRow[] };
-    setEventRows(data.rows ?? []);
-  };
-
-  const loadOverall = async (signal?: AbortSignal) => {
-    if (!tournamentId || !divisionId) return;
-    const res = await fetch(`/api/public/scoreboard/overall?tournamentId=${encodeURIComponent(tournamentId)}&divisionId=${encodeURIComponent(divisionId)}`, { cache: "no-store", signal });
-    if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as { rows: OverallLeaderboardRow[] };
-    setOverallRows(data.rows ?? []);
+    const data = await res.json() as { eventRows: EventLeaderboardRow[]; overallRows: OverallLeaderboardRow[] };
+    setEventRows(data.eventRows ?? []);
+    setOverallRows(data.overallRows ?? []);
   };
 
   const loadAll = async () => {
@@ -347,7 +303,19 @@ export default function AdminScoreboardPage() {
     setLoading(true);
     const controller = new AbortController();
     try {
-      await Promise.all([loadEvent(controller.signal), loadPlayers(controller.signal), loadParticipants(controller.signal), loadSquads(controller.signal), loadAssignments(controller.signal), loadLeaderboard(controller.signal), loadOverall(controller.signal)]);
+      const res = await fetch(bundleUrl, { cache: "no-store", signal: controller.signal });
+      if (!res.ok) throw new Error(await parseError(res));
+      const data = await res.json();
+      setEvent(data.event ?? null);
+      setAllPlayers(data.players ?? []);
+      setParticipantList(data.participants ?? []);
+      setSquads(data.squads ?? []);
+      setAssignments(data.assignments ?? []);
+      setEventRows(data.eventRows ?? []);
+      setOverallRows(data.overallRows ?? []);
+      if (data.event) {
+        setSelectedGame((prev) => (prev < 1 || prev > data.event.gameCount ? 1 : prev));
+      }
     } catch (err) {
       if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "조회 실패", "error");
     } finally { setLoading(false); }
@@ -357,28 +325,8 @@ export default function AdminScoreboardPage() {
   useEffect(() => {
     let ctrl: AbortController | null = null;
     (async () => { ctrl = await loadAll() ?? null; })();
-    if (pollerRef.current) clearInterval(pollerRef.current);
-    pollerRef.current = window.setInterval(() => {
-      if (document.hidden) return;
-      if (activeTab === "lane" && !dirtyRef.current) { void loadAssignments(); }
-      else if (activeTab === "score") {
-        if (!scoreEditingRef.current) { void loadLeaderboard(); }
-      }
-      else if (activeTab === "event-rank") { void loadLeaderboard(); }
-      else if (activeTab === "overall-rank") { void loadOverall(); }
-    }, 15000) as unknown as number;
-    return () => {
-      ctrl?.abort();
-      if (pollerRef.current) clearInterval(pollerRef.current);
-    };
-  }, [tournamentId, divisionId, eventId, activeTab]);
-
-  // 스쿼드 변경 시 배정 데이터 재로드
-  useEffect(() => {
-    if (hasSquads) {
-      void loadAssignments();
-    }
-  }, [selectedSquadId]);
+    return () => { ctrl?.abort(); };
+  }, [tournamentId, divisionId, eventId]);
 
   // Derive scoreDraft from existing eventRows — preserve user-edited (dirty) values
   const prevGameRef = useRef(selectedGame);
@@ -548,7 +496,7 @@ export default function AdminScoreboardPage() {
       if (!res.ok) throw new Error(await parseError(res));
       scoreDirtyRef.current.delete(playerId);
       showMsg(`저장됨: ${playerById.get(playerId)?.name ?? playerId} - ${score}점`);
-      await Promise.all([loadLeaderboard(), loadOverall()]);
+      await loadScores();
     } catch (err) { showMsg((err as Error).message || "점수 저장 실패", "error"); }
   };
 
@@ -577,13 +525,36 @@ export default function AdminScoreboardPage() {
     setLoading(false);
     if (failed > 0) showMsg(`${saved}명 저장됨, ${failed}명 실패`, "error");
     else showMsg(`Lane ${laneNum} 전체 ${saved}명 저장 완료!`);
-    await Promise.all([loadLeaderboard(), loadOverall()]);
+    await loadScores();
   };
 
   // 현재 게임에서 배정된 레인 목록 (선수 있는 레인만)
   const activeLanes = useMemo(
     () => lanes.filter((l) => (currentBoard[l] ?? []).length > 0),
     [lanes, currentBoard],
+  );
+
+  // 스쿼드 필터링된 점수입력용 데이터
+  const scoreFilteredEventRows = useMemo(
+    () => hasSquads && selectedSquadId
+      ? eventRows.filter((r) => squadParticipantIds.has(r.playerId))
+      : eventRows,
+    [eventRows, hasSquads, selectedSquadId, squadParticipantIds],
+  );
+
+  const scoreFilteredBoard = useMemo(() => {
+    if (!hasSquads || !selectedSquadId) return currentBoard;
+    const filtered: GameBoard = {};
+    for (const [lane, pids] of Object.entries(currentBoard)) {
+      const kept = pids.filter((pid) => squadParticipantIds.has(pid));
+      filtered[Number(lane)] = kept;
+    }
+    return filtered;
+  }, [currentBoard, hasSquads, selectedSquadId, squadParticipantIds]);
+
+  const scoreActiveLanes = useMemo(
+    () => lanes.filter((l) => (scoreFilteredBoard[l] ?? []).length > 0),
+    [lanes, scoreFilteredBoard],
   );
 
   const tabStyle = (tab: ScoreboardTab) => ({
@@ -609,6 +580,33 @@ export default function AdminScoreboardPage() {
       </main>
     );
   }
+
+  const renderSquadSelector = (opts?: { onSelect?: (id: string) => void; showCount?: boolean }) => (
+    <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+      <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
+      {squads.map((sq) => {
+        const isSelected = selectedSquadId === sq.id;
+        const label = opts?.showCount
+          ? `${sq.name} (${participantList.filter((p) => p.squadId === sq.id).length}명)`
+          : sq.name;
+        return (
+          <button
+            key={sq.id}
+            onClick={() => (opts?.onSelect ? opts.onSelect(sq.id) : setSelectedSquadId(sq.id))}
+            style={{
+              padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+              color: isSelected ? "#fff" : "#475569",
+              background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
+              border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+              cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
@@ -860,29 +858,7 @@ export default function AdminScoreboardPage() {
       {activeTab === "lane" && (
         <GlassCard>
           {/* 스쿼드 선택 (스쿼드 있을 때만) */}
-          {hasSquads && (
-            <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
-              {squads.map((sq) => {
-                const isSelected = selectedSquadId === sq.id;
-                return (
-                  <button
-                    key={sq.id}
-                    onClick={() => setSelectedSquadId(sq.id)}
-                    style={{
-                      padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                      color: isSelected ? "#fff" : "#475569",
-                      background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-                      border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
-                    {sq.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {hasSquads && renderSquadSelector()}
           <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
             <GlassButton onClick={handleRandomAssign} disabled={loading}>
               🔀 랜덤 배정{hasSquads && selectedSquadId ? ` (${squads.find((s) => s.id === selectedSquadId)?.name})` : ""}
@@ -1010,7 +986,13 @@ export default function AdminScoreboardPage() {
             )}
           </div>
 
-          {activeLanes.length === 0 ? (
+          {/* 스쿼드 선택 */}
+          {hasSquads && renderSquadSelector({
+            onSelect: (id) => { setSelectedSquadId(id); setSelectedScoreLane(0); },
+            showCount: true,
+          })}
+
+          {scoreActiveLanes.length === 0 ? (
             <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
               <p style={{ fontSize: 36, marginBottom: 8 }}>🎳</p>
               <p>먼저 레인 배정 탭에서 선수를 배정해 주세요.</p>
@@ -1019,11 +1001,11 @@ export default function AdminScoreboardPage() {
             <>
               {/* 레인 서브탭 */}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 }}>
-                {activeLanes.map((laneNum) => {
-                  const isActive = (selectedScoreLane || activeLanes[0]) === laneNum;
-                  const lanePlayerIds = currentBoard[laneNum] ?? [];
+                {scoreActiveLanes.map((laneNum) => {
+                  const isActive = (selectedScoreLane || scoreActiveLanes[0]) === laneNum;
+                  const lanePlayerIds = scoreFilteredBoard[laneNum] ?? [];
                   const savedCount = lanePlayerIds.filter((pid) => {
-                    const row = eventRows.find((r) => r.playerId === pid);
+                    const row = scoreFilteredEventRows.find((r) => r.playerId === pid);
                     return row && row.gameScores[selectedGame - 1]?.score !== null;
                   }).length;
                   return (
@@ -1062,10 +1044,10 @@ export default function AdminScoreboardPage() {
 
               {/* 선택된 레인의 점수 입력 패널 */}
               {(() => {
-                const activeLane = selectedScoreLane || activeLanes[0];
-                const lanePlayerIds = currentBoard[activeLane] ?? [];
+                const activeLane = selectedScoreLane || scoreActiveLanes[0];
+                const lanePlayerIds = scoreFilteredBoard[activeLane] ?? [];
                 const laneRows = lanePlayerIds
-                  .map((pid) => eventRows.find((r) => r.playerId === pid))
+                  .map((pid) => scoreFilteredEventRows.find((r) => r.playerId === pid))
                   .filter((r): r is EventLeaderboardRow => r !== undefined)
                   .sort((a, b) => a.number - b.number);
 
@@ -1153,8 +1135,6 @@ export default function AdminScoreboardPage() {
                               step={1}
                               value={scoreDraft[row.playerId] ?? ""}
                               onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
-                              onFocus={() => { scoreEditingRef.current = true; }}
-                              onBlur={() => { scoreEditingRef.current = false; }}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   scoreDirtyRef.current.delete(row.playerId);
@@ -1188,13 +1168,13 @@ export default function AdminScoreboardPage() {
               })()}
 
               {/* 미배정 선수 (하단 접이식) */}
-              {eventRows.filter((row) => getLaneForPlayerInGameBoard(currentBoard, row.playerId) === 0).length > 0 && (
+              {scoreFilteredEventRows.filter((row) => getLaneForPlayerInGameBoard(currentBoard, row.playerId) === 0).length > 0 && (
                 <div style={{ marginTop: 12, background: "rgba(241,245,249,0.3)", borderRadius: 10, padding: "12px 14px", border: "1px dashed rgba(203,213,225,0.5)" }}>
                   <p style={{ fontSize: 12, fontWeight: 700, color: "#94a3b8", marginBottom: 10 }}>
                     ⚠️ 레인 미배정 선수
                   </p>
                   <div style={{ display: "grid", gap: 8 }}>
-                    {eventRows.filter((row) => getLaneForPlayerInGameBoard(currentBoard, row.playerId) === 0).map((row) => (
+                    {scoreFilteredEventRows.filter((row) => getLaneForPlayerInGameBoard(currentBoard, row.playerId) === 0).map((row) => (
                       <div key={row.playerId} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <span style={{ fontSize: 13, color: "#94a3b8", minWidth: 28 }}>{row.number}</span>
                         <span style={{ flex: 1, fontSize: 13, color: "#94a3b8" }}>{row.name}</span>
@@ -1202,8 +1182,6 @@ export default function AdminScoreboardPage() {
                           type="number" min={0} max={MAX_SCORE}
                           value={scoreDraft[row.playerId] ?? ""}
                           onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
-                          onFocus={() => { scoreEditingRef.current = true; }}
-                          onBlur={() => { scoreEditingRef.current = false; }}
                           onKeyDown={(e) => { if (e.key === "Enter") { scoreDirtyRef.current.delete(row.playerId); void handleSaveScore(row.playerId); } }}
                           placeholder="점수"
                           style={{ width: 70, padding: "5px 8px", borderRadius: 7, fontSize: 13, textAlign: "center", background: "rgba(255,255,255,0.4)", border: "1px solid rgba(203,213,225,0.4)", outline: "none", fontFamily: "inherit" }}

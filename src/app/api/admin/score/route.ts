@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
+import { invalidateCache } from "@/lib/api-cache";
 
 const MAX_SCORE = 300;
 
@@ -92,6 +93,12 @@ export async function POST(req: NextRequest) {
       laneNumber: normalizedLaneNumber,
       updatedAt: new Date().toISOString(),
     });
+
+    // Invalidate all score-related caches
+    invalidateCache(`scoreboard:${tournamentId}`);
+    invalidateCache(`overall:${tournamentId}`);
+    invalidateCache(`bundle-scores:${tournamentId}`);
+    invalidateCache(`bundle-full:${tournamentId}`);
 
     return NextResponse.json({ message: "SCORE_SAVED" });
   } catch (error) {

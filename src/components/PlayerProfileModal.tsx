@@ -2,6 +2,7 @@
 
 import { CSSProperties, useEffect, useState } from "react";
 import { GlassCard, GlassBadge } from "@/components/ui";
+import { cachedFetch } from "@/lib/client-cache";
 
 type GameScore = { gameNumber: number; score: number | null };
 
@@ -157,12 +158,10 @@ export default function PlayerProfileModal({ playerName, onClose }: Props) {
       setLoading(true);
       setError("");
       try {
-        const res = await fetch(
+        const data = await cachedFetch<ProfileData>(
           `/api/public/players/profile?name=${encodeURIComponent(playerName)}`,
-          { cache: "no-store" },
+          600000,
         );
-        if (!res.ok) throw new Error("선수 프로필을 불러오지 못했습니다.");
-        const data = (await res.json()) as ProfileData;
         setProfile(data);
       } catch (err) {
         setError((err as Error).message);

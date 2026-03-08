@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+
 const cache = new Map<string, { data: unknown; expires: number }>();
 
 export function getCached<T>(key: string): T | null {
@@ -19,4 +21,16 @@ export function invalidateCache(prefix: string): void {
       cache.delete(key);
     }
   }
+}
+
+/**
+ * NextResponse.json with HTTP Cache-Control headers for CDN edge caching.
+ * s-maxage: CDN cache duration, stale-while-revalidate: serve stale while refreshing.
+ */
+export function jsonCached<T>(data: T, maxAgeSec: number): NextResponse {
+  return NextResponse.json(data, {
+    headers: {
+      "Cache-Control": `public, s-maxage=${maxAgeSec}, stale-while-revalidate=${maxAgeSec * 2}`,
+    },
+  });
 }

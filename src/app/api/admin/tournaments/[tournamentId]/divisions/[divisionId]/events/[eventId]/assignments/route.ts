@@ -199,7 +199,7 @@ export async function GET(
   const allItems = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
   const items = squadId ? allItems.filter((item: any) => item.squadId === squadId) : allItems;
   const result = { items };
-  setCache(cacheKey, result, 5000);
+  setCache(cacheKey, result, 15000);
   return NextResponse.json(result);
 }
 
@@ -269,6 +269,8 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
     invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
     invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
+    invalidateCache(`bundle-assign:${ctx.params.tournamentId}`);
+    invalidateCache(`bundle-full:${ctx.params.tournamentId}`);
     return NextResponse.json({ message: "ASSIGNMENTS_SAVED", mode: "manual" });
   }
 
@@ -339,5 +341,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   await writeAssignments(event.ref, all);
   invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
   invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
+  invalidateCache(`bundle-assign:${ctx.params.tournamentId}`);
+  invalidateCache(`bundle-full:${ctx.params.tournamentId}`);
   return NextResponse.json({ mode: "random", firstGame, gameBoard: result.gameBoard });
 }
