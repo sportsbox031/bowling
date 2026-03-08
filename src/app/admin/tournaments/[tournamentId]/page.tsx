@@ -303,10 +303,18 @@ export default function TournamentDetailPage() {
           {tournament?.title ?? "대회 상세"}
         </h1>
         {tournament && (
-          <div style={{ display: "flex", gap: 16, color: "#64748b", fontSize: 14, marginTop: 4 }}>
+          <div style={{ display: "flex", gap: 16, color: "#64748b", fontSize: 14, marginTop: 4, flexWrap: "wrap", alignItems: "center" }}>
             <span>📍 {tournament.region}</span>
             <span>🎳 레인 {tournament.laneStart}-{tournament.laneEnd}</span>
             <span>📅 {tournament.seasonYear}년</span>
+            <span style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: 12, display: "flex", gap: 8 }}>
+              <Link href={`/admin/tournaments/${tournamentId}/summary`}>
+                <GlassButton size="sm" variant="secondary">📊 종합집계표</GlassButton>
+              </Link>
+              <Link href={`/admin/tournaments/${tournamentId}/certificates`}>
+                <GlassButton size="sm" variant="secondary">🏅 상장 생성</GlassButton>
+              </Link>
+            </span>
           </div>
         )}
       </div>
