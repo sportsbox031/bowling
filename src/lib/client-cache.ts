@@ -9,6 +9,7 @@
 
 type CacheEntry = { data: unknown; ts: number };
 
+const MAX_MEM_SIZE = 100;
 const mem = new Map<string, CacheEntry>();
 
 function storage(): Storage | null {
@@ -41,6 +42,10 @@ export function getClientCache<T>(key: string, maxAge: number): T | null {
 
 export function setClientCache<T>(key: string, data: T): void {
   const entry: CacheEntry = { data, ts: Date.now() };
+  if (mem.size >= MAX_MEM_SIZE) {
+    const oldest = mem.keys().next().value;
+    if (oldest) mem.delete(oldest);
+  }
   mem.set(key, entry);
   const s = storage();
   if (!s) return;

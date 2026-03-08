@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildEventLeaderboard } from "@/lib/scoring";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 interface PlayerAgg {
