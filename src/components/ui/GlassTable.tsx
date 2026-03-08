@@ -1,7 +1,10 @@
 import { CSSProperties, ReactNode } from "react";
 
+type Align = "left" | "center" | "right";
+
 type GlassTableProps = {
   headers: string[];
+  headerAligns?: Align[];
   children: ReactNode;
   emptyMessage?: string;
   rowCount?: number;
@@ -54,6 +57,7 @@ export const glassTrHoverProps = {
 
 export default function GlassTable({
   headers,
+  headerAligns,
   children,
   emptyMessage = "데이터가 없습니다.",
   rowCount = 0,
@@ -63,8 +67,8 @@ export default function GlassTable({
       <table style={tableStyle}>
         <thead>
           <tr>
-            {headers.map((header) => (
-              <th key={header} style={thStyle}>
+            {headers.map((header, i) => (
+              <th key={header} style={{ ...thStyle, textAlign: headerAligns?.[i] ?? "left" }}>
                 {header}
               </th>
             ))}

@@ -241,6 +241,7 @@ const EventScoreBoardPage = () => {
       {/* Scoreboard Table */}
       <GlassTable
         headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차"]}
+        headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center", "center", "center", "center", "center", "center"]}
         rowCount={filteredRows.length}
         emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "등록된 점수가 없습니다."}
       >

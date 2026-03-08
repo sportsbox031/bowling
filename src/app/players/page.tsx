@@ -124,6 +124,7 @@ export default function PlayersRankingPage() {
       {/* Ranking Table */}
       <GlassTable
         headers={["순위", "성명", "시도", "소속", "평균", "총점", "총게임", "하이게임", "출전대회"]}
+        headerAligns={["center", "left", "center", "left", "center", "center", "center", "center", "center"]}
         rowCount={filteredPlayers.length}
         emptyMessage={searchKeyword ? "검색 결과가 없습니다." : loading ? "불러오는 중..." : "등록된 선수가 없습니다."}
       >

@@ -24,8 +24,8 @@ No test framework is configured yet. Type-check via `npm run build` (runs `next 
 ## Architecture
 
 ### Layers
-- **Pages** (`src/app/`): Next.js App Router — nearly all pages are `"use client"` components. Server components: `tournaments/[tournamentId]/page.tsx` (uses Admin SDK + `force-dynamic`), `admin/page.tsx` (session check + redirect). Root layout (`layout.tsx`) is a server component that renders `PublicHeader`. Admin layout (`admin/layout.tsx`) is also a server component wrapping `AdminHeader` + `AdminAuthGate`.
-- **API Routes** (`src/app/api/`): Route Handlers split into `admin/` (protected) and `public/` (open read). Admin routes receive dynamic params via `ctx: { params: { tournamentId, divisionId, eventId } }` context object.
+- **Pages** (`src/app/`): Next.js App Router — nearly all pages are `"use client"` components with `export const dynamic = "force-dynamic"`. Server components: `admin/page.tsx` (session check + redirect). Root layout (`layout.tsx`) is a server component that renders `PublicHeader`. Admin layout (`admin/layout.tsx`) is also a server component wrapping `AdminHeader` + `AdminAuthGate`.
+- **API Routes** (`src/app/api/`): Route Handlers split into `admin/` (protected) and `public/` (open read). Admin routes receive dynamic params via `ctx: { params: { tournamentId, divisionId, eventId } }` context object. Public routes include `players/` (profile, rankings), `scoreboard/` (overall), and `tournaments/` (metadata, events, bundle). Admin routes cover CRUD for tournaments, divisions, events, squads, scores, lane assignments, and session management.
 - **Domain Logic** (`src/lib/`): Scoring engine, lane assignment, models, auth — pure functions, no Firebase imports (except `eventPath.ts`)
 - **Firebase** (`src/lib/firebase/`): Client SDK (`client.ts`), Admin SDK (`admin.ts`), collection paths (`schema.ts`), event resolution (`eventPath.ts`)
 - **UI Components** (`src/components/ui/`): Glass-morphism design system using inline `CSSProperties` (not CSS classes). Components: `GlassCard`, `GlassButton`, `GlassInput`, `GlassSelect`, `GlassTable`, `GlassBadge`, `GlassHeader`. Barrel export from `index.ts` — also exports `glassTdStyle` and `glassTrHoverProps` helpers from `GlassTable`.
@@ -46,7 +46,12 @@ tournaments/{tournamentId}
 
 **Event resolution**: Events are nested under divisions, but some API routes receive only `tournamentId` + `eventId` (no `divisionId`). Use `resolveEventRef()` / `getEventRefOrThrow()` from `src/lib/firebase/eventPath.ts` to scan divisions and find the event. This is the one `src/lib/` file that imports Firebase Admin directly.
 
-**API caching**: `src/lib/api-cache.ts` provides in-memory TTL cache (`getCached` / `setCache` / `invalidateCache`, default 5s) for public API routes. `invalidateCache(prefix)` clears all keys matching a prefix.
+**3-Layer Caching Architecture**:
+1. **Server-side** (`src/lib/api-cache.ts`): In-memory TTL cache (`getCached` / `setCache` / `invalidateCache`, default 5s). `jsonCached<T>()` wraps responses with HTTP `Cache-Control` headers (`s-maxage`, `stale-while-revalidate`) for CDN edge caching. Routes use variable TTLs (5s–15s).
+2. **Client-side** (`src/lib/client-cache.ts`): Dual sessionStorage + in-memory cache (MAX_MEM_SIZE=100). Exports `getClientCache<T>()`, `setClientCache<T>()`, `invalidateClientCache()`, and `cachedFetch<T>()`. Used in `PlayerProfileModal` and public pages.
+3. **HTTP CDN cache**: Set by `jsonCached()` response headers on public API routes.
+
+**Polling pattern**: Bundle routes support `?only=scores` and `?only=assignments` query params for partial data polling instead of full bundle refetch.
 
 **Note**: `squads` collection is used in API routes but has no corresponding type in `models.ts` or path helper in `schema.ts` — squad documents are built ad-hoc in the route handlers.
 
@@ -81,7 +86,7 @@ tournaments/{tournamentId}
 
 **Client-side** (prefixed `NEXT_PUBLIC_`): Firebase config keys (API_KEY, AUTH_DOMAIN, PROJECT_ID, etc.)
 
-**Server-side**: `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_PATH`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_ADMIN_EMAILS` (comma-separated allowlist)
+**Server-side**: `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_SERVICE_ACCOUNT_PATH` (path to JSON file on disk, loaded via `fs.readFileSync`), `FIREBASE_STORAGE_BUCKET`, `FIREBASE_ADMIN_EMAILS` (comma-separated allowlist)
 
 ## Conventions
 
@@ -92,7 +97,7 @@ tournaments/{tournamentId}
 - `firestorePaths` helper in `schema.ts` builds collection/document path strings.
 - Glass components use inline styles via `CSSProperties`, not CSS class names. When creating new UI, follow this pattern.
 - Pages re-declare local types mirroring API response shapes rather than importing from `models.ts` — this is intentional for client/server boundary isolation.
-- CSS custom properties in `globals.css` define the design palette: `--color-primary: #6366f1`, `--color-accent: #8b5cf6`, `--gradient-bg` for page backgrounds, `--glass-*` for component theming. Font: Noto Sans KR.
+- CSS custom properties in `globals.css` define the design palette: `--color-primary: #6366f1`, `--color-accent: #8b5cf6`, `--gradient-bg` for page backgrounds, `--glass-*` for component theming. Font: Noto Sans KR. Keyframe animations: `float` (background orbs), `pulse`, `fadeIn`, `shimmer` (skeleton loading via `.skeleton` class). Supports `prefers-reduced-motion`.
 - `next.config.mjs` uses ESM format. `reactStrictMode` is enabled.
 
 ## Docs

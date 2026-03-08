@@ -458,7 +458,7 @@ export default function TournamentDetailPage() {
               </form>
 
               <div style={{ marginTop: 24 }}>
-                <GlassTable headers={["종목명", "종류", "게임수", "레인", "Table", "경기일", "작업"]} rowCount={events.length} emptyMessage="등록된 세부종목이 없습니다.">
+                <GlassTable headers={["종목명", "종류", "게임수", "레인", "Table", "경기일", "작업"]} headerAligns={["left", "left", "center", "left", "center", "left", "left"]} rowCount={events.length} emptyMessage="등록된 세부종목이 없습니다.">
                   {events.map((ev) => (
                     <tr key={ev.id} {...glassTrHoverProps}>
                       <td style={glassTdStyle}>
@@ -549,7 +549,7 @@ export default function TournamentDetailPage() {
                     {selectedDivisionPlayers.length}명{playerSearch.trim() ? ` (전체 ${players.filter((p) => !activeDivisionId || p.divisionId === activeDivisionId).length}명)` : ""}
                   </span>
                 </div>
-                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "작업"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
+                <GlassTable headers={["번호", "이름", "시군", "소속", "손", "팀조", "작업"]} headerAligns={["center", "left", "left", "left", "left", "center", "left"]} rowCount={selectedDivisionPlayers.length} emptyMessage="등록된 선수가 없습니다.">
                   {selectedDivisionPlayers.map((p) => (
                     <tr key={p.id} {...glassTrHoverProps}>
                       <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 600 }}>{p.number}</td>

@@ -131,7 +131,7 @@ export async function GET(
     await Promise.all([
       eventRef.get(),
       adminDb.collection("tournaments").doc(tournamentId)
-        .collection("players").where("divisionId", "==", divisionId).orderBy("number").get(),
+        .collection("players").where("divisionId", "==", divisionId).get(),
       eventRef.collection("participants").get(),
       eventRef.collection("squads").orderBy("createdAt").get(),
       eventRef.collection("assignments").orderBy("gameNumber").get(),
@@ -143,7 +143,9 @@ export async function GET(
   }
 
   const eventData = { id: eventDoc.id, ...eventDoc.data() } as any;
-  const allPlayers = playersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
+  const allPlayers = playersSnap.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() } as any))
+    .sort((a: any, b: any) => (a.number ?? 0) - (b.number ?? 0));
   const participants = participantsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const squads = squadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const assignments = assignmentsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));

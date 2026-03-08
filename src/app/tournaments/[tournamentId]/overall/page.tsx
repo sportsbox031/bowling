@@ -196,6 +196,7 @@ export default function TournamentOverallPage() {
       {/* Overall Table */}
       <GlassTable
         headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차이", "게임수"]}
+        headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center", "center", "center", "center", "center", "center", "center"]}
         rowCount={filteredRows.length}
         emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "아직 성적 데이터가 없습니다."}
       >

@@ -409,6 +409,7 @@ const LaneAssignmentPage = () => {
       ) : (
         <GlassTable
           headers={["레인", "번호", "성명", "소속", "시도"]}
+          headerAligns={["center", "center", "left", "left", "center"]}
           rowCount={searchResult.filtered.reduce((acc, [, players]) => acc + Math.max(players.length, 1), 0)}
           emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "배정된 선수가 없습니다."}
         >

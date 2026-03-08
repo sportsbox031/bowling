@@ -1203,6 +1203,7 @@ export default function AdminScoreboardPage() {
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>세부종목 순위</h2>
           <GlassTable
             headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차"]}
+            headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center", "center", "center", "center", "center", "center"]}
             rowCount={eventRows.length}
             emptyMessage="순위 데이터가 없습니다."
           >
@@ -1236,6 +1237,7 @@ export default function AdminScoreboardPage() {
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>전체 종합순위</h2>
           <GlassTable
             headers={["순위", "시도", "소속", "번호", "성명", "합계", "평균", "핀차", "게임수"]}
+            headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center"]}
             rowCount={overallRows.length}
             emptyMessage="종합점수 데이터가 없습니다."
           >
