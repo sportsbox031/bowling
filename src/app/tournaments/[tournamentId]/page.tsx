@@ -46,10 +46,19 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
     .orderBy("title")
     .get();
 
-  const divisions = divisionsSnap.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as { title: string; code: string }),
-  }));
+  const GENDER_LABELS: Record<string, string> = { M: "남자", F: "여자", MIXED: "혼합" };
+
+  const divisions = divisionsSnap.docs.map((doc) => {
+    const d = doc.data() as { title: string; code: string; gender?: string };
+    const genderLabel = GENDER_LABELS[d.gender ?? ""] ?? "";
+    return {
+      id: doc.id,
+      title: d.title,
+      code: d.code,
+      gender: d.gender ?? "",
+      displayTitle: genderLabel ? `${d.title} ${genderLabel}` : d.title,
+    };
+  });
 
   const eventsByDivision = await Promise.all(
     divisions.map(async (division) => {
@@ -129,7 +138,7 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>{division.title}</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", margin: 0 }}>{division.displayTitle}</h2>
               <span
                 style={{
                   padding: "3px 10px",
