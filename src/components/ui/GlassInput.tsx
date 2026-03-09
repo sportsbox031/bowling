@@ -1,4 +1,4 @@
-import { CSSProperties, InputHTMLAttributes } from "react";
+import { CSSProperties, FocusEvent, InputHTMLAttributes } from "react";
 
 type GlassInputProps = InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
@@ -27,21 +27,20 @@ const labelStyle: CSSProperties = {
   marginBottom: 6,
 };
 
-export default function GlassInput({ label, style, ...rest }: GlassInputProps) {
-  const input = (
-    <input
-      style={{ ...inputStyle, ...style }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.6)";
-        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      {...rest}
-    />
-  );
+export default function GlassInput({ label, style, onFocus, onBlur, ...rest }: GlassInputProps) {
+  const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.6)";
+    event.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+    onFocus?.(event);
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
+    event.currentTarget.style.boxShadow = "none";
+    onBlur?.(event);
+  };
+
+  const input = <input style={{ ...inputStyle, ...style }} onFocus={handleFocus} onBlur={handleBlur} {...rest} />;
 
   if (!label) return input;
 

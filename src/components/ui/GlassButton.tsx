@@ -55,6 +55,7 @@ export default function GlassButton({
   disabled,
   isLoading,
   children,
+  className,
   ...rest
 }: GlassButtonProps) {
   const isDisabled = disabled || isLoading;
@@ -76,32 +77,15 @@ export default function GlassButton({
     ...style,
   };
 
+  const mergedClassName = [className, !isDisabled ? "glass-button-interactive" : undefined]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <button
       style={base}
       disabled={isDisabled}
-      onMouseEnter={(e) => {
-        if (!isDisabled) {
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.15)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      onMouseDown={(e) => {
-        if (!isDisabled) {
-          e.currentTarget.style.transform = "scale(0.97)";
-          e.currentTarget.style.boxShadow = "none";
-        }
-      }}
-      onMouseUp={(e) => {
-        if (!isDisabled) {
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.15)";
-        }
-      }}
+      className={mergedClassName || undefined}
       {...rest}
     >
       {isLoading && <span style={spinnerStyle} aria-hidden="true" />}

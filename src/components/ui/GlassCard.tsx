@@ -44,27 +44,15 @@ export default function GlassCard({
     ...style,
   };
 
+  const mergedClassName = [className, hover ? "glass-card-hover" : undefined]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
-      className={className}
+      className={mergedClassName || undefined}
       style={base}
       onClick={onClick}
-      onMouseEnter={
-        hover
-          ? (e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 12px 40px rgba(0, 0, 0, 0.12)";
-            }
-          : undefined
-      }
-      onMouseLeave={
-        hover
-          ? (e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 8px 32px rgba(0, 0, 0, 0.08)";
-            }
-          : undefined
-      }
     >
       {children}
     </div>

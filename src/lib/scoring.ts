@@ -11,6 +11,7 @@ export const MAX_GAME_COUNT = 6;
 export interface EventRankingInput {
   players: Player[];
   scores: ScoreRow[];
+  gameCount: number;
 }
 
 export interface EventRankingResult {
@@ -25,6 +26,14 @@ export interface OverallRankingInput {
 export interface OverallRankingResult {
   rows: OverallRankingRow[];
 }
+
+const normalizeGameCount = (gameCount: number): number => {
+  if (!Number.isFinite(gameCount)) {
+    return 1;
+  }
+
+  return Math.min(MAX_GAME_COUNT, Math.max(1, Math.floor(gameCount)));
+};
 
 const emptyScoreColumns = (count = MAX_GAME_COUNT): ScoreColumn[] =>
   Array.from({ length: count }, (_, index) => ({
@@ -48,29 +57,47 @@ const compareRows = (
   return a.pinDiff - b.pinDiff;
 };
 
+const getOverallGameColumnCount = (eventRowsByEventId: Record<string, EventRankingRow[]>): number => {
+  let maxColumnCount = 1;
+
+  for (const eventRows of Object.values(eventRowsByEventId)) {
+    for (const row of eventRows) {
+      maxColumnCount = Math.max(maxColumnCount, row.gameScores.length);
+    }
+  }
+
+  return maxColumnCount;
+};
+
 export const buildEventLeaderboard = (input: EventRankingInput): EventRankingResult => {
-  const playerMap = new Map<string, Player>(input.players.map((player) => [player.id, player]));
+  const gameCount = normalizeGameCount(input.gameCount);
   const scoreMap = new Map<string, ScoreRow[]>();
 
   for (const score of input.scores) {
     const list = scoreMap.get(score.playerId);
-    if (list) { list.push(score); } else { scoreMap.set(score.playerId, [score]); }
+    if (list) {
+      list.push(score);
+    } else {
+      scoreMap.set(score.playerId, [score]);
+    }
   }
 
   const baseRows: Omit<EventRankingRow, "rank" | "tieRank">[] = input.players.map((player) => {
     const playerScores = scoreMap.get(player.id) ?? [];
-    const games = emptyScoreColumns();
+    const games = emptyScoreColumns(gameCount);
     let total = 0;
+    let attempts = 0;
 
     for (const row of playerScores) {
-      if (row.gameNumber < 1 || row.gameNumber > MAX_GAME_COUNT) {
+      if (row.gameNumber < 1 || row.gameNumber > gameCount) {
         continue;
       }
+
       games[row.gameNumber - 1].score = row.score;
       total += row.score;
+      attempts += 1;
     }
 
-    const attempts = playerScores.length;
     const average = attempts > 0 ? roundToOneDecimal(total / attempts) : 0;
 
     return {
@@ -110,6 +137,7 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
 export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRankingResult => {
   const merged: Map<string, OverallRankingRow> = new Map();
   const playerMeta = new Map<string, { region: string; affiliation: string; number: number; name: string }>();
+  const overallGameColumnCount = getOverallGameColumnCount(input.eventRowsByEventId);
 
   for (const eventRows of Object.values(input.eventRowsByEventId)) {
     for (const row of eventRows) {
@@ -131,7 +159,7 @@ export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRank
 
   for (const playerId of candidatePlayerIds) {
     const meta = playerMeta.get(playerId) ?? { region: "", affiliation: "", number: 0, name: "" };
-    const gameScores: ScoreColumn[] = emptyScoreColumns();
+    const gameScores: ScoreColumn[] = emptyScoreColumns(overallGameColumnCount);
     let total = 0;
     let attempts = 0;
     let gameCount = 0;

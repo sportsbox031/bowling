@@ -13,7 +13,9 @@ import {
   glassTdStyle,
   glassTrHoverProps,
 } from "@/components/ui";
-
+import StatusBanner from "@/components/common/StatusBanner";
+import PlayerBulkImportPanel from "@/components/admin/PlayerBulkImportPanel";
+import { GENDER_LABELS, KIND_LABELS } from "@/lib/constants";
 type Division = {
   id: string;
   title: string;
@@ -52,20 +54,6 @@ type TournamentDetail = {
   laneEnd: number;
 };
 
-const KIND_LABELS: Record<string, string> = {
-  SINGLE: "개인전",
-  DOUBLES: "2인조",
-  TRIPLES: "3인조",
-  FOURS: "4인조",
-  FIVES: "5인조",
-  OVERALL: "개인종합",
-};
-
-const GENDER_LABELS: Record<string, string> = {
-  M: "남자",
-  F: "여자",
-  MIXED: "혼합",
-};
 
 type Tab = "events" | "players";
 
@@ -534,7 +522,9 @@ export default function TournamentDetailPage() {
               </form>
 
               <div style={{ marginTop: 24 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                <PlayerBulkImportPanel tournamentId={tournamentId} divisionId={activeDivisionId} onImported={loadPlayers} />
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                   <div style={{ position: "relative", flex: 1, maxWidth: 320 }}>
                     <input
                       type="text"
@@ -586,3 +576,9 @@ export default function TournamentDetailPage() {
     </div>
   );
 }
+
+
+
+
+
+

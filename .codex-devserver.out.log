@@ -1,0 +1,59 @@
+
+> bowling-tournament-saas@0.1.0 dev
+> next dev --port 3000
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1868ms
+ ○ Compiling /tournaments/[tournamentId]/events/[eventId] ...
+ ✓ Compiled /tournaments/[tournamentId]/events/[eventId] in 1155ms (570 modules)
+ GET /tournaments/YqD6TYCPuCKKLQ26OXKZ/events/hELYMe8N2DcbKKVhNzvH?divisionId=DsekTORpEiQhRbPhHNhy 200 in 1910ms
+ ✓ Compiled /api/public/tournaments/[tournamentId] in 343ms (346 modules)
+ ✓ Compiled (348 modules)
+ GET /api/public/scoreboard?tournamentId=YqD6TYCPuCKKLQ26OXKZ&eventId=hELYMe8N2DcbKKVhNzvH&divisionId=DsekTORpEiQhRbPhHNhy 200 in 1525ms
+ GET /api/public/scoreboard?tournamentId=YqD6TYCPuCKKLQ26OXKZ&eventId=hELYMe8N2DcbKKVhNzvH&divisionId=DsekTORpEiQhRbPhHNhy 200 in 1535ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 1891ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 1907ms
+ ✓ Compiled /api/public/players/search in 187ms (350 modules)
+ GET /api/public/players/search?name=%EC%9D%B4%EB%82%A8%EA%B7%A0 200 in 330ms
+ GET /api/public/players/search?name=%EC%9D%B4%EB%82%A8%EA%B7%A0 200 in 336ms
+ ✓ Compiled /api/public/players/profile in 162ms (352 modules)
+ GET /api/public/players/profile?name=%EC%9D%B4%EB%82%A8%EA%B7%A0 200 in 361ms
+ GET /api/public/players/profile?name=%EC%9D%B4%EB%82%A8%EA%B7%A0 200 in 375ms
+ ○ Compiling /admin/login ...
+ ✓ Compiled /admin/login in 724ms (788 modules)
+ ✓ Compiled /api/admin/session in 237ms (505 modules)
+ POST /api/admin/session 200 in 1256ms
+ ○ Compiling /admin ...
+ ✓ Compiled /admin in 629ms (806 modules)
+ GET /api/admin/session 200 in 351ms
+ ✓ Compiled /admin/tournaments in 337ms (812 modules)
+ ✓ Compiled /api/admin/tournaments in 134ms (525 modules)
+ GET /api/admin/session 200 in 631ms
+ GET /api/admin/tournaments 200 in 649ms
+ GET /api/admin/tournaments 200 in 372ms
+ ✓ Compiled /admin/tournaments/[tournamentId] in 332ms (826 modules)
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 168ms (533 modules)
+ ✓ Compiled (537 modules)
+ GET /api/admin/session 200 in 698ms
+ GET /api/admin/tournaments 200 in 747ms
+ GET /api/admin/tournaments 200 in 375ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 1215ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 1389ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events in 135ms (539 modules)
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 358ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 695ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 704ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 1366ms
+ ○ Compiling /admin/tournaments/[tournamentId]/scoreboard ...
+ ✓ Compiled /admin/tournaments/[tournamentId]/scoreboard in 714ms (846 modules)
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=hELYMe8N2DcbKKVhNzvH&divisionId=DsekTORpEiQhRbPhHNhy 200 in 1204ms
+ GET /api/admin/session 200 in 435ms
+ ○ Compiling /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle ...
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 537ms (548 modules)
+ GET /api/admin/session 200 in 1107ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/hELYMe8N2DcbKKVhNzvH/bundle 200 in 1745ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/hELYMe8N2DcbKKVhNzvH/bundle 200 in 1783ms

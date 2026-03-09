@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       })
       .filter((player) => player.divisionId === event.divisionId);
 
-    const leaderboard = buildEventLeaderboard({ players, scores });
+    const leaderboard = buildEventLeaderboard({ players, scores, gameCount: eventDoc.gameCount ?? 1 });
 
     const result = {
       ...leaderboard,
@@ -105,3 +105,4 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+

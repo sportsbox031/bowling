@@ -1,13 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import Link from "next/link";
+import { FormEvent, Suspense, useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "@/lib/firebase/client";
 import { GlassCard, GlassButton, GlassInput } from "@/components/ui";
-import Link from "next/link";
+import StatusBanner from "@/components/common/StatusBanner";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/admin";
@@ -46,13 +47,47 @@ export default function AdminLoginPage() {
 
       router.push(next);
       router.refresh();
-    } catch (error) {
+    } catch {
       setMessage("로그인에 실패했습니다.");
     } finally {
       setBusy(false);
     }
   };
 
+  return (
+    <GlassCard variant="strong">
+      <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
+        <GlassInput
+          label="이메일"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          required
+          type="email"
+          placeholder="admin@bowling.kr"
+        />
+        <GlassInput
+          label="비밀번호"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          type="password"
+          placeholder="비밀번호를 입력하세요"
+        />
+        <GlassButton type="submit" isLoading={busy} size="lg" style={{ width: "100%", marginTop: 4 }}>
+          {busy ? "로그인 중..." : "로그인"}
+        </GlassButton>
+      </form>
+
+      {message && (
+        <StatusBanner tone="error" style={{ marginTop: 16, textAlign: "center", fontSize: 14 }}>
+          {message}
+        </StatusBanner>
+      )}
+    </GlassCard>
+  );
+}
+
+export default function AdminLoginPage() {
   return (
     <main
       style={{
@@ -81,46 +116,9 @@ export default function AdminLoginPage() {
           <p style={{ color: "#94a3b8", fontSize: 14 }}>대회 관리를 위해 로그인하세요</p>
         </div>
 
-        <GlassCard variant="strong">
-          <form onSubmit={onSubmit} style={{ display: "grid", gap: 16 }}>
-            <GlassInput
-              label="이메일"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              type="email"
-              placeholder="admin@bowling.kr"
-            />
-            <GlassInput
-              label="비밀번호"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              placeholder="비밀번호를 입력하세요"
-            />
-            <GlassButton type="submit" isLoading={busy} size="lg" style={{ width: "100%", marginTop: 4 }}>
-              {busy ? "로그인 중..." : "로그인"}
-            </GlassButton>
-          </form>
-
-          {message && (
-            <div
-              style={{
-                marginTop: 16,
-                padding: "10px 14px",
-                background: "rgba(239, 68, 68, 0.1)",
-                border: "1px solid rgba(239, 68, 68, 0.2)",
-                borderRadius: 10,
-                color: "#dc2626",
-                fontSize: 14,
-                textAlign: "center",
-              }}
-            >
-              {message}
-            </div>
-          )}
-        </GlassCard>
+        <Suspense fallback={<GlassCard variant="strong">로그인 화면을 준비하고 있습니다...</GlassCard>}>
+          <AdminLoginForm />
+        </Suspense>
 
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <Link

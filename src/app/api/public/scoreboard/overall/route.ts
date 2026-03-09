@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
           createdAt: data.updatedAt ?? new Date().toISOString(),
         };
       });
-      const leaderboard = buildEventLeaderboard({ players: playersForEvent, scores });
+      const leaderboard = buildEventLeaderboard({ players: playersForEvent, scores, gameCount: eventDoc.data()?.gameCount ?? 1 });
       return { eventId: eventDoc.id, rows: leaderboard.rows };
     }),
   );
@@ -87,3 +87,4 @@ export async function GET(req: NextRequest) {
 
   return jsonCached(overall, 60);
 }
+

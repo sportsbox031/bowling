@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { getLaneForGame } from "@/lib/lane";
+import { parseParticipantNumberInput } from "@/lib/participant-range";
 import {
   GlassCard,
   GlassButton,
@@ -13,8 +14,11 @@ import {
   glassTdStyle,
   glassTrHoverProps,
 } from "@/components/ui";
+import StatusBanner from "@/components/common/StatusBanner";
+import RankingTable from "@/components/scoreboard/RankingTable";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
-
+import { KIND_LABELS } from "@/lib/constants";
+import { clearScoreDraft, readScoreDraft, writeScoreDraft } from "@/lib/score-draft";
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventLeaderboardRow = {
   playerId: string;
@@ -76,6 +80,7 @@ type Participant = {
 type ApiList<T> = { items: T[] };
 type ApiError = { message?: string };
 type ScoreboardTab = "participants" | "lane" | "score" | "event-rank" | "overall-rank";
+const PARTICIPANT_VIEW_ALL = "ALL";
 
 const TAB_LABELS: Record<ScoreboardTab, string> = {
   participants: "📋 출전선수등록",
@@ -83,11 +88,6 @@ const TAB_LABELS: Record<ScoreboardTab, string> = {
   score: "📝 점수 입력",
   "event-rank": "🏆 세부순위",
   "overall-rank": "📊 종합순위",
-};
-
-const KIND_LABELS: Record<string, string> = {
-  SINGLE: "개인전", DOUBLES: "2인조", TRIPLES: "3인조",
-  FOURS: "4인조", FIVES: "5인조", OVERALL: "개인종합",
 };
 
 const parseError = async (res: Response) => {
@@ -151,12 +151,6 @@ const buildBoardForGame = (board: Board, gameNumber: number, event: EventInfo | 
 const MAX_SCORE = 300;
 const MAX_PER_LANE = 4;
 
-const rankStyle = (rank: number) => {
-  if (rank === 1) return { color: "#f59e0b", fontWeight: 800 as const };
-  if (rank === 2) return { color: "#6366f1", fontWeight: 700 as const };
-  if (rank === 3) return { color: "#8b5cf6", fontWeight: 600 as const };
-  return {};
-};
 
 export default function AdminScoreboardPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -171,6 +165,7 @@ export default function AdminScoreboardPage() {
   const [participantList, setParticipantList] = useState<Participant[]>([]);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
+  const [participantViewSquadId, setParticipantViewSquadId] = useState<string>(PARTICIPANT_VIEW_ALL);
   const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [participantSearch, setParticipantSearch] = useState("");
@@ -183,9 +178,11 @@ export default function AdminScoreboardPage() {
   const [loading, setLoading] = useState(false);
   const [scoreDraft, setScoreDraft] = useState<Record<string, string>>({});
   const [selectedScoreLane, setSelectedScoreLane] = useState<number>(0);
+  const [draftRecoveredCount, setDraftRecoveredCount] = useState(0);
   const msgTimerRef = useRef<number | null>(null);
   const dirtyRef = useRef(false);
   const scoreDirtyRef = useRef<Set<string>>(new Set());
+  const scoreInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const showMsg = (msg: string, type: "success" | "error" = "success") => {
     setMessage(msg); setMessageType(type);
@@ -197,13 +194,18 @@ export default function AdminScoreboardPage() {
   useEffect(() => {
     if (!hasSquads) {
       if (selectedSquadId !== null) setSelectedSquadId(null);
+      if (participantViewSquadId !== PARTICIPANT_VIEW_ALL) setParticipantViewSquadId(PARTICIPANT_VIEW_ALL);
       return;
     }
 
     if (!selectedSquadId || !squads.some((sq) => sq.id === selectedSquadId)) {
       setSelectedSquadId(squads[0]?.id ?? null);
     }
-  }, [hasSquads, squads, selectedSquadId]);
+
+    if (participantViewSquadId !== PARTICIPANT_VIEW_ALL && !squads.some((sq) => sq.id === participantViewSquadId)) {
+      setParticipantViewSquadId(PARTICIPANT_VIEW_ALL);
+    }
+  }, [hasSquads, squads, selectedSquadId, participantViewSquadId]);
 
   const participantIds = useMemo(
     () => new Set(participantList.map((p) => p.id)),
@@ -214,6 +216,10 @@ export default function AdminScoreboardPage() {
     () => new Map(participantList.map((p) => [p.id, p])),
     [participantList],
   );
+  const participantViewIds = useMemo(() => {
+    if (!hasSquads || participantViewSquadId === PARTICIPANT_VIEW_ALL) return null;
+    return new Set(participantList.filter((p) => p.squadId === participantViewSquadId).map((p) => p.id));
+  }, [hasSquads, participantList, participantViewSquadId]);
 
   const squadParticipantIds = useMemo(() => {
     if (!hasSquads || !selectedSquadId) return participantIds;
@@ -224,6 +230,18 @@ export default function AdminScoreboardPage() {
     () => allPlayers.filter((p) => squadParticipantIds.has(p.id)),
     [allPlayers, squadParticipantIds],
   );
+
+  const participantTabPlayers = useMemo(() => {
+    const keyword = participantSearch.trim().toLowerCase();
+    return allPlayers.filter((player) => {
+      if (participantViewIds && !participantViewIds.has(player.id)) {
+        return false;
+      }
+
+      if (!keyword) return true;
+      return player.name.toLowerCase().includes(keyword) || player.affiliation.toLowerCase().includes(keyword) || String(player.number).includes(keyword);
+    });
+  }, [allPlayers, participantSearch, participantViewIds]);
 
   const playerById = useMemo(() => {
     const m = new Map<string, Player>();
@@ -252,11 +270,12 @@ export default function AdminScoreboardPage() {
   );
 
   const bundleUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/bundle`;
+  const draftStorageKey = `${tournamentId}:${divisionId}:${eventId}:game-${selectedGame}:lane-${selectedScoreLane}`;
 
   // --- API loaders ---
   const participantsUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/participants`;
 
-  const handleAddParticipant = async (playerId: string) => {
+  const handleAddParticipant = async (playerId: string, options?: { silent?: boolean }) => {
     try {
       const res = await fetch(participantsUrl, {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -265,7 +284,55 @@ export default function AdminScoreboardPage() {
       if (!res.ok) throw new Error(await parseError(res));
       setParticipantList((prev) => [...prev, { id: playerId, playerId, squadId: hasSquads ? selectedSquadId ?? undefined : undefined }]);
       return true;
-    } catch (err) { showMsg((err as Error).message || "등록 실패", "error"); return false; }
+    } catch (err) { if (!options?.silent) showMsg((err as Error).message || "등록 실패", "error"); return false; }
+  };
+
+  const handleParticipantNumberSubmit = async () => {
+    const numbers = parseParticipantNumberInput(participantNumberInput);
+    if (!numbers) {
+      showMsg("선수번호 또는 범위를 7 또는 1-30 형식으로 입력해 주세요.", "error");
+      return;
+    }
+
+    const queuedIds = new Set<string>();
+    let added = 0;
+    let alreadyRegistered = 0;
+    let missing = 0;
+    let failed = 0;
+
+    for (const number of numbers) {
+      const player = allPlayers.find((item) => item.number === number);
+      if (!player) {
+        missing += 1;
+        continue;
+      }
+
+      if (participantIds.has(player.id) || queuedIds.has(player.id)) {
+        alreadyRegistered += 1;
+        continue;
+      }
+
+      const success = await handleAddParticipant(player.id, { silent: true });
+      if (success) {
+        queuedIds.add(player.id);
+        added += 1;
+      } else {
+        failed += 1;
+      }
+    }
+
+    const messageParts: string[] = [];
+    if (added > 0) messageParts.push(`${added}명 등록`);
+    if (alreadyRegistered > 0) messageParts.push(`${alreadyRegistered}명 이미 등록됨`);
+    if (missing > 0) messageParts.push(`${missing}명 번호 없음`);
+    if (failed > 0) messageParts.push(`${failed}명 등록 실패`);
+
+    if (added > 0) {
+      setParticipantNumberInput("");
+    }
+
+    const squadLabel = hasSquads ? `${squads.find((item) => item.id === selectedSquadId)?.name ?? "현재 스쿼드"} 등록 결과` : "출전선수 등록 결과";
+    showMsg(`${squadLabel}: ${messageParts.join(", ") || "처리된 선수가 없습니다."}`, added > 0 ? "success" : "error");
   };
 
   const handleRemoveParticipant = async (playerId: string) => {
@@ -345,28 +412,40 @@ export default function AdminScoreboardPage() {
     return () => { ctrl?.abort(); };
   }, [tournamentId, divisionId, eventId]);
 
-  // Derive scoreDraft from existing eventRows — preserve user-edited (dirty) values
+  // Derive scoreDraft from existing eventRows and restore temporary drafts.
   const prevGameRef = useRef(selectedGame);
   useEffect(() => {
     const gameChanged = prevGameRef.current !== selectedGame;
     prevGameRef.current = selectedGame;
 
-    setScoreDraft((prev) => {
+    const storedDraft = readScoreDraft(draftStorageKey);
+    const restoredIds = Object.keys(storedDraft);
+
+    setScoreDraft(() => {
       const next: Record<string, string> = {};
       eventRows.forEach((row) => {
-        const v = row.gameScores?.[selectedGame - 1]?.score;
-        const serverVal = typeof v === "number" ? String(v) : "";
-        // On game change: always reset all. On poll update: keep dirty entries.
-        if (gameChanged || !scoreDirtyRef.current.has(row.playerId)) {
-          next[row.playerId] = serverVal;
-        } else {
-          next[row.playerId] = prev[row.playerId] ?? serverVal;
-        }
+        const serverValue = row.gameScores?.[selectedGame - 1]?.score;
+        const normalizedServerValue = typeof serverValue === "number" ? String(serverValue) : "";
+        next[row.playerId] = storedDraft[row.playerId] ?? normalizedServerValue;
       });
-      if (gameChanged) scoreDirtyRef.current.clear();
       return next;
     });
-  }, [selectedGame, eventRows]);
+
+    scoreDirtyRef.current = new Set(restoredIds);
+    setDraftRecoveredCount(restoredIds.length);
+
+    if (gameChanged && restoredIds.length === 0) {
+      clearScoreDraft(draftStorageKey);
+    }
+  }, [draftStorageKey, eventRows, selectedGame]);
+
+  useEffect(() => {
+    const dirtyEntries = Object.fromEntries(
+      Object.entries(scoreDraft).filter(([playerId, value]) => scoreDirtyRef.current.has(playerId) && value !== ""),
+    );
+    writeScoreDraft(draftStorageKey, dirtyEntries);
+    setDraftRecoveredCount(Object.keys(dirtyEntries).length);
+  }, [draftStorageKey, scoreDraft]);
 
   // --- Lane assignment ---
   const encodeDrag = (playerId: string, sourceLane?: number) => JSON.stringify({ playerId, sourceLane });
@@ -562,6 +641,7 @@ export default function AdminScoreboardPage() {
     const failed = results.length - saved;
     // Clear dirty flags for all players in this lane
     for (const pid of playerIds) scoreDirtyRef.current.delete(pid);
+    clearScoreDraft(draftStorageKey, playerIds);
     setLoading(false);
     if (failed > 0) showMsg(`${saved}명 저장됨, ${failed}명 실패`, "error");
     else showMsg(`Lane ${laneNum} 전체 ${saved}명 저장 완료!`);
@@ -597,6 +677,53 @@ export default function AdminScoreboardPage() {
     [lanes, scoreFilteredBoard],
   );
 
+  const activeScoreLane = selectedScoreLane || scoreActiveLanes[0] || 0;
+  const activeLaneRows = useMemo(() => {
+    const lanePlayerIds = scoreFilteredBoard[activeScoreLane] ?? [];
+    return lanePlayerIds
+      .map((pid) => scoreFilteredEventRows.find((row) => row.playerId === pid))
+      .filter((row): row is EventLeaderboardRow => row !== undefined)
+      .sort((a, b) => a.number - b.number);
+  }, [activeScoreLane, scoreFilteredBoard, scoreFilteredEventRows]);
+
+  const focusAdjacentScoreInput = (playerIds: string[], currentPlayerId: string, delta: number) => {
+    const currentIndex = playerIds.indexOf(currentPlayerId);
+    if (currentIndex < 0) return;
+    const targetPlayerId = playerIds[currentIndex + delta];
+    if (!targetPlayerId) return;
+    const input = scoreInputRefs.current[targetPlayerId];
+    input?.focus();
+    input?.select();
+  };
+
+  const resetDraftToSavedScores = () => {
+    clearScoreDraft(draftStorageKey);
+    scoreDirtyRef.current.clear();
+    setDraftRecoveredCount(0);
+    setScoreDraft(() => {
+      const next: Record<string, string> = {};
+      eventRows.forEach((row) => {
+        const saved = row.gameScores?.[selectedGame - 1]?.score;
+        next[row.playerId] = typeof saved === "number" ? String(saved) : "";
+      });
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (activeTab !== "score") return;
+    const firstTarget = activeLaneRows.find((row) => {
+      const saved = row.gameScores[selectedGame - 1]?.score;
+      return saved === null || scoreDirtyRef.current.has(row.playerId);
+    })?.playerId ?? activeLaneRows[0]?.playerId;
+    if (!firstTarget) return;
+    const timer = window.setTimeout(() => {
+      const input = scoreInputRefs.current[firstTarget];
+      input?.focus();
+      input?.select();
+    }, 30);
+    return () => window.clearTimeout(timer);
+  }, [activeLaneRows, activeTab, selectedGame]);
   const tabStyle = (tab: ScoreboardTab) => ({
     padding: "10px 18px",
     fontSize: 14,
@@ -621,11 +748,12 @@ export default function AdminScoreboardPage() {
     );
   }
 
-  const renderSquadSelector = (opts?: { onSelect?: (id: string) => void; showCount?: boolean }) => (
+  const renderSquadSelector = (opts?: { onSelect?: (id: string) => void; showCount?: boolean; selectedId?: string }) => (
     <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
       <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
       {squads.map((sq) => {
-        const isSelected = selectedSquadId === sq.id;
+        const currentSelectedId = opts?.selectedId ?? selectedSquadId ?? "";
+        const isSelected = currentSelectedId === sq.id;
         const label = opts?.showCount
           ? `${sq.name} (${participantList.filter((p) => p.squadId === sq.id).length}명)`
           : sq.name;
@@ -783,6 +911,46 @@ export default function AdminScoreboardPage() {
                 })}
               </div>
             )}
+            {hasSquads && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>목록 보기:</span>
+                  <button
+                    type="button"
+                    onClick={() => setParticipantViewSquadId(PARTICIPANT_VIEW_ALL)}
+                    style={{
+                      padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: participantViewSquadId === PARTICIPANT_VIEW_ALL ? 700 : 500,
+                      color: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "#fff" : "#475569",
+                      background: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "linear-gradient(135deg, #0f766e, #14b8a6)" : "rgba(255,255,255,0.4)",
+                      border: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "1px solid rgba(20,184,166,0.35)" : "1px solid rgba(203,213,225,0.4)",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    전체 ({allPlayers.length}명)
+                  </button>
+                  {squads.map((sq) => {
+                    const count = participantList.filter((p) => p.squadId === sq.id).length;
+                    const isSelected = participantViewSquadId === sq.id;
+                    return (
+                      <button
+                        key={`participant-view-${sq.id}`}
+                        type="button"
+                        onClick={() => setParticipantViewSquadId(sq.id)}
+                        style={{
+                          padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                          color: isSelected ? "#fff" : "#475569",
+                          background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
+                          border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                          cursor: "pointer", fontFamily: "inherit",
+                        }}
+                      >
+                        {sq.name} ({count}명)
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             {!hasSquads && (
               <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0" }}>
                 스쿼드 없이 운영하면 모든 출전선수가 동일 레인 배정에 포함됩니다. 선수가 레인 수용량을 초과하면 스쿼드를 추가하세요.
@@ -793,26 +961,19 @@ export default function AdminScoreboardPage() {
           {/* 선수번호로 빠른 등록 */}
           <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
             <input
-              type="number"
-              placeholder="선수번호 입력"
+              type="text"
+              inputMode="numeric"
+              placeholder="선수번호 또는 범위 (예: 7, 1-30)"
               value={participantNumberInput}
               onChange={(e) => setParticipantNumberInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  const num = Number(participantNumberInput);
-                  const player = allPlayers.find((p) => p.number === num);
-                  if (!player) { showMsg(`선수번호 ${num}번을 찾을 수 없습니다.`, "error"); return; }
-                  if (participantIds.has(player.id)) { showMsg(`${player.name} 선수는 이미 등록되어 있습니다.`, "error"); return; }
-                  void (async () => {
-                    if (await handleAddParticipant(player.id)) {
-                      setParticipantNumberInput("");
-                      showMsg(`${player.name} 선수가 등록되었습니다.`);
-                    }
-                  })();
+                  e.preventDefault();
+                  void handleParticipantNumberSubmit();
                 }
               }}
               style={{
-                width: 140, padding: "8px 12px", borderRadius: 8, fontSize: 14,
+                width: 240, padding: "8px 12px", borderRadius: 8, fontSize: 14,
                 background: "rgba(255,255,255,0.7)", border: "1.5px solid rgba(99,102,241,0.25)",
                 outline: "none", fontFamily: "inherit", color: "#1e293b",
               }}
@@ -836,12 +997,7 @@ export default function AdminScoreboardPage() {
 
           {/* 선수 목록 */}
           <div style={{ display: "grid", gap: 6, maxHeight: 500, overflowY: "auto" }}>
-            {allPlayers
-              .filter((p) => {
-                if (!participantSearch) return true;
-                const q = participantSearch.toLowerCase();
-                return p.name.toLowerCase().includes(q) || p.affiliation.toLowerCase().includes(q) || String(p.number).includes(q);
-              })
+            {participantTabPlayers
               .map((p) => {
                 const isRegistered = participantIds.has(p.id);
                 const participant = participantMap.get(p.id);
@@ -850,7 +1006,12 @@ export default function AdminScoreboardPage() {
                   <div
                     key={p.id}
                     onClick={() => {
-                      void (isRegistered ? handleRemoveParticipant(p.id) : handleAddParticipant(p.id));
+                      if (isRegistered) {
+                        if (!confirm(`${p.name}님을 등록해제하시겠습니까?`)) return;
+                        void handleRemoveParticipant(p.id);
+                        return;
+                      }
+                      void handleAddParticipant(p.id);
                     }}
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
@@ -1083,130 +1244,107 @@ export default function AdminScoreboardPage() {
               </div>
 
               {/* 선택된 레인의 점수 입력 패널 */}
-              {(() => {
-                const activeLane = selectedScoreLane || scoreActiveLanes[0];
-                const lanePlayerIds = scoreFilteredBoard[activeLane] ?? [];
-                const laneRows = lanePlayerIds
-                  .map((pid) => scoreFilteredEventRows.find((r) => r.playerId === pid))
-                  .filter((r): r is EventLeaderboardRow => r !== undefined)
-                  .sort((a, b) => a.number - b.number);
+              {draftRecoveredCount > 0 && (
+                <StatusBanner tone="info" style={{ marginBottom: 12 }}>
+                  임시저장된 점수 {draftRecoveredCount}건을 복원했습니다.
+                  <button
+                    type="button"
+                    onClick={resetDraftToSavedScores}
+                    style={{ marginLeft: 10, background: "none", border: "none", color: "#6366f1", fontWeight: 700, cursor: "pointer" }}
+                  >
+                    임시저장 초기화
+                  </button>
+                </StatusBanner>
+              )}
 
-                return (
-                  <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 14, padding: "18px 16px", border: "1px solid rgba(99,102,241,0.15)" }}>
-                    {/* 레인 헤더 */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <span style={{
-                          fontSize: 20, fontWeight: 800, color: "#6366f1",
-                          background: "rgba(99,102,241,0.1)", padding: "4px 14px",
-                          borderRadius: 8, border: "1px solid rgba(99,102,241,0.2)",
-                        }}>
-                          Lane {activeLane}
-                        </span>
-                        <span style={{ fontSize: 13, color: "#64748b" }}>
-                          선수 {laneRows.length}명
-                        </span>
-                        {event && event.tableShift !== 0 && selectedGame > 1 && (
-                          <GlassBadge variant="info">
-                            {selectedGame - 1}G Lane {(() => {
-                              // 이전 게임에서 어느 레인에서 왔는지 역산
-                              const shift = event.tableShift;
-                              const laneCount = event.laneEnd - event.laneStart + 1;
-                              const prevLane = ((activeLane - event.laneStart - shift) % laneCount + laneCount) % laneCount + event.laneStart;
-                              return prevLane;
-                            })()} 에서 이동
-                          </GlassBadge>
-                        )}
-                      </div>
-                      <GlassButton
-                        size="sm"
-                        onClick={() => void handleSaveAllInLane(activeLane)}
-                        disabled={loading}
-                      >
-                        💾 레인 전체 저장
-                      </GlassButton>
-                    </div>
-
-                    {/* 선수 점수 입력 rows */}
-                    <div style={{ display: "grid", gap: 10 }}>
-                      {laneRows.map((row, idx) => {
-                        const savedScore = row.gameScores[selectedGame - 1]?.score;
-                        const hasSaved = savedScore !== null && savedScore !== undefined;
-                        return (
-                          <div
-                            key={row.playerId}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "36px 1fr auto auto auto",
-                              alignItems: "center",
-                              gap: 10,
-                              padding: "12px 14px",
-                              background: hasSaved ? "rgba(34,197,94,0.06)" : "rgba(255,255,255,0.25)",
-                              borderRadius: 10,
-                              border: hasSaved
-                                ? "1px solid rgba(34,197,94,0.2)"
-                                : "1px solid rgba(255,255,255,0.3)",
-                            }}
-                          >
-                            {/* 번호 */}
-                            <span style={{
-                              textAlign: "center", fontWeight: 800, fontSize: 15,
-                              color: "#6366f1", background: "rgba(99,102,241,0.1)",
-                              borderRadius: 6, padding: "2px 0",
-                            }}>
-                              {row.number}
-                            </span>
-                            {/* 이름 + 소속 */}
-                            <div>
-                              <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{row.name}</p>
-                              <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{row.region} · {row.affiliation}</p>
-                            </div>
-                            {/* 기존 점수 뱃지 */}
-                            {hasSaved ? (
-                              <GlassBadge variant="success">{savedScore}점 ✓</GlassBadge>
-                            ) : (
-                              <span style={{ fontSize: 12, color: "#cbd5e1" }}>미입력</span>
-                            )}
-                            {/* 점수 입력 */}
-                            <input
-                              type="number"
-                              min={0}
-                              max={MAX_SCORE}
-                              step={1}
-                              value={scoreDraft[row.playerId] ?? ""}
-                              onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  scoreDirtyRef.current.delete(row.playerId);
-                                  void handleSaveScore(row.playerId);
-                                  // 다음 선수로 포커스 이동
-                                  const inputs = document.querySelectorAll<HTMLInputElement>("input[type=number]");
-                                  const currentIdx = Array.from(inputs).findIndex((el) => el === e.currentTarget);
-                                  inputs[currentIdx + 1]?.focus();
-                                }
-                              }}
-                              autoFocus={idx === 0}
-                              placeholder="0~300"
-                              style={{
-                                width: 80, padding: "8px 10px", borderRadius: 8,
-                                fontSize: 15, textAlign: "center", fontWeight: 600,
-                                background: "rgba(255,255,255,0.7)",
-                                border: "1.5px solid rgba(99,102,241,0.25)",
-                                outline: "none", fontFamily: "inherit", color: "#1e293b",
-                              }}
-                            />
-                            {/* 개별 저장 */}
-                            <GlassButton size="sm" onClick={() => void handleSaveScore(row.playerId)}>
-                              저장
-                            </GlassButton>
-                          </div>
-                        );
-                      })}
-                    </div>
+              <div style={{ background: "rgba(255,255,255,0.12)", borderRadius: 14, padding: "18px 16px", border: "1px solid rgba(99,102,241,0.15)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: "#6366f1", background: "rgba(99,102,241,0.1)", padding: "4px 14px", borderRadius: 8, border: "1px solid rgba(99,102,241,0.2)" }}>
+                      Lane {activeScoreLane}
+                    </span>
+                    <span style={{ fontSize: 13, color: "#64748b" }}>선수 {activeLaneRows.length}명</span>
+                    {event && event.tableShift !== 0 && selectedGame > 1 && (
+                      <GlassBadge variant="info">
+                        {selectedGame - 1}G Lane {(() => {
+                          const shift = event.tableShift;
+                          const laneCount = event.laneEnd - event.laneStart + 1;
+                          const prevLane = ((activeScoreLane - event.laneStart - shift) % laneCount + laneCount) % laneCount + event.laneStart;
+                          return prevLane;
+                        })()} 에서 이동
+                      </GlassBadge>
+                    )}
                   </div>
-                );
-              })()}
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <GlassButton size="sm" variant="secondary" onClick={resetDraftToSavedScores}>초안 초기화</GlassButton>
+                    <GlassButton size="sm" onClick={() => void handleSaveAllInLane(activeScoreLane)} disabled={loading}>💾 레인 전체 저장</GlassButton>
+                  </div>
+                </div>
 
+                <div style={{ display: "grid", gap: 10 }}>
+                  {activeLaneRows.map((row) => {
+                    const savedScore = row.gameScores[selectedGame - 1]?.score;
+                    const hasSaved = savedScore !== null && savedScore !== undefined;
+                    const lanePlayerIds = activeLaneRows.map((laneRow) => laneRow.playerId);
+                    return (
+                      <div
+                        key={row.playerId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "36px 1fr auto auto auto",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "12px 14px",
+                          background: hasSaved ? "rgba(34,197,94,0.06)" : "rgba(255,255,255,0.25)",
+                          borderRadius: 10,
+                          border: hasSaved ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(255,255,255,0.3)",
+                        }}
+                      >
+                        <span style={{ textAlign: "center", fontWeight: 800, fontSize: 15, color: "#6366f1", background: "rgba(99,102,241,0.1)", borderRadius: 6, padding: "2px 0" }}>{row.number}</span>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{row.name}</p>
+                          <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{row.region} · {row.affiliation}</p>
+                        </div>
+                        {hasSaved ? <GlassBadge variant="success">{savedScore}점 ✓</GlassBadge> : <span style={{ fontSize: 12, color: "#cbd5e1" }}>미입력</span>}
+                        <input
+                          ref={(node) => {
+                            scoreInputRefs.current[row.playerId] = node;
+                          }}
+                          type="text"
+                          min={0}
+                          max={MAX_SCORE}
+                          step={1}
+                          value={scoreDraft[row.playerId] ?? ""}
+                          onChange={(e) => {
+                            scoreDirtyRef.current.add(row.playerId);
+                            setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value }));
+                          }}
+                          onFocus={(e) => e.currentTarget.select()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              void handleSaveScore(row.playerId).then(() => focusAdjacentScoreInput(lanePlayerIds, row.playerId, 1));
+                              return;
+                            }
+                            if (e.key === "ArrowDown") {
+                              e.preventDefault();
+                              focusAdjacentScoreInput(lanePlayerIds, row.playerId, 1);
+                              return;
+                            }
+                            if (e.key === "ArrowUp") {
+                              e.preventDefault();
+                              focusAdjacentScoreInput(lanePlayerIds, row.playerId, -1);
+                            }
+                          }}
+                          placeholder="0~300"
+                          style={{ width: 80, padding: "8px 10px", borderRadius: 8, fontSize: 15, textAlign: "center", fontWeight: 600, background: "rgba(255,255,255,0.7)", border: "1.5px solid rgba(99,102,241,0.25)", outline: "none", fontFamily: "inherit", color: "#1e293b" }}
+                        />
+                        <GlassButton size="sm" onClick={() => void handleSaveScore(row.playerId)}>저장</GlassButton>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
               {/* 미배정 선수 (하단 접이식) */}
               {scoreFilteredEventRows.filter((row) => getLaneForPlayerInGameBoard(currentBoard, row.playerId) === 0).length > 0 && (
                 <div style={{ marginTop: 12, background: "rgba(241,245,249,0.3)", borderRadius: 10, padding: "12px 14px", border: "1px dashed rgba(203,213,225,0.5)" }}>
@@ -1219,7 +1357,7 @@ export default function AdminScoreboardPage() {
                         <span style={{ fontSize: 13, color: "#94a3b8", minWidth: 28 }}>{row.number}</span>
                         <span style={{ flex: 1, fontSize: 13, color: "#94a3b8" }}>{row.name}</span>
                         <input
-                          type="number" min={0} max={MAX_SCORE}
+                          type="text" min={0} max={MAX_SCORE}
                           value={scoreDraft[row.playerId] ?? ""}
                           onChange={(e) => { scoreDirtyRef.current.add(row.playerId); setScoreDraft((prev) => ({ ...prev, [row.playerId]: e.target.value })); }}
                           onKeyDown={(e) => { if (e.key === "Enter") { scoreDirtyRef.current.delete(row.playerId); void handleSaveScore(row.playerId); } }}
@@ -1241,33 +1379,7 @@ export default function AdminScoreboardPage() {
       {activeTab === "event-rank" && (
         <GlassCard>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>세부종목 순위</h2>
-          <GlassTable
-            headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차"]}
-            headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center", "center", "center", "center", "center", "center"]}
-            rowCount={eventRows.length}
-            emptyMessage="순위 데이터가 없습니다."
-          >
-            {eventRows.map((row) => (
-              <tr key={row.playerId} {...glassTrHoverProps}>
-                <td style={{ ...glassTdStyle, ...rankStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
-                <td style={{ ...glassTdStyle, color: "#64748b", textAlign: "center" }}>{row.region}</td>
-                <td style={glassTdStyle}>{row.affiliation}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-                <td
-                  style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
-                  onClick={() => setSelectedPlayer(row.name)}
-                >
-                  {row.name}
-                </td>
-                {row.gameScores.map((g) => (
-                  <td key={g.gameNumber} style={{ ...glassTdStyle, textAlign: "center" }}>{g.score ?? ""}</td>
-                ))}
-                <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700 }}>{row.total}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center", color: "#6366f1", fontWeight: 600 }}>{row.average}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.pinDiff}</td>
-              </tr>
-            ))}
-          </GlassTable>
+          <RankingTable rows={eventRows} emptyMessage="순위 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} />
         </GlassCard>
       )}
 
@@ -1275,34 +1387,9 @@ export default function AdminScoreboardPage() {
       {activeTab === "overall-rank" && (
         <GlassCard>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>전체 종합순위</h2>
-          <GlassTable
-            headers={["순위", "시도", "소속", "번호", "성명", "합계", "평균", "핀차", "게임수"]}
-            headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center"]}
-            rowCount={overallRows.length}
-            emptyMessage="종합점수 데이터가 없습니다."
-          >
-            {overallRows.map((row) => (
-              <tr key={row.playerId} {...glassTrHoverProps}>
-                <td style={{ ...glassTdStyle, ...rankStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
-                <td style={{ ...glassTdStyle, color: "#64748b", textAlign: "center" }}>{row.region}</td>
-                <td style={glassTdStyle}>{row.affiliation}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-                <td
-                  style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
-                  onClick={() => setSelectedPlayer(row.name)}
-                >
-                  {row.name}
-                </td>
-                <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700 }}>{row.total}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center", color: "#6366f1", fontWeight: 600 }}>{row.average}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.pinDiff}</td>
-                <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameCount}</td>
-              </tr>
-            ))}
-          </GlassTable>
+          <RankingTable rows={overallRows} emptyMessage="종합점수 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} showOverallOnly />
         </GlassCard>
       )}
-
       {selectedPlayer && (
         <PlayerProfileModal
           playerName={selectedPlayer}
@@ -1312,3 +1399,30 @@ export default function AdminScoreboardPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

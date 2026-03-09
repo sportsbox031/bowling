@@ -176,7 +176,7 @@ export async function GET(req: NextRequest) {
           const playerScores = allScores.filter((s) => playerIdsInDiv.includes(s.playerId));
           if (playerScores.length === 0) continue;
 
-          const leaderboard = buildEventLeaderboard({ players: allDivPlayers, scores: allScores });
+          const leaderboard = buildEventLeaderboard({ players: allDivPlayers, scores: allScores, gameCount: eData.gameCount ?? 1 });
           const playerRow = leaderboard.rows.find((r) => playerIdsInDiv.includes(r.playerId));
           if (!playerRow) continue;
 
@@ -281,3 +281,4 @@ export async function GET(req: NextRequest) {
 
   return jsonCached(result, 300);
 }
+

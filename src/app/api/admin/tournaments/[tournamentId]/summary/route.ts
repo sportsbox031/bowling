@@ -91,7 +91,7 @@ export async function GET(
         };
       });
 
-      const leaderboard = buildEventLeaderboard({ players, scores });
+      const leaderboard = buildEventLeaderboard({ players, scores, gameCount: event.gameCount ?? 1 });
       const top4 = leaderboard.rows
         .filter((r) => r.total > 0)
         .slice(0, 4)
@@ -134,3 +134,4 @@ export async function GET(
   setCache(cacheKey, result, 15000);
   return NextResponse.json(result);
 }
+

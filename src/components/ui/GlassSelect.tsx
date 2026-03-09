@@ -1,4 +1,4 @@
-import { CSSProperties, SelectHTMLAttributes } from "react";
+import { CSSProperties, FocusEvent, SelectHTMLAttributes } from "react";
 
 type GlassSelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
@@ -33,20 +33,21 @@ const labelStyle: CSSProperties = {
   marginBottom: 6,
 };
 
-export default function GlassSelect({ label, style, children, ...rest }: GlassSelectProps) {
+export default function GlassSelect({ label, style, children, onFocus, onBlur, ...rest }: GlassSelectProps) {
+  const handleFocus = (event: FocusEvent<HTMLSelectElement>) => {
+    event.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.6)";
+    event.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
+    onFocus?.(event);
+  };
+
+  const handleBlur = (event: FocusEvent<HTMLSelectElement>) => {
+    event.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
+    event.currentTarget.style.boxShadow = "none";
+    onBlur?.(event);
+  };
+
   const select = (
-    <select
-      style={{ ...selectStyle, ...style }}
-      onFocus={(e) => {
-        e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.6)";
-        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.15)";
-      }}
-      onBlur={(e) => {
-        e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.4)";
-        e.currentTarget.style.boxShadow = "none";
-      }}
-      {...rest}
-    >
+    <select style={{ ...selectStyle, ...style }} onFocus={handleFocus} onBlur={handleBlur} {...rest}>
       {children}
     </select>
   );

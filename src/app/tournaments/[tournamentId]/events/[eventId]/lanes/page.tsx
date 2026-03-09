@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
-import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import { GlassBadge, GlassCard, GlassInput, GlassTable, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import PrintModeBar from "@/components/common/PrintModeBar";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { cachedFetch } from "@/lib/client-cache";
+import { KIND_LABELS } from "@/lib/constants";
+import { chunkItems } from "@/lib/print-layout";
 
 type AssignmentRow = {
   playerId: string;
@@ -39,14 +42,7 @@ type AssignmentResponse = {
   event?: EventDetail;
 };
 
-const KIND_LABELS: Record<string, string> = {
-  SINGLE: "개인전",
-  DOUBLES: "2인조",
-  TRIPLES: "3인조",
-  FOURS: "4인조",
-  FIVES: "5인조",
-  OVERALL: "개인종합",
-};
+const PRINT_LANES_PER_PAGE = 6;
 
 const LaneAssignmentPage = () => {
   const { tournamentId, eventId } = useParams<{ tournamentId: string; eventId: string }>();
@@ -60,6 +56,7 @@ const LaneAssignmentPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedGame, setSelectedGame] = useState(1);
+  const [printMode, setPrintMode] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -81,15 +78,12 @@ const LaneAssignmentPage = () => {
       setEventInfo(data.event ?? null);
       setMessage("");
 
-      // 스쿼드가 있는데 아직 선택 안 된 경우 첫 번째 자동 선택
       if (data.squads.length > 0 && !selectedSquadIdRef.current) {
         setSelectedSquadId(data.squads[0].id);
       }
 
       if (!tournamentTitle) {
-        const detail = await cachedFetch<{ tournament?: { title?: string } }>(
-          `/api/public/tournaments/${tournamentId}`, 600000,
-        );
+        const detail = await cachedFetch<{ tournament?: { title?: string } }>(`/api/public/tournaments/${tournamentId}`, 600000);
         setTournamentTitle(detail.tournament?.title ?? "");
       }
     } catch (error) {
@@ -103,7 +97,6 @@ const LaneAssignmentPage = () => {
     load();
   }, [tournamentId, eventId, divisionId]);
 
-  // 스쿼드 변경 시 재로드
   useEffect(() => {
     if (hasSquads && selectedSquadId) {
       load();
@@ -138,7 +131,6 @@ const LaneAssignmentPage = () => {
     return Array.from(grouped.entries()).sort((a, b) => a[0] - b[0]);
   }, [assignments, selectedGame, laneStart, laneEnd]);
 
-  // 검색: 매칭되는 선수가 있는 레인만 표시
   const searchResult = useMemo(() => {
     const kw = searchKeyword.trim().toLowerCase();
     if (!kw) return { filtered: laneGroups, matchedPlayerIds: new Set<string>() };
@@ -175,317 +167,231 @@ const LaneAssignmentPage = () => {
     return ids.size;
   }, [assignments]);
 
+  const printPages = useMemo(() => chunkItems(searchResult.filtered, PRINT_LANES_PER_PAGE), [searchResult.filtered]);
+
   return (
-    <main>
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: 8, display: "flex", gap: 12 }}>
-        <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
-          {tournamentTitle || "대회"} 로 돌아가기
-        </Link>
-        <span style={{ color: "#cbd5e1", fontSize: 13 }}>|</span>
-        <Link
-          href={`/tournaments/${tournamentId}/events/${eventId}?divisionId=${divisionId}`}
-          style={{ color: "#94a3b8", fontSize: 13 }}
-        >
-          성적표 보기
-        </Link>
-      </div>
+    <main className={printMode ? "print-mode" : undefined}>
+      <div className="screen-only">
+        <div style={{ marginBottom: 8, display: "flex", gap: 12 }}>
+          <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
+            {tournamentTitle || "대회"} 로 돌아가기
+          </Link>
+          <span style={{ color: "#cbd5e1", fontSize: 13 }}>|</span>
+          <Link href={`/tournaments/${tournamentId}/events/${eventId}?divisionId=${divisionId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
+            성적표 보기
+          </Link>
+        </div>
 
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 800,
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            marginBottom: 8,
-          }}
-        >
-          {eventInfo?.title ?? "세부종목"} 레인 배정표
-          {eventInfo?.kind ? ` (${KIND_LABELS[eventInfo.kind] ?? eventInfo.kind})` : ""}
-        </h1>
-        {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
-      </div>
+        <div style={{ marginBottom: 24 }}>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              marginBottom: 8,
+            }}
+          >
+            {eventInfo?.title ?? "세부종목"} 레인 배정표
+            {eventInfo?.kind ? ` (${KIND_LABELS[eventInfo.kind] ?? eventInfo.kind})` : ""}
+          </h1>
+          {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
+        </div>
 
-      {/* Squad Tabs */}
-      {hasSquads && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-          {squads.map((sq) => {
-            const isSelected = selectedSquadId === sq.id;
-            return (
+        <PrintModeBar enabled={printMode} onToggle={() => setPrintMode((prev: boolean) => !prev)} />
+
+        {hasSquads && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+            {squads.map((sq) => {
+              const isSelected = selectedSquadId === sq.id;
+              return (
+                <button
+                  key={sq.id}
+                  onClick={() => setSelectedSquadId(sq.id)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 10,
+                    border: isSelected ? "1px solid rgba(139, 92, 246, 0.4)" : "1px solid rgba(255, 255, 255, 0.3)",
+                    background: isSelected
+                      ? "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15))"
+                      : "rgba(255, 255, 255, 0.15)",
+                    color: isSelected ? "#7c3aed" : "#64748b",
+                    fontWeight: isSelected ? 700 : 500,
+                    fontSize: 14,
+                    cursor: "pointer",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  {sq.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <GlassCard variant="strong" style={{ marginBottom: 20, padding: "16px 20px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 18 }}>🎳</span>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e293b" }}>경기 규칙</h3>
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(99, 102, 241, 0.06)", borderRadius: 10, border: "1px solid rgba(99, 102, 241, 0.1)" }}>
+              <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>레인</span>
+              <span style={{ fontSize: 14, color: "#334155" }}>{laneStart}번 ~ {laneEnd}번 (총 {totalLanes}레인)</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(99, 102, 241, 0.06)", borderRadius: 10, border: "1px solid rgba(99, 102, 241, 0.1)" }}>
+              <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>경기 수</span>
+              <span style={{ fontSize: 14, color: "#334155" }}>{gameCount}게임</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(99, 102, 241, 0.06)", borderRadius: 10, border: "1px solid rgba(99, 102, 241, 0.1)" }}>
+              <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>참가 선수</span>
+              <span style={{ fontSize: 14, color: "#334155" }}>{totalPlayers}명</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: tableShift !== 0 ? "rgba(245, 158, 11, 0.08)" : "rgba(99, 102, 241, 0.06)", borderRadius: 10, border: `1px solid ${tableShift !== 0 ? "rgba(245, 158, 11, 0.15)" : "rgba(99, 102, 241, 0.1)"}` }}>
+              <span style={{ fontSize: 14, color: tableShift !== 0 ? "#d97706" : "#6366f1", fontWeight: 700, minWidth: 60 }}>Table 이동</span>
+              <span style={{ fontSize: 14, color: "#334155", fontWeight: 600 }}>{shiftDescription}</span>
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard variant="strong" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 16 }}>🔍</span>
+            <GlassInput value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder="선수명, 번호, 소속, 시도로 검색..." style={{ flex: 1 }} />
+            {searchKeyword && (
+              <button onClick={() => setSearchKeyword("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", fontSize: 18, lineHeight: 1, padding: "0 4px" }}>
+                ✕
+              </button>
+            )}
+          </div>
+          {searchKeyword && <p style={{ margin: "8px 0 0", fontSize: 13, color: "#6366f1" }}>&quot;{searchKeyword}&quot; 검색 결과: {searchResult.matchedPlayerIds.size}명 ({searchResult.filtered.length}레인)</p>}
+        </GlassCard>
+
+        {message && <GlassCard variant="subtle" style={{ marginBottom: 16, color: "#ef4444", padding: "12px 16px" }}>{message}</GlassCard>}
+
+        {gameNumbers.length > 0 && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+            {gameNumbers.map((g) => (
               <button
-                key={sq.id}
-                onClick={() => setSelectedSquadId(sq.id)}
+                key={g}
+                onClick={() => setSelectedGame(g)}
                 style={{
                   padding: "8px 16px",
                   borderRadius: 10,
-                  border: isSelected ? "1px solid rgba(139, 92, 246, 0.4)" : "1px solid rgba(255, 255, 255, 0.3)",
-                  background: isSelected
-                    ? "linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15))"
-                    : "rgba(255, 255, 255, 0.15)",
-                  color: isSelected ? "#7c3aed" : "#64748b",
-                  fontWeight: isSelected ? 700 : 500,
+                  border: selectedGame === g ? "1px solid rgba(99, 102, 241, 0.4)" : "1px solid rgba(255, 255, 255, 0.3)",
+                  background: selectedGame === g ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))" : "rgba(255, 255, 255, 0.15)",
+                  color: selectedGame === g ? "#6366f1" : "#64748b",
+                  fontWeight: selectedGame === g ? 700 : 500,
                   fontSize: 14,
                   cursor: "pointer",
                   backdropFilter: "blur(8px)",
                 }}
               >
-                {sq.name}
+                {g}게임
               </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Table Shift Rule */}
-      <GlassCard variant="strong" style={{ marginBottom: 20, padding: "16px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <span style={{ fontSize: 18 }}>&#x1F3B3;</span>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e293b" }}>경기 규칙</h3>
-        </div>
-        <div style={{ display: "grid", gap: 8 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 14px",
-              background: "rgba(99, 102, 241, 0.06)",
-              borderRadius: 10,
-              border: "1px solid rgba(99, 102, 241, 0.1)",
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>레인</span>
-            <span style={{ fontSize: 14, color: "#334155" }}>
-              {laneStart}번 ~ {laneEnd}번 (총 {totalLanes}레인)
-            </span>
+            ))}
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 14px",
-              background: "rgba(99, 102, 241, 0.06)",
-              borderRadius: 10,
-              border: "1px solid rgba(99, 102, 241, 0.1)",
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>경기 수</span>
-            <span style={{ fontSize: 14, color: "#334155" }}>{gameCount}게임</span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 14px",
-              background: "rgba(99, 102, 241, 0.06)",
-              borderRadius: 10,
-              border: "1px solid rgba(99, 102, 241, 0.1)",
-            }}
-          >
-            <span style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, minWidth: 60 }}>참가 선수</span>
-            <span style={{ fontSize: 14, color: "#334155" }}>{totalPlayers}명</span>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "10px 14px",
-              background: tableShift !== 0 ? "rgba(245, 158, 11, 0.08)" : "rgba(99, 102, 241, 0.06)",
-              borderRadius: 10,
-              border: `1px solid ${tableShift !== 0 ? "rgba(245, 158, 11, 0.15)" : "rgba(99, 102, 241, 0.1)"}`,
-            }}
-          >
-            <span style={{ fontSize: 14, color: tableShift !== 0 ? "#d97706" : "#6366f1", fontWeight: 700, minWidth: 60 }}>
-              Table 이동
-            </span>
-            <span style={{ fontSize: 14, color: "#334155", fontWeight: 600 }}>
-              {shiftDescription}
-            </span>
-          </div>
-          {tableShift !== 0 && (
-            <div
-              style={{
-                padding: "10px 14px",
-                background: "rgba(245, 158, 11, 0.05)",
-                borderRadius: 10,
-                border: "1px solid rgba(245, 158, 11, 0.1)",
-              }}
-            >
-              <p style={{ margin: 0, fontSize: 13, color: "#92400e", lineHeight: 1.6 }}>
-                {gameNumbers.map((g) => {
-                  if (g === 1) return null;
-                  const direction = tableShift > 0 ? "오른쪽" : "왼쪽";
-                  const moved = Math.abs(tableShift) * (g - 1);
-                  return (
-                    <span key={g} style={{ display: "block" }}>
-                      {g - 1}게임 종료 후 {direction}으로 {Math.abs(tableShift)}레인 이동 (1게임 대비 총 {moved}레인 이동)
-                    </span>
-                  );
-                })}
-              </p>
-            </div>
-          )}
-        </div>
-      </GlassCard>
-
-      {/* Search */}
-      <GlassCard variant="strong" style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16 }}>&#x1F50D;</span>
-          <GlassInput
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="선수명, 번호, 소속, 시도로 검색..."
-            style={{ flex: 1 }}
-          />
-          {searchKeyword && (
-            <button
-              onClick={() => setSearchKeyword("")}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#94a3b8",
-                fontSize: 18,
-                lineHeight: 1,
-                padding: "0 4px",
-              }}
-            >
-              &#x2715;
-            </button>
-          )}
-        </div>
-        {searchKeyword && (
-          <p style={{ margin: "8px 0 0", fontSize: 13, color: "#6366f1" }}>
-            &quot;{searchKeyword}&quot; 검색 결과: {searchResult.matchedPlayerIds.size}명 ({searchResult.filtered.length}레인)
-          </p>
         )}
-      </GlassCard>
 
-      {message && (
-        <GlassCard variant="subtle" style={{ marginBottom: 16, color: "#ef4444", padding: "12px 16px" }}>
-          {message}
-        </GlassCard>
-      )}
+        {assignments.length === 0 && !loading ? (
+          <GlassCard variant="subtle" style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>레인 배정이 아직 되지 않았습니다.</GlassCard>
+        ) : (
+          <GlassTable headers={["레인", "번호", "성명", "소속", "시도"]} headerAligns={["center", "center", "left", "left", "center"]} rowCount={searchResult.filtered.reduce((acc, [, players]) => acc + Math.max(players.length, 1), 0)} emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "배정된 선수가 없습니다."}>
+            {searchResult.filtered.map(([lane, players]) => {
+              if (players.length === 0) {
+                return (
+                  <tr key={`lane-${lane}`} {...glassTrHoverProps}>
+                    <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700, color: "#6366f1", background: "rgba(99, 102, 241, 0.04)" }}>{lane}</td>
+                    <td style={{ ...glassTdStyle, textAlign: "center", color: "#cbd5e1" }} colSpan={4}>-</td>
+                  </tr>
+                );
+              }
 
-      {/* Game Tabs */}
-      {gameNumbers.length > 0 && (
-        <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
-          {gameNumbers.map((g) => (
-            <button
-              key={g}
-              onClick={() => setSelectedGame(g)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 10,
-                border: selectedGame === g ? "1px solid rgba(99, 102, 241, 0.4)" : "1px solid rgba(255, 255, 255, 0.3)",
-                background: selectedGame === g
-                  ? "linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.15))"
-                  : "rgba(255, 255, 255, 0.15)",
-                color: selectedGame === g ? "#6366f1" : "#64748b",
-                fontWeight: selectedGame === g ? 700 : 500,
-                fontSize: 14,
-                cursor: "pointer",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              {g}게임
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Lane Assignment Table */}
-      {assignments.length === 0 && !loading ? (
-        <GlassCard variant="subtle" style={{ padding: "3rem", textAlign: "center", color: "#94a3b8" }}>
-          레인 배정이 아직 되지 않았습니다.
-        </GlassCard>
-      ) : (
-        <GlassTable
-          headers={["레인", "번호", "성명", "소속", "시도"]}
-          headerAligns={["center", "center", "left", "left", "center"]}
-          rowCount={searchResult.filtered.reduce((acc, [, players]) => acc + Math.max(players.length, 1), 0)}
-          emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "배정된 선수가 없습니다."}
-        >
-          {searchResult.filtered.map(([lane, players]) => {
-            if (players.length === 0) {
-              return (
-                <tr key={`lane-${lane}`} {...glassTrHoverProps}>
-                  <td
-                    style={{
-                      ...glassTdStyle,
-                      textAlign: "center",
-                      fontWeight: 700,
-                      color: "#6366f1",
-                      background: "rgba(99, 102, 241, 0.04)",
-                    }}
-                  >
-                    {lane}
-                  </td>
-                  <td style={{ ...glassTdStyle, textAlign: "center", color: "#cbd5e1" }} colSpan={4}>
-                    -
-                  </td>
+              return players.map((player, idx) => (
+                <tr key={`${lane}-${player.playerId}`} {...glassTrHoverProps} style={idx === 0 ? { borderTop: "2px solid rgba(99, 102, 241, 0.12)" } : undefined}>
+                  {idx === 0 ? (
+                    <td rowSpan={players.length} style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700, fontSize: 16, color: "#6366f1", background: "rgba(99, 102, 241, 0.04)", verticalAlign: "middle" }}>{lane}</td>
+                  ) : null}
+                  {(() => {
+                    const isMatch = searchKeyword && searchResult.matchedPlayerIds.has(player.playerId);
+                    const highlight = isMatch ? { background: "rgba(99, 102, 241, 0.1)", fontWeight: 700 as const } : {};
+                    return (
+                      <>
+                        <td style={{ ...glassTdStyle, textAlign: "center", ...highlight }}>{player.playerNumber}</td>
+                        <td style={{ ...glassTdStyle, fontWeight: 600, ...highlight, color: "#6366f1", cursor: "pointer" }} onClick={() => setSelectedPlayer(player.playerName)}>{player.playerName}</td>
+                        <td style={{ ...glassTdStyle, ...highlight }}>{player.affiliation}</td>
+                        <td style={{ ...glassTdStyle, textAlign: "center", color: isMatch ? "#6366f1" : "#64748b", ...highlight }}>{player.region}</td>
+                      </>
+                    );
+                  })()}
                 </tr>
-              );
-            }
+              ));
+            })}
+          </GlassTable>
+        )}
+      </div>
 
-            return players.map((player, idx) => (
-              <tr
-                key={`${lane}-${player.playerId}`}
-                {...glassTrHoverProps}
-                style={idx === 0 ? { borderTop: "2px solid rgba(99, 102, 241, 0.12)" } : undefined}
-              >
-                {idx === 0 ? (
-                  <td
-                    rowSpan={players.length}
-                    style={{
-                      ...glassTdStyle,
-                      textAlign: "center",
-                      fontWeight: 700,
-                      fontSize: 16,
-                      color: "#6366f1",
-                      background: "rgba(99, 102, 241, 0.04)",
-                      verticalAlign: "middle",
-                    }}
-                  >
-                    {lane}
-                  </td>
-                ) : null}
-                {(() => {
-                  const isMatch = searchKeyword && searchResult.matchedPlayerIds.has(player.playerId);
-                  const highlight = isMatch ? { background: "rgba(99, 102, 241, 0.1)", fontWeight: 700 as const } : {};
-                  return (
-                    <>
-                      <td style={{ ...glassTdStyle, textAlign: "center", ...highlight }}>{player.playerNumber}</td>
-                      <td
-                        style={{ ...glassTdStyle, fontWeight: 600, ...highlight, color: isMatch ? "#6366f1" : "#6366f1", cursor: "pointer" }}
-                        onClick={() => setSelectedPlayer(player.playerName)}
-                      >
-                        {player.playerName}
-                      </td>
-                      <td style={{ ...glassTdStyle, ...highlight }}>{player.affiliation}</td>
-                      <td style={{ ...glassTdStyle, textAlign: "center", color: isMatch ? "#6366f1" : "#64748b", ...highlight }}>{player.region}</td>
-                    </>
-                  );
-                })()}
-              </tr>
-            ));
-          })}
-        </GlassTable>
-      )}
+      <div className="print-only">
+        {printPages.length === 0 ? (
+          <section className="print-page">
+            <h1 className="print-page-title">{tournamentTitle || "대회"}</h1>
+            <p className="print-page-subtitle">{eventInfo?.title ?? "세부종목"} 레인 배정표</p>
+            <p style={{ fontSize: 12 }}>출력할 레인 배정 데이터가 없습니다.</p>
+          </section>
+        ) : (
+          printPages.map((pageLanes, pageIndex) => (
+            <section className="print-page" key={`lane-print-${pageIndex}`}>
+              <div className="print-header-block">
+                <h1 className="print-page-title">{tournamentTitle || "대회"}</h1>
+                <p className="print-page-subtitle">
+                  {eventInfo?.title ?? "세부종목"} 레인 배정표
+                  {eventInfo?.kind ? ` (${KIND_LABELS[eventInfo.kind] ?? eventInfo.kind})` : ""}
+                </p>
+                <p className="print-page-meta">
+                  {selectedGame}게임
+                  {hasSquads && selectedSquadId ? ` · ${squads.find((sq) => sq.id === selectedSquadId)?.name ?? ""}` : ""}
+                  {printPages.length > 1 ? ` · ${pageIndex + 1}/${printPages.length} 페이지` : ""}
+                </p>
+              </div>
 
-      {selectedPlayer && (
-        <PlayerProfileModal
-          playerName={selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
-        />
-      )}
+              <div className="lane-print-grid">
+                {pageLanes.map(([lane, players]) => (
+                  <section className="lane-print-card" key={`print-lane-${lane}`}>
+                    <div className="lane-print-title">Lane {lane}</div>
+                    {players.length === 0 ? (
+                      <p className="lane-print-empty">배정 선수 없음</p>
+                    ) : (
+                      <table className="print-table lane-print-table">
+                        <thead>
+                          <tr>
+                            <th>번호</th>
+                            <th>성명</th>
+                            <th>소속</th>
+                            <th>시도</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {players.map((player) => (
+                            <tr key={player.playerId}>
+                              <td>{player.playerNumber}</td>
+                              <td>{player.playerName}</td>
+                              <td>{player.affiliation}</td>
+                              <td>{player.region}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </div>
+
+      {selectedPlayer && <PlayerProfileModal playerName={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
     </main>
   );
 };

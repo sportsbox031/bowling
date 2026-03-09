@@ -1,11 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { GlassCard, GlassTable, GlassBadge, GlassInput, glassTdStyle, glassTrHoverProps } from "@/components/ui";
+import { GlassBadge, GlassCard } from "@/components/ui";
+import PageTitle from "@/components/common/PageTitle";
+import PrintModeBar from "@/components/common/PrintModeBar";
+import SearchField from "@/components/common/SearchField";
+import StatusBanner from "@/components/common/StatusBanner";
+import RankingTable from "@/components/scoreboard/RankingTable";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { cachedFetch } from "@/lib/client-cache";
+import { KIND_LABELS } from "@/lib/constants";
+import { chunkItems } from "@/lib/print-layout";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventRow = {
@@ -47,21 +54,7 @@ type TournamentDetailResponse = {
   eventsByDivision: { divisionId: string; events: EventDetail[] }[];
 };
 
-const KIND_LABELS: Record<string, string> = {
-  SINGLE: "개인전",
-  DOUBLES: "2인조",
-  TRIPLES: "3인조",
-  FOURS: "4인조",
-  FIVES: "5인조",
-  OVERALL: "개인종합",
-};
-
-const rankStyle = (rank: number) => {
-  if (rank === 1) return { color: "#f59e0b", fontWeight: 800 as const, fontSize: 15 };
-  if (rank === 2) return { color: "#6366f1", fontWeight: 700 as const };
-  if (rank === 3) return { color: "#8b5cf6", fontWeight: 600 as const };
-  return {};
-};
+const PRINT_ROWS_PER_PAGE = 24;
 
 const EventScoreBoardPage = () => {
   const { tournamentId, eventId } = useParams<{ tournamentId: string; eventId: string }>();
@@ -76,6 +69,7 @@ const EventScoreBoardPage = () => {
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [printMode, setPrintMode] = useState(false);
 
   const load = async () => {
     if (!tournamentId || !eventId) return;
@@ -112,11 +106,6 @@ const EventScoreBoardPage = () => {
     return fallback?.title ?? "";
   }, [eventInfo, detail?.eventsByDivision, divisionId, eventId]);
 
-  const kindLabel = useMemo(() => {
-    if (eventInfo) return KIND_LABELS[eventInfo.kind] ?? eventInfo.kind;
-    return "";
-  }, [eventInfo]);
-
   const filteredRows = useMemo(() => {
     const kw = searchKeyword.trim().toLowerCase();
     if (!kw) return rows;
@@ -128,154 +117,127 @@ const EventScoreBoardPage = () => {
     );
   }, [rows, searchKeyword]);
 
+  const divisionTitle = detail?.divisions.find((division) => division.id === divisionId)?.title ?? "";
+  const printPages = useMemo(() => chunkItems(filteredRows, PRINT_ROWS_PER_PAGE), [filteredRows]);
+  const maxGameCount = useMemo(() => Math.max(0, ...filteredRows.map((row) => row.gameScores.length)), [filteredRows]);
+
   return (
-    <main>
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: 8 }}>
-        <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
-          ← {tournament?.title ?? "대회"} 로 돌아가기
-        </Link>
-      </div>
-
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 800,
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            marginBottom: 8,
-          }}
-        >
-          {eventLabel || "세부종목"} {kindLabel ? `(${kindLabel})` : ""}
-        </h1>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ color: "#64748b", fontSize: 14 }}>
-            {detail?.divisions.find((d) => d.id === divisionId)?.title ?? ""}
-          </span>
-          {eventInfo?.scheduleDate && (
-            <GlassBadge variant="info">{eventInfo.scheduleDate}</GlassBadge>
-          )}
-          {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
-        </div>
-        <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link
-            href={`/tournaments/${tournamentId}/events/${eventId}/lanes?divisionId=${divisionId}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              background: "rgba(245, 158, 11, 0.1)",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#d97706",
-              border: "1px solid rgba(245, 158, 11, 0.15)",
-            }}
-          >
-            &#x1F3B3; 레인 배정표
-          </Link>
-          <Link
-            href={`/tournaments/${tournamentId}/overall?divisionId=${divisionId}`}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "6px 14px",
-              background: "rgba(99, 102, 241, 0.1)",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#6366f1",
-              border: "1px solid rgba(99, 102, 241, 0.15)",
-            }}
-          >
-            📊 종합성적 보기
+    <main className={printMode ? "print-mode" : undefined}>
+      <div className="screen-only">
+        <div className="no-print" style={{ marginBottom: 8 }}>
+          <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
+            ← {tournament?.title ?? "대회"} 로 돌아가기
           </Link>
         </div>
-      </div>
 
-      {/* Search */}
-      <GlassCard variant="strong" style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16 }}>🔍</span>
-          <GlassInput
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="선수명, 소속, 시도로 검색..."
-            style={{ flex: 1 }}
-          />
-          {searchKeyword && (
-            <button
-              onClick={() => setSearchKeyword("")}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "#94a3b8",
-                fontSize: 18,
-                lineHeight: 1,
-                padding: "0 4px",
-              }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
-        {searchKeyword && (
-          <p style={{ margin: "8px 0 0", fontSize: 13, color: "#6366f1" }}>
-            "{searchKeyword}" 검색 결과: {filteredRows.length}명
-          </p>
-        )}
-      </GlassCard>
-
-      {message && (
-        <GlassCard variant="subtle" style={{ marginBottom: 16, color: "#ef4444", padding: "12px 16px" }}>
-          {message}
-        </GlassCard>
-      )}
-
-      {/* Scoreboard Table */}
-      <GlassTable
-        headers={["순위", "시도", "소속", "번호", "성명", "1G", "2G", "3G", "4G", "5G", "6G", "합계", "평균", "핀차"]}
-        headerAligns={["center", "center", "left", "center", "left", "center", "center", "center", "center", "center", "center", "center", "center", "center"]}
-        rowCount={filteredRows.length}
-        emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "등록된 점수가 없습니다."}
-      >
-        {filteredRows.map((row) => (
-          <tr key={row.playerId} {...glassTrHoverProps}>
-            <td style={{ ...glassTdStyle, ...rankStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
-            <td style={glassTdStyle}>{row.affiliation}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
-            <td
-              style={{ ...glassTdStyle, fontWeight: 600, color: "#6366f1", cursor: "pointer" }}
-              onClick={() => setSelectedPlayer(row.name)}
-            >
-              {row.name}
-            </td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[0]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[1]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[2]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[3]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[4]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.gameScores[5]?.score ?? ""}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700, color: "#1e293b" }}>{row.total}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", color: "#6366f1", fontWeight: 600 }}>{row.average}</td>
-            <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.pinDiff}</td>
-          </tr>
-        ))}
-      </GlassTable>
-
-      {selectedPlayer && (
-        <PlayerProfileModal
-          playerName={selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
+        <PageTitle
+          title={`${eventLabel || "세부종목"}${eventInfo ? ` (${KIND_LABELS[eventInfo.kind] ?? eventInfo.kind})` : ""}`}
+          meta={
+            <>
+              <span style={{ color: "#64748b", fontSize: 14 }}>{divisionTitle}</span>
+              {eventInfo?.scheduleDate && <GlassBadge variant="info">{eventInfo.scheduleDate}</GlassBadge>}
+              {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
+            </>
+          }
+          actions={
+            <div className="no-print" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Link href={`/tournaments/${tournamentId}/events/${eventId}/lanes?divisionId=${divisionId}`}>
+                <GlassBadge variant="warning">레인 배정표</GlassBadge>
+              </Link>
+              <Link href={`/tournaments/${tournamentId}/overall?divisionId=${divisionId}`}>
+                <GlassBadge variant="info">종합성적</GlassBadge>
+              </Link>
+            </div>
+          }
         />
-      )}
+
+        <PrintModeBar enabled={printMode} onToggle={() => setPrintMode((prev) => !prev)} />
+
+        <SearchField
+          value={searchKeyword}
+          onChange={(event) => setSearchKeyword(event.target.value)}
+          onClear={() => setSearchKeyword("")}
+          placeholder="선수명, 소속, 시도로 검색..."
+          helperText={searchKeyword ? `"${searchKeyword}" 검색 결과: ${filteredRows.length}명` : undefined}
+        />
+
+        {message && <StatusBanner tone="error" style={{ marginBottom: 16 }}>{message}</StatusBanner>}
+
+        {printMode && (
+          <GlassCard variant="subtle" style={{ marginBottom: 16 }}>
+            <strong style={{ color: "#475569" }}>인쇄 안내</strong>
+            <p style={{ marginTop: 6, color: "#64748b", fontSize: 13 }}>
+              인쇄 시에는 화면용 카드 대신 페이지별 인쇄 전용 레이아웃이 출력됩니다.
+            </p>
+          </GlassCard>
+        )}
+
+        <RankingTable rows={filteredRows} emptyMessage={searchKeyword ? "검색 결과가 없습니다." : "등록된 점수가 없습니다."} onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} />
+      </div>
+
+      <div className="print-only">
+        {printPages.length === 0 ? (
+          <section className="print-page">
+            <h1 className="print-page-title">{tournament?.title ?? "대회"}</h1>
+            <p className="print-page-subtitle">{eventLabel || "세부종목"}</p>
+            <p style={{ fontSize: 12 }}>출력할 점수 데이터가 없습니다.</p>
+          </section>
+        ) : (
+          printPages.map((pageRows, pageIndex) => (
+            <section className="print-page" key={`score-print-${pageIndex}`}>
+              <div className="print-header-block">
+                <h1 className="print-page-title">{tournament?.title ?? "대회"}</h1>
+                <p className="print-page-subtitle">
+                  {eventLabel || "세부종목"}
+                  {eventInfo?.kind ? ` (${KIND_LABELS[eventInfo.kind] ?? eventInfo.kind})` : ""}
+                </p>
+                <p className="print-page-meta">
+                  {divisionTitle}
+                  {eventInfo?.scheduleDate ? ` · ${eventInfo.scheduleDate}` : ""}
+                  {printPages.length > 1 ? ` · ${pageIndex + 1}/${printPages.length} 페이지` : ""}
+                </p>
+              </div>
+
+              <table className="print-table">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>시도</th>
+                    <th>소속</th>
+                    <th>번호</th>
+                    <th>성명</th>
+                    {Array.from({ length: maxGameCount }, (_, index) => (
+                      <th key={`game-${index}`}>{index + 1}G</th>
+                    ))}
+                    <th>합계</th>
+                    <th>평균</th>
+                    <th>핀차</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((row) => (
+                    <tr key={row.playerId}>
+                      <td>{row.rank}</td>
+                      <td>{row.region}</td>
+                      <td>{row.affiliation}</td>
+                      <td>{row.number}</td>
+                      <td>{row.name}</td>
+                      {Array.from({ length: maxGameCount }, (_, index) => (
+                        <td key={`${row.playerId}-${index}`}>{row.gameScores[index]?.score ?? ""}</td>
+                      ))}
+                      <td>{row.total}</td>
+                      <td>{row.average}</td>
+                      <td>{row.pinDiff}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ))
+        )}
+      </div>
+
+      {selectedPlayer && <PlayerProfileModal playerName={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
     </main>
   );
 };

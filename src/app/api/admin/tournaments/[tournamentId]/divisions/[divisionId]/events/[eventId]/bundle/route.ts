@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildEventLeaderboard, buildOverallLeaderboard } from "@/lib/scoring";
+import { buildEventLeaderboard, buildOverallLeaderboard, MAX_GAME_COUNT } from "@/lib/scoring";
 import { getCached, setCache } from "@/lib/api-cache";
 import type { Firestore } from "firebase-admin/firestore";
 
@@ -14,6 +14,14 @@ import type { Firestore } from "firebase-admin/firestore";
  *   ?only=assignments   — only assignments (for polling on lane tab)
  *   (no param)          — full bundle (initial load)
  */
+
+const getEventGameCount = (value: unknown): number => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(MAX_GAME_COUNT, Math.max(1, Math.floor(value)));
+};
 
 // Shared helpers
 const mapScoreDoc = (doc: FirebaseFirestore.QueryDocumentSnapshot, tournamentId: string, eventId: string) => {
@@ -50,12 +58,13 @@ const buildOverallForDivision = async (
       otherEventDocs.map((ed) =>
         ed.ref.collection("scores").get().then((snap) => ({
           eventId: ed.id,
+          gameCount: getEventGameCount(ed.data().gameCount),
           scores: snap.docs.map((sd) => mapScoreDoc(sd, tournamentId, ed.id)),
         })),
       ),
     );
     for (const os of otherScores) {
-      const lb = buildEventLeaderboard({ players, scores: os.scores });
+      const lb = buildEventLeaderboard({ players, scores: os.scores, gameCount: os.gameCount });
       eventRowsByEventId[os.eventId] = lb.rows;
     }
   }
@@ -106,15 +115,25 @@ export async function GET(
     const cached = getCached<object>(cacheKey);
     if (cached) return NextResponse.json(cached);
 
-    const [scoresSnap, playersSnap] = await Promise.all([
+    const [eventDoc, scoresSnap, playersSnap] = await Promise.all([
+      eventRef.get(),
       eventRef.collection("scores").get(),
       adminDb.collection("tournaments").doc(tournamentId)
         .collection("players").where("divisionId", "==", divisionId).get(),
     ]);
 
+    if (!eventDoc.exists) {
+      return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
+    }
+
+    const eventData = eventDoc.data() ?? {};
     const players = playersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
     const scores = scoresSnap.docs.map((doc) => mapScoreDoc(doc, tournamentId, eventId));
-    const eventLeaderboard = buildEventLeaderboard({ players, scores });
+    const eventLeaderboard = buildEventLeaderboard({
+      players,
+      scores,
+      gameCount: getEventGameCount(eventData.gameCount),
+    });
     const overall = await buildOverallForDivision(adminDb, tournamentId, divisionId, eventId, eventLeaderboard.rows, players);
 
     const result = { eventRows: eventLeaderboard.rows, overallRows: overall.rows };
@@ -151,7 +170,11 @@ export async function GET(
   const assignments = assignmentsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const scores = scoresSnap.docs.map((doc) => mapScoreDoc(doc, tournamentId, eventId));
 
-  const eventLeaderboard = buildEventLeaderboard({ players: allPlayers, scores });
+  const eventLeaderboard = buildEventLeaderboard({
+    players: allPlayers,
+    scores,
+    gameCount: getEventGameCount(eventData.gameCount),
+  });
   const overall = await buildOverallForDivision(adminDb, tournamentId, divisionId, eventId, eventLeaderboard.rows, allPlayers);
 
   const result = {
