@@ -25,12 +25,13 @@ No test framework is configured yet. Type-check via `npm run build` (runs `next 
 
 ### Layers
 - **Pages** (`src/app/`): Next.js App Router — nearly all pages are `"use client"` components with `export const dynamic = "force-dynamic"`. Server components: `admin/page.tsx` (session check + redirect). Root layout (`layout.tsx`) is a server component that renders `PublicHeader`. Admin layout (`admin/layout.tsx`) is also a server component wrapping `AdminHeader` + `AdminAuthGate`.
-- **API Routes** (`src/app/api/`): Route Handlers split into `admin/` (protected) and `public/` (open read). Admin routes receive dynamic params via `ctx: { params: { tournamentId, divisionId, eventId } }` context object. Public routes include `players/` (profile, rankings), `scoreboard/` (overall), and `tournaments/` (metadata, events, bundle). Admin routes cover CRUD for tournaments, divisions, events, squads, scores, lane assignments, and session management.
+- **API Routes** (`src/app/api/`): Route Handlers split into `admin/` (protected) and `public/` (open read). Admin routes receive dynamic params via `ctx: { params: { tournamentId, divisionId, eventId } }` context object. Public routes include `players/` (profile, rankings), `scoreboard/` (overall), and `tournaments/` (metadata, events, bundle). Admin routes cover CRUD for tournaments, divisions, events, squads, scores, lane assignments, session management, and summary/certificates generation.
 - **Domain Logic** (`src/lib/`): Scoring engine, lane assignment, models, auth — pure functions, no Firebase imports (except `eventPath.ts`)
 - **Firebase** (`src/lib/firebase/`): Client SDK (`client.ts`), Admin SDK (`admin.ts`), collection paths (`schema.ts`), event resolution (`eventPath.ts`)
-- **UI Components** (`src/components/ui/`): Glass-morphism design system using inline `CSSProperties` (not CSS classes). Components: `GlassCard`, `GlassButton`, `GlassInput`, `GlassSelect`, `GlassTable`, `GlassBadge`, `GlassHeader`. Barrel export from `index.ts` — also exports `glassTdStyle` and `glassTrHoverProps` helpers from `GlassTable`.
+- **UI Components** (`src/components/ui/`): Glass-morphism design system using inline `CSSProperties` (not CSS classes). Components: `GlassCard` (supports `className` prop for custom CSS), `GlassButton`, `GlassInput`, `GlassSelect`, `GlassTable` (supports `headerAligns` prop for per-column text alignment), `GlassBadge`, `GlassHeader`. Barrel export from `index.ts` — also exports `glassTdStyle` and `glassTrHoverProps` helpers from `GlassTable`.
 - **Shared Components** (`src/components/`): `PublicHeader` (client component, hides on `/admin` paths), `PlayerProfileModal` (player stats modal with tournament history)
 - **Admin Components** (`src/app/admin/_components/`): `AdminAuthGate` (client-side session check), `AdminHeader`
+- **Admin Feature Pages** (`src/app/admin/tournaments/[tournamentId]/`): `certificates/` (A4 printable award certificates with per-division/event filtering), `summary/` (종합집계표 — per-event medal winners + team tally ranking by medal count)
 
 ### Data Flow
 All data is **tournament-scoped** — every query includes `tournamentId`. Firestore collection hierarchy:
@@ -99,6 +100,7 @@ tournaments/{tournamentId}
 - Pages re-declare local types mirroring API response shapes rather than importing from `models.ts` — this is intentional for client/server boundary isolation.
 - CSS custom properties in `globals.css` define the design palette: `--color-primary: #6366f1`, `--color-accent: #8b5cf6`, `--gradient-bg` for page backgrounds, `--glass-*` for component theming. Font: Noto Sans KR. Keyframe animations: `float` (background orbs), `pulse`, `fadeIn`, `shimmer` (skeleton loading via `.skeleton` class). Supports `prefers-reduced-motion`.
 - `next.config.mjs` uses ESM format. `reactStrictMode` is enabled.
+- Print-optimized pages use `@media print` CSS with `-webkit-print-color-adjust: exact` and `.no-print` class to hide UI controls during printing.
 
 ## Docs
 

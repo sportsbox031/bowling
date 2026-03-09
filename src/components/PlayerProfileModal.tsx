@@ -52,6 +52,13 @@ type ProfileData = {
   tournaments: TournamentRecord[];
 };
 
+type Candidate = {
+  shortId: string;
+  name: string;
+  region: string;
+  affiliation: string;
+};
+
 type Props = {
   playerName: string;
   onClose: () => void;
@@ -148,21 +155,51 @@ const rankBadgeVariant = (rank: number): "warning" | "info" | "default" => {
   return "default";
 };
 
+const candidateItemStyle: CSSProperties = {
+  padding: "14px 18px",
+  borderRadius: 12,
+  border: "1px solid rgba(99, 102, 241, 0.15)",
+  background: "rgba(99, 102, 241, 0.04)",
+  cursor: "pointer",
+  transition: "all 0.15s",
+};
+
 export default function PlayerProfileModal({ playerName, onClose }: Props) {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [candidates, setCandidates] = useState<Candidate[] | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
       setError("");
+      setCandidates(null);
       try {
-        const data = await cachedFetch<ProfileData>(
-          `/api/public/players/profile?name=${encodeURIComponent(playerName)}`,
-          600000,
+        // 1단계: 이름으로 글로벌 선수 검색
+        const searchRes = await cachedFetch<{ players: Candidate[] }>(
+          `/api/public/players/search?name=${encodeURIComponent(playerName)}`,
+          300000,
         );
-        setProfile(data);
+
+        if (searchRes.players.length === 0) {
+          // shortId 없는 레거시 데이터 — 이름으로 직접 프로필 조회
+          const data = await cachedFetch<ProfileData>(
+            `/api/public/players/profile?name=${encodeURIComponent(playerName)}`,
+            600000,
+          );
+          setProfile(data);
+        } else if (searchRes.players.length === 1) {
+          // 동명이인 없음 → 바로 shortId로 프로필 조회
+          const data = await cachedFetch<ProfileData>(
+            `/api/public/players/profile?shortId=${encodeURIComponent(searchRes.players[0].shortId)}`,
+            600000,
+          );
+          setProfile(data);
+        } else {
+          // 동명이인 존재 → 선택 UI 표시
+          setCandidates(searchRes.players);
+        }
       } catch (err) {
         setError((err as Error).message);
       } finally {
@@ -171,6 +208,23 @@ export default function PlayerProfileModal({ playerName, onClose }: Props) {
     };
     fetchProfile();
   }, [playerName]);
+
+  const handleSelectCandidate = async (shortId: string) => {
+    setLoading(true);
+    setCandidates(null);
+    setError("");
+    try {
+      const data = await cachedFetch<ProfileData>(
+        `/api/public/players/profile?shortId=${encodeURIComponent(shortId)}`,
+        600000,
+      );
+      setProfile(data);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -213,7 +267,7 @@ export default function PlayerProfileModal({ playerName, onClose }: Props) {
               marginBottom: 4,
             }}
           >
-            {playerName}
+            {profile?.playerName ?? playerName}
           </h2>
           <p style={{ fontSize: 14, color: "#64748b" }}>선수 누적 기록</p>
         </div>
@@ -228,6 +282,40 @@ export default function PlayerProfileModal({ playerName, onClose }: Props) {
           <GlassCard variant="subtle" style={{ color: "#ef4444", padding: "12px 16px" }}>
             {error}
           </GlassCard>
+        )}
+
+        {/* 동명이인 선택 UI */}
+        {candidates && !loading && (
+          <div>
+            <p style={{ fontSize: 15, color: "#475569", marginBottom: 16, fontWeight: 600 }}>
+              동명이인이 {candidates.length}명 있습니다. 선수를 선택해주세요.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {candidates.map((c) => (
+                <div
+                  key={c.shortId}
+                  style={candidateItemStyle}
+                  onClick={() => handleSelectCandidate(c.shortId)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)";
+                    e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(99, 102, 241, 0.04)";
+                    e.currentTarget.style.borderColor = "rgba(99, 102, 241, 0.15)";
+                  }}
+                >
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#1e293b", marginBottom: 4 }}>
+                    {c.name}
+                  </div>
+                  <div style={{ display: "flex", gap: 12, fontSize: 13, color: "#64748b" }}>
+                    {c.affiliation && <span>소속: {c.affiliation}</span>}
+                    {c.region && <span>지역: {c.region}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {profile && !loading && (

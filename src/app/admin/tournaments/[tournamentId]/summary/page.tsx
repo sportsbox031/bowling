@@ -83,11 +83,25 @@ const buildTeamTally = (events: EventMedal[]): TeamTally[] => {
 
 const RANK_LABELS = ["우 승", "준우승", "3 위", "4 위"];
 
+const divisionLabel = (div: DivisionSummary) => {
+  const g = GENDER_LABELS[div.gender] ?? "";
+  return g ? `${div.divisionTitle} ${g}` : div.divisionTitle;
+};
+
 const printStyles = `
 @media print {
+  @page { size: A4 portrait; margin: 10mm; }
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .no-print { display: none !important; }
+  body::before, body::after { display: none !important; }
+  /* 레이아웃 전체 숨기기: 헤더 등 */
+  header, nav, .no-print { display: none !important; }
+  /* admin layout main 래퍼 padding 제거 */
+  main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
   .print-break { page-break-before: always; }
+  .summary-container { padding: 0 !important; max-width: none !important; }
+  .summary-card { box-shadow: none !important; border: none !important; background: #fff !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; padding: 0 !important; }
+  table { page-break-inside: avoid; }
 }
 `;
 
@@ -160,7 +174,7 @@ export default function SummaryPage() {
   return (
     <>
       <style>{printStyles}</style>
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 16px" }}>
+      <div className="summary-container" style={{ maxWidth: 1000, margin: "0 auto", padding: "24px 16px" }}>
         {/* Navigation */}
         <div className="no-print" style={{ marginBottom: 24, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <Link href={`/admin/tournaments/${tournamentId}`}>
@@ -184,21 +198,21 @@ export default function SummaryPage() {
                 variant={selectedDivisionId === div.divisionId ? "primary" : "secondary"}
                 onClick={() => setSelectedDivisionId(div.divisionId)}
               >
-                {div.divisionTitle}
+                {divisionLabel(div)}
               </GlassButton>
             ))}
           </div>
         )}
 
         {selectedDivision && (
-          <GlassCard>
+          <GlassCard className="summary-card">
             {/* Header */}
             <div style={{ textAlign: "center", marginBottom: 28 }}>
               <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", marginBottom: 6 }}>
                 {data.tournament.title}
               </h1>
               <p style={{ fontSize: 16, fontWeight: 600, color: "#475569", marginBottom: 4 }}>
-                {selectedDivision.divisionTitle} 종합집계표
+                {divisionLabel(selectedDivision)} 종합집계표
               </p>
               <p style={{ fontSize: 13, color: "#94a3b8" }}>
                 {data.tournament.startsAt && data.tournament.endsAt

@@ -1,4 +1,4 @@
-import { Division, EventSpec, GameAssignment, Player, ScoreRow, Tournament } from "../models";
+import { Division, EventSpec, GameAssignment, GlobalPlayer, Player, ScoreRow, Tournament } from "../models";
 
 export const COLLECTIONS = {
   Tournaments: "tournaments",
@@ -8,6 +8,7 @@ export const COLLECTIONS = {
   Scores: "scores",
   Assignments: "assignments",
   System: "system",
+  GlobalPlayers: "globalPlayers",
 } as const;
 
 export interface TournamentDocument extends Tournament {}
@@ -21,6 +22,8 @@ export interface PlayerDocument extends Player {}
 export interface ScoreDocument extends ScoreRow {}
 
 export interface AssignmentDocument extends GameAssignment {}
+
+export interface GlobalPlayerDocument extends GlobalPlayer {}
 
 export const firestorePaths = {
   tournament: (tournamentId: string) => `tournaments/${tournamentId}`,
@@ -37,4 +40,7 @@ export const firestorePaths = {
     `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/scores`,
   assignments: (tournamentId: string, divisionId: string, eventId: string) =>
     `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`,
+  globalPlayers: () => "globalPlayers",
+  globalPlayer: (shortId: string) => `globalPlayers/${shortId}`,
+  shortIdCounter: () => "system/shortIdCounter",
 } as const;

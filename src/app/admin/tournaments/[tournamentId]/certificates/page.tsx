@@ -48,9 +48,20 @@ const RANK_LABELS: Record<number, string> = {
   4: "4 위",
 };
 
+const GENDER_LABELS: Record<string, string> = {
+  M: "남자",
+  F: "여자",
+  MIXED: "혼합",
+};
+
+const divisionLabel = (div: DivisionSummary) => {
+  const g = GENDER_LABELS[div.gender] ?? "";
+  return g ? `${div.divisionTitle} ${g}` : div.divisionTitle;
+};
+
 const certPageStyle: React.CSSProperties = {
   width: "210mm",
-  minHeight: "297mm",
+  height: "297mm",
   padding: "30mm 25mm",
   boxSizing: "border-box",
   background: "#fff",
@@ -60,6 +71,7 @@ const certPageStyle: React.CSSProperties = {
   alignItems: "center",
   justifyContent: "center",
   pageBreakAfter: "always",
+  overflow: "hidden",
   fontFamily: "'Noto Sans KR', 'Batang', serif",
 };
 
@@ -85,11 +97,16 @@ const innerBorderStyle: React.CSSProperties = {
 
 const printStyles = `
 @media print {
-  @page { size: A4 portrait; margin: 0; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; }
-  .no-print { display: none !important; }
-  .cert-container { padding: 0 !important; max-width: none !important; }
-  .cert-page { box-shadow: none !important; margin: 0 !important; }
+  @page { size: 210mm 297mm; margin: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; width: 210mm; background: #fff !important; }
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body::before, body::after { display: none !important; }
+  /* 레이아웃 전체 숨기기: 헤더 등 */
+  header, nav, .no-print { display: none !important; }
+  /* admin layout main 래퍼 padding 제거 */
+  main { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+  .cert-container { padding: 0 !important; max-width: none !important; width: 210mm !important; margin: 0 !important; }
+  .cert-page { box-shadow: none !important; margin: 0 !important; width: 210mm !important; height: 297mm !important; page-break-after: always; page-break-inside: avoid; }
 }
 @media screen {
   .cert-page { box-shadow: 0 2px 16px rgba(0,0,0,0.12); margin-bottom: 32px; }
@@ -155,9 +172,9 @@ function Certificate({ cert }: { cert: CertData }) {
         marginBottom: "24mm",
         maxWidth: "140mm",
       }}>
-        위는 {cert.tournamentTitle} 에서
+        위 사람은 {cert.tournamentTitle} 에서
         <br />
-        두서와 같이 우수한 성적으로 입상하였기에
+        우수한 성적으로 입상하였기에
         <br />
         이 상장을 수여합니다.
       </p>
@@ -233,7 +250,7 @@ export default function CertificatesPage() {
         certs.push({
           tournamentTitle: data.tournament.title,
           host: data.tournament.host || "",
-          divisionTitle: selectedDivision.divisionTitle,
+          divisionTitle: divisionLabel(selectedDivision),
           eventTitle: ev.eventTitle,
           rankLabel: RANK_LABELS[w.rank] ?? `${w.rank}위`,
           name: w.name,
@@ -293,7 +310,7 @@ export default function CertificatesPage() {
                   }}
                 >
                   {data.divisions.map((d) => (
-                    <option key={d.divisionId} value={d.divisionId}>{d.divisionTitle}</option>
+                    <option key={d.divisionId} value={d.divisionId}>{divisionLabel(d)}</option>
                   ))}
                 </GlassSelect>
               </div>

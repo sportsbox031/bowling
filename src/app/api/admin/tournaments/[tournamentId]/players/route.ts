@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { findOrCreateGlobalPlayer } from "@/lib/shortId";
 
 const normalizePlayerInput = (body: any) => ({
   divisionId: typeof body?.divisionId === "string" ? body.divisionId.trim() : "",
@@ -77,9 +78,16 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   const lastNumber = latest.docs[0]?.data().number ?? 0;
   const number = Number(lastNumber) + 1;
 
+  const shortId = await findOrCreateGlobalPlayer(adminDb, {
+    name: input.name,
+    affiliation: input.affiliation,
+    region: input.region,
+  });
+
   const now = new Date().toISOString();
   const data = {
     tournamentId: ctx.params.tournamentId,
+    shortId,
     divisionId: input.divisionId,
     group: input.group,
     region: input.region,

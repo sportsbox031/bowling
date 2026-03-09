@@ -63,12 +63,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const name = new URL(req.url).searchParams.get("name")?.trim();
-  if (!name) {
+  const params = new URL(req.url).searchParams;
+  const shortId = params.get("shortId")?.trim();
+  const name = params.get("name")?.trim();
+
+  if (!shortId && !name) {
     return NextResponse.json({ message: "INVALID_QUERY" }, { status: 400 });
   }
 
-  const cacheKey = `player-profile:${name}`;
+  const cacheKey = shortId ? `player-profile:sid:${shortId}` : `player-profile:${name}`;
   const cached = getCached<ProfileResponse>(cacheKey);
   if (cached) {
     return jsonCached(cached, 300);
@@ -89,13 +92,14 @@ export async function GET(req: NextRequest) {
       const tournamentId = tDoc.id;
       const tData = tDoc.data();
 
-      // 1. Find player in this tournament
-      const playersSnap = await adminDb!
+      // 1. Find player in this tournament (shortId 우선, 없으면 name 폴백)
+      const playersCol = adminDb!
         .collection("tournaments")
         .doc(tournamentId)
-        .collection("players")
-        .where("name", "==", name)
-        .get();
+        .collection("players");
+      const playersSnap = shortId
+        ? await playersCol.where("shortId", "==", shortId).get()
+        : await playersCol.where("name", "==", name).get();
 
       if (playersSnap.empty) return null;
 
@@ -247,8 +251,18 @@ export async function GET(req: NextRequest) {
       : 0,
   }));
 
+  // 실제 선수 이름 추출
+  let playerNameResolved = name || "";
+  if (!playerNameResolved && shortId) {
+    // shortId로 조회 시, globalPlayers에서 이름 가져오기
+    const gpSnap = await adminDb.collection("globalPlayers").doc(shortId).get();
+    if (gpSnap.exists) {
+      playerNameResolved = (gpSnap.data()?.name ?? shortId) as string;
+    }
+  }
+
   const result: ProfileResponse = {
-    playerName: name,
+    playerName: playerNameResolved,
     summary: {
       totalScore,
       totalGames,

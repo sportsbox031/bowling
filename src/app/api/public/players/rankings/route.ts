@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 
 interface PlayerAgg {
+  shortId: string;
   name: string;
   region: string;
   affiliation: string;
@@ -27,8 +28,9 @@ export async function GET(_req: NextRequest) {
 
   const tournamentsSnap = await adminDb.collection("tournaments").get();
 
-  // playerName -> aggregated data
+  // shortId (또는 이름 폴백) -> aggregated data
   const agg = new Map<string, {
+    shortId: string;
     name: string;
     regions: Set<string>;
     affiliations: Set<string>;
@@ -48,10 +50,11 @@ export async function GET(_req: NextRequest) {
         adminDb!.collection("tournaments").doc(tournamentId).collection("players").get(),
       ]);
 
-      const playerMap = new Map<string, { name: string; region: string; affiliation: string }>();
+      const playerMap = new Map<string, { shortId: string; name: string; region: string; affiliation: string }>();
       for (const pDoc of playersSnap.docs) {
         const d = pDoc.data();
         playerMap.set(pDoc.id, {
+          shortId: (d.shortId ?? "") as string,
           name: d.name,
           region: d.region ?? "",
           affiliation: d.affiliation ?? "",
@@ -81,10 +84,12 @@ export async function GET(_req: NextRequest) {
           const player = playerMap.get(sd.playerId);
           if (!player) continue;
 
-          const key = player.name;
+          // shortId 우선, 없으면 이름으로 폴백 (마이그레이션 전 데이터)
+          const key = player.shortId || player.name;
           let entry = agg.get(key);
           if (!entry) {
             entry = {
+              shortId: player.shortId,
               name: player.name,
               regions: new Set(),
               affiliations: new Set(),
@@ -112,6 +117,7 @@ export async function GET(_req: NextRequest) {
   const players: PlayerAgg[] = Array.from(agg.values())
     .filter((e) => e.totalGames > 0)
     .map((e) => ({
+      shortId: e.shortId,
       name: e.name,
       region: Array.from(e.regions).join(", "),
       affiliation: Array.from(e.affiliations).join(", "),

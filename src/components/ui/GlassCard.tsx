@@ -26,6 +26,7 @@ const variantStyles: Record<string, CSSProperties> = {
 
 export default function GlassCard({
   children,
+  className,
   style,
   variant = "default",
   hover = false,
@@ -45,6 +46,7 @@ export default function GlassCard({
 
   return (
     <div
+      className={className}
       style={base}
       onClick={onClick}
       onMouseEnter={

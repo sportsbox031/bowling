@@ -53,6 +53,7 @@ export interface EventSpec {
 
 export interface Player {
   id: string;
+  shortId?: string; // 글로벌 고유 ID (예: "P0001") — 마이그레이션 전 데이터는 없을 수 있음
   tournamentId: string;
   divisionId: string;
   group: string;
@@ -61,6 +62,15 @@ export interface Player {
   number: number;
   name: string;
   hand: Hand;
+  createdAt: string;
+}
+
+/** 글로벌 선수 레지스트리 — 동명이인 구분용 */
+export interface GlobalPlayer {
+  shortId: string;
+  name: string;
+  region: string;
+  affiliation: string;
   createdAt: string;
 }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { findOrCreateGlobalPlayer } from "@/lib/shortId";
 
 const normalizePlayerInput = (body: any) => ({
   divisionId: typeof body?.divisionId === "string" ? body.divisionId.trim() : undefined,
@@ -62,6 +63,17 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ message: "NO_FIELDS" }, { status: 400 });
+  }
+
+  // 이름/소속/지역 변경 시 shortId 재할당
+  if (updateData.name || updateData.affiliation || updateData.region) {
+    const currentData = current.data()!;
+    const shortId = await findOrCreateGlobalPlayer(adminDb, {
+      name: (updateData.name ?? currentData.name) as string,
+      affiliation: (updateData.affiliation ?? currentData.affiliation) as string,
+      region: (updateData.region ?? currentData.region) as string,
+    });
+    updateData.shortId = shortId;
   }
 
   await ref.set({ ...updateData, updatedAt: new Date().toISOString() }, { merge: true });
