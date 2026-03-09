@@ -194,6 +194,17 @@ export default function AdminScoreboardPage() {
   };
 
   const hasSquads = squads.length > 0;
+  useEffect(() => {
+    if (!hasSquads) {
+      if (selectedSquadId !== null) setSelectedSquadId(null);
+      return;
+    }
+
+    if (!selectedSquadId || !squads.some((sq) => sq.id === selectedSquadId)) {
+      setSelectedSquadId(squads[0]?.id ?? null);
+    }
+  }, [hasSquads, squads, selectedSquadId]);
+
   const participantIds = useMemo(
     () => new Set(participantList.map((p) => p.id)),
     [participantList],
@@ -221,10 +232,16 @@ export default function AdminScoreboardPage() {
   }, [allPlayers]);
 
   const lanes = useMemo(() => event ? range(event.laneStart, event.laneEnd) : [], [event]);
+  const visibleAssignments = useMemo(
+    () => hasSquads && selectedSquadId
+      ? assignments.filter((a) => a.squadId === selectedSquadId)
+      : assignments,
+    [assignments, hasSquads, selectedSquadId],
+  );
 
   const board = useMemo(
-    () => buildBoards(assignments, event?.gameCount ?? 1, event?.laneStart ?? 1, event?.laneEnd ?? 1),
-    [assignments, event],
+    () => buildBoards(visibleAssignments, event?.gameCount ?? 1, event?.laneStart ?? 1, event?.laneEnd ?? 1),
+    [visibleAssignments, event],
   );
 
   const currentBoard = useMemo(() => buildBoardForGame(board, selectedGame, event), [board, event, selectedGame]);
@@ -378,6 +395,21 @@ export default function AdminScoreboardPage() {
     return [...game1, ...nonLane, ...generated];
   };
 
+  const mergeVisibleAssignments = (currentAll: Assignment[], nextVisible: Assignment[]) => {
+    const normalizedVisible = hasSquads && selectedSquadId
+      ? nextVisible.map((item) => ({ ...item, squadId: selectedSquadId }))
+      : nextVisible;
+
+    if (!hasSquads || !selectedSquadId) {
+      return normalizedVisible;
+    }
+
+    return [
+      ...currentAll.filter((item) => item.squadId !== selectedSquadId),
+      ...normalizedVisible,
+    ];
+  };
+
   const movePlayer = (playerId: string, toLane?: number, sourceLane?: number, swapTargetId?: string) => {
     const actualSource = getLaneForPlayerInBoard(board, selectedGame, playerId);
     const source = actualSource > 0 ? actualSource : sourceLane ?? 0;
@@ -387,8 +419,10 @@ export default function AdminScoreboardPage() {
       if (!isAssigned) return;
       dirtyRef.current = true;
       setAssignments((cur) => {
-        const next = cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame));
-        return selectedGame === 1 ? rebuildAllGames(next) : next;
+        const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
+        const nextVisible = currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame));
+        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+        return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
     }
@@ -400,12 +434,14 @@ export default function AdminScoreboardPage() {
       if (swapSource <= 0) return;
       dirtyRef.current = true;
       setAssignments((cur) => {
-        const next = [
-          ...cur.filter((a) => a.gameNumber !== selectedGame || (a.playerId !== playerId && a.playerId !== swapTargetId)),
+        const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
+        const nextVisible = [
+          ...currentVisible.filter((a) => a.gameNumber !== selectedGame || (a.playerId !== playerId && a.playerId !== swapTargetId)),
           { playerId, gameNumber: selectedGame, laneNumber: swapSource, id: `${playerId}_${selectedGame}_${swapSource}` } as Assignment,
           { playerId: swapTargetId, gameNumber: selectedGame, laneNumber: source, id: `${swapTargetId}_${selectedGame}_${source}` } as Assignment,
         ];
-        return selectedGame === 1 ? rebuildAllGames(next) : next;
+        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+        return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
     }
@@ -416,8 +452,10 @@ export default function AdminScoreboardPage() {
       if (targetPlayers.length >= MAX_PER_LANE) { showMsg("한 레인은 최대 4명까지만 배정할 수 있습니다.", "error"); return; }
       dirtyRef.current = true;
       setAssignments((cur) => {
-        const next = [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { id: `${playerId}_${selectedGame}_${toLane}`, playerId, gameNumber: selectedGame, laneNumber: toLane } as Assignment];
-        return selectedGame === 1 ? rebuildAllGames(next) : next;
+        const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
+        const nextVisible = [...currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { id: `${playerId}_${selectedGame}_${toLane}`, playerId, gameNumber: selectedGame, laneNumber: toLane } as Assignment];
+        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+        return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
     }
@@ -425,8 +463,10 @@ export default function AdminScoreboardPage() {
     if (targetPlayers.length < MAX_PER_LANE) {
       dirtyRef.current = true;
       setAssignments((cur) => {
-        const next = [...cur.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` } as Assignment];
-        return selectedGame === 1 ? rebuildAllGames(next) : next;
+        const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
+        const nextVisible = [...currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` } as Assignment];
+        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+        return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
     }
@@ -472,7 +512,7 @@ export default function AdminScoreboardPage() {
   const handleSaveManual = async () => {
     if (!tournamentId || !divisionId || !eventId) return;
     setLoading(true);
-    const items = assignments.map((a) => ({ playerId: a.playerId, gameNumber: a.gameNumber, laneNumber: a.laneNumber }));
+    const items = visibleAssignments.map((a) => ({ playerId: a.playerId, gameNumber: a.gameNumber, laneNumber: a.laneNumber }));
     try {
       const res = await fetch(`/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/assignments`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "manual", items, replaceAll: true, squadId: hasSquads ? selectedSquadId : undefined }) });
       if (!res.ok) throw new Error(await parseError(res));
