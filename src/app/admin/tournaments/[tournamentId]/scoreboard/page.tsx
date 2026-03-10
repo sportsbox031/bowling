@@ -43,6 +43,7 @@ type Player = {
   name: string;
   affiliation: string;
   region: string;
+  group: string;
   divisionId: string;
 };
 
@@ -388,6 +389,28 @@ export default function AdminScoreboardPage() {
     const m = new Map<string, string>();
     for (const team of teams) {
       for (const pid of team.memberIds) m.set(pid, team.name);
+    }
+    return m;
+  }, [teams]);
+
+  // 팀 ID → 색상 맵 (점수입력 등에서 팀 구분용)
+  const TEAM_COLORS = [
+    { bg: "rgba(99,102,241,0.10)", border: "rgba(99,102,241,0.35)", text: "#4f46e5" },
+    { bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", text: "#059669" },
+    { bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", text: "#d97706" },
+    { bg: "rgba(239,68,68,0.10)", border: "rgba(239,68,68,0.35)", text: "#dc2626" },
+    { bg: "rgba(168,85,247,0.10)", border: "rgba(168,85,247,0.35)", text: "#7c3aed" },
+    { bg: "rgba(6,182,212,0.10)", border: "rgba(6,182,212,0.35)", text: "#0891b2" },
+    { bg: "rgba(236,72,153,0.10)", border: "rgba(236,72,153,0.35)", text: "#db2777" },
+    { bg: "rgba(101,163,13,0.10)", border: "rgba(101,163,13,0.35)", text: "#65a30d" },
+  ];
+  const playerTeamColorMap = useMemo(() => {
+    const teamIdToIdx = new Map<string, number>();
+    teams.forEach((t, i) => teamIdToIdx.set(t.id, i % TEAM_COLORS.length));
+    const m = new Map<string, { bg: string; border: string; text: string; teamName: string }>();
+    for (const team of teams) {
+      const color = TEAM_COLORS[teamIdToIdx.get(team.id)!];
+      for (const pid of team.memberIds) m.set(pid, { ...color, teamName: team.name });
     }
     return m;
   }, [teams]);
@@ -1577,6 +1600,7 @@ export default function AdminScoreboardPage() {
                     const savedScore = row.gameScores[selectedGame - 1]?.score;
                     const hasSaved = savedScore !== null && savedScore !== undefined;
                     const lanePlayerIds = activeLaneRows.map((laneRow) => laneRow.playerId);
+                    const teamColor = playerTeamColorMap.get(row.playerId);
                     return (
                       <div
                         key={row.playerId}
@@ -1586,14 +1610,18 @@ export default function AdminScoreboardPage() {
                           alignItems: "center",
                           gap: 10,
                           padding: "12px 14px",
-                          background: hasSaved ? "rgba(34,197,94,0.06)" : "rgba(255,255,255,0.25)",
+                          background: teamColor ? teamColor.bg : (hasSaved ? "rgba(34,197,94,0.06)" : "rgba(255,255,255,0.25)"),
                           borderRadius: 10,
-                          border: hasSaved ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(255,255,255,0.3)",
+                          border: teamColor ? `2px solid ${teamColor.border}` : (hasSaved ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(255,255,255,0.3)"),
+                          borderLeft: teamColor ? `4px solid ${teamColor.text}` : undefined,
                         }}
                       >
                         <span style={{ textAlign: "center", fontWeight: 800, fontSize: 15, color: "#6366f1", background: "rgba(99,102,241,0.1)", borderRadius: 6, padding: "2px 0" }}>{row.number}</span>
                         <div>
-                          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#1e293b" }}>{row.name}</p>
+                          <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: "#1e293b" }}>
+                            {row.name}
+                            {teamColor && <span style={{ marginLeft: 6, fontSize: 11, fontWeight: 600, color: teamColor.text, background: teamColor.bg, padding: "1px 6px", borderRadius: 4, border: `1px solid ${teamColor.border}` }}>{teamColor.teamName}</span>}
+                          </p>
                           <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{row.region} · {row.affiliation}</p>
                         </div>
                         {hasSaved ? <GlassBadge variant="success">{savedScore}점 ✓</GlassBadge> : <span style={{ fontSize: 12, color: "#cbd5e1" }}>미입력</span>}
@@ -1820,7 +1848,7 @@ export default function AdminScoreboardPage() {
                       <span style={{ color: "#64748b", fontSize: 13 }}>
                         {team.memberIds.map((pid) => {
                           const p = playerById.get(pid);
-                          return p ? `${p.name}(${p.affiliation})` : pid;
+                          return p ? `[${p.number}] ${p.name}(${p.affiliation}${p.group ? p.group : ""})` : pid;
                         }).join(" · ")}
                       </span>
                     </div>
