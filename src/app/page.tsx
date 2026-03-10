@@ -6,6 +6,7 @@ import { GlassBadge, GlassButton, GlassCard, GlassInput, GlassSelect } from "@/c
 import PageTitle from "@/components/common/PageTitle";
 import StatusBanner from "@/components/common/StatusBanner";
 import { TOURNAMENT_STATUS_LABELS } from "@/lib/constants";
+import { cachedFetch } from "@/lib/client-cache";
 
 type Tournament = {
   id: string;
@@ -39,8 +40,9 @@ const HomePage = () => {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [regionFilter, setRegionFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const load = async (params: { keyword?: string; region?: string; year?: string } = {}) => {
     const query = new URLSearchParams();
@@ -50,17 +52,15 @@ const HomePage = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/public/tournaments?${query.toString()}`, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error("대회 목록을 불러오지 못했습니다.");
-      }
-      const data = (await response.json()) as TournamentApiResponse;
+      const url = `/api/public/tournaments?${query.toString()}`;
+      const data = await cachedFetch<TournamentApiResponse>(url, 120000);
       setItems(data.items ?? []);
       setMessage("");
     } catch (error) {
-      setMessage((error as Error).message || "조회 실패");
+      setMessage((error as Error).message || "대회 목록을 불러오지 못했습니다.");
     } finally {
       setLoading(false);
+      setHasLoaded(true);
     }
   };
 
@@ -89,6 +89,7 @@ const HomePage = () => {
           <>
             <GlassBadge variant="info">공개 조회</GlassBadge>
             <span style={{ color: "#64748b", fontSize: 14 }}>진행 중인 대회와 종료된 대회를 한 곳에서 확인하세요.</span>
+            {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>대회 정보를 가져오고 있습니다.</span>}
           </>
         }
       />
@@ -192,10 +193,11 @@ const HomePage = () => {
             ))}
       </section>
 
-      {!loading && items.length === 0 && !message && (
+      {hasLoaded && !loading && items.length === 0 && !message && (
         <GlassCard variant="subtle" style={{ textAlign: "center", padding: "3rem 1rem", marginTop: 16 }}>
           <p style={{ fontSize: 48, marginBottom: 12 }}>🎳</p>
-          <p style={{ color: "#94a3b8", fontSize: 16 }}>조회된 대회가 없습니다</p>
+          <p style={{ color: "#64748b", fontSize: 16, fontWeight: 600 }}>조건에 맞는 대회를 아직 찾지 못했습니다.</p>
+          <p style={{ color: "#94a3b8", fontSize: 13, marginTop: 8 }}>검색 조건을 조금 넓히면 더 많은 대회를 볼 수 있습니다.</p>
         </GlassCard>
       )}
     </main>

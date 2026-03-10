@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 const normalizeDivision = (value: any) => ({
   title: typeof value?.title === "string" ? value.title.trim() : "",
   gender: typeof value?.gender === "string" ? value.gender.toUpperCase() : "",
 });
+
+const refreshPublicTournamentCaches = async (tournamentId: string) => {
+  if (!adminDb) return;
+  try {
+    await rebuildPublicTournamentAggregate(adminDb, tournamentId);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+};
 
 export async function GET(_req: NextRequest, ctx: { params: { tournamentId: string } }) {
   const session = await verifyAdminSessionToken(_req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -62,6 +74,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
   const ref = tournamentRef.collection("divisions").doc();
   await ref.set(data);
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
 
   return NextResponse.json({ id: ref.id, ...data });
 }

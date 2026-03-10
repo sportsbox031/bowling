@@ -1,5 +1,6 @@
 import AdminHeader from "@/app/admin/_components/AdminHeader";
 import AdminAuthGate from "@/app/admin/_components/AdminAuthGate";
+import RouteTransition from "@/components/common/RouteTransition";
 
 export default function AdminLayout({
   children,
@@ -11,7 +12,7 @@ export default function AdminLayout({
       <AdminHeader />
       <AdminAuthGate />
       <main style={{ maxWidth: 1200, margin: "0 auto", padding: "1.5rem 1rem 3rem" }}>
-        {children}
+        <RouteTransition mode="admin">{children}</RouteTransition>
       </main>
     </>
   );

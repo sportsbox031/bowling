@@ -1,0 +1,2070 @@
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/route.ts:34:146)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/[tournamentId]/divisions/route.ts:33:166)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1587:40)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/route.ts:50:167)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1587:40)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/[tournamentId]/players/route.ts:34:191)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1587:40)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/route.ts:34:146)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1599:28)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/[tournamentId]/divisions/route.ts:33:166)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1587:40)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Error: 8 RESOURCE_EXHAUSTED: Quota exceeded.
+    at callErrorFromStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:359:73)
+    at Object.onReceiveStatus (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeServerStreamRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\client.js:342:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:38:28
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at Object.request (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:234:40)
+    at makeRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:159:28)
+    at retryRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\retry-request\index.js:119:5)
+    at StreamProxy.setStream (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streaming.js:225:37)
+    at StreamingApiCaller.call (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\streamingCalls\streamingApiCaller.js:54:16)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\google-gax\build\src\createApiCall.js:112:30
+Caused by: Error
+    at QueryUtil._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query-util.js:44:23)
+    at Query._getResponse (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:784:32)
+    at Query._get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:777:35)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:745:43
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Query.get (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\@google-cloud\firestore\build\src\reference\query.js:744:43)
+    at GET (webpack-internal:///(rsc)/./src/app/api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/route.ts:50:167)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:53446
+    at async e_.execute (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:44747)
+    at async e_.handle (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:54700)
+    at async doRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1377:42)
+    at async cacheEntry.responseCache.get.routeKind (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1587:40)
+    at async DevServer.renderToResponseWithComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1507:28)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 8,
+  details: 'Quota exceeded.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ ⨯ Failed to generate static paths for /admin/tournaments/[tournamentId]:
+Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ ⨯ Failed to generate static paths for /admin/tournaments/[tournamentId]:
+Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ ⨯ Failed to generate static paths for /admin/tournaments/[tournamentId]/scoreboard:
+Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ]
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/xlsx' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js', but to 'Error: Can't resolve './vendor-chunks/xlsx' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/xlsx (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/xlsx' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js', but to 'Error: Can't resolve './vendor-chunks/xlsx' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/xlsx (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\scoreboard\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+ ⨯ Error: Cannot find module './vendor-chunks/@opentelemetry.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\static-paths-worker.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\jest-worker\processChild.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  type: 'Error',
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\admin\\tournaments\\[tournamentId]\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\static-paths-worker.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\compiled\\jest-worker\\processChild.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/xlsx' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js', but to 'Error: Can't resolve './vendor-chunks/xlsx' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/xlsx (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@swc (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/next' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js', but to 'Error: Can't resolve './vendor-chunks/next' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/next (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\page.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+ ⨯ ./src/app/admin/tournaments/[tournamentId]/page.tsx
+Error: 
+  [31mx[0m Expected ';', '}' or <eof>
+    ,-[[36;1;4mC:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\src\app\admin\tournaments\[tournamentId]\page.tsx[0m:13:1]
+ [2m13[0m |   glassTdStyle,
+ [2m14[0m |   glassTrHoverProps,
+ [2m15[0m | } from "@/components/ui";
+ [2m16[0m | import StatusBanner from "@/components/common/StatusBanner";`r`nimport PageLoading from "@/components/common/PageLoading";
+    : [31;1m                                                            ^|^[0m[33;1m^^^^^^^[0m
+    :                                                              [31;1m`-- [31;1mThis is the expression part of an expression statement[0m[0m
+ [2m17[0m | import PlayerBulkImportPanel from "@/components/admin/PlayerBulkImportPanel";
+ [2m18[0m | import { GENDER_LABELS, KIND_LABELS } from "@/lib/constants";
+ [2m18[0m | import { buildFivesEventPayload, shouldPromptFivesCopy } from "@/lib/fives-link";
+    `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/tournaments/[tournamentId]/page.tsx
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/xlsx' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js', but to 'Error: Can't resolve './vendor-chunks/xlsx' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/xlsx (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\xlsx.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@swc (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/next' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js', but to 'Error: Can't resolve './vendor-chunks/next' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/next (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_error.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+ ⨯ ./src/app/admin/tournaments/[tournamentId]/page.tsx
+Error: 
+  [31mx[0m Expected '}', got '<eof>'
+     ,-[[36;1;4mC:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\src\app\admin\tournaments\[tournamentId]\page.tsx[0m:245:1]
+ [2m245[0m |     return () => {
+ [2m246[0m |       cancelled = true;
+ [2m247[0m |     };
+ [2m248[0m |   }, [activeDivisionId, loadEvents, loadPlayers]);
+     : [31;1m                                                 ^[0m
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/tournaments/[tournamentId]/page.tsx
+ ⨯ ./src/app/admin/tournaments/[tournamentId]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\src\app\admin\tournaments\[tournamentId]\page.tsx[0m:426:1]
+ [2m426[0m |   }
+ [2m427[0m | 
+ [2m428[0m |   return (
+ [2m429[0m |     <div style={{ display: "grid", gap: 24 }}>
+     : [31;1m     ^^^[0m
+ [2m430[0m |       <div>
+ [2m431[0m |         <Link href="/admin/tournaments" style={{ color: "#94a3b8", fontSize: 13 }}>
+ [2m432[0m |           ← 대회 목록
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/tournaments/[tournamentId]/page.tsx
+ ⨯ ./src/app/admin/tournaments/[tournamentId]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\src\app\admin\tournaments\[tournamentId]\page.tsx[0m:426:1]
+ [2m426[0m |   }
+ [2m427[0m | 
+ [2m428[0m |   return (
+ [2m429[0m |     <div style={{ display: "grid", gap: 24 }}>
+     : [31;1m     ^^^[0m
+ [2m430[0m |       <div>
+ [2m431[0m |         <Link href="/admin/tournaments" style={{ color: "#94a3b8", fontSize: 13 }}>
+ [2m432[0m |           ← 대회 목록
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/tournaments/[tournamentId]/page.tsx
+ ⨯ ./src/app/admin/tournaments/[tournamentId]/page.tsx
+Error: 
+  [31mx[0m Unexpected token `div`. Expected jsx identifier
+     ,-[[36;1;4mC:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\src\app\admin\tournaments\[tournamentId]\page.tsx[0m:426:1]
+ [2m426[0m |   }
+ [2m427[0m | 
+ [2m428[0m |   return (
+ [2m429[0m |     <div style={{ display: "grid", gap: 24 }}>
+     : [31;1m     ^^^[0m
+ [2m430[0m |       <div>
+ [2m431[0m |         <Link href="/admin/tournaments" style={{ color: "#94a3b8", fontSize: 13 }}>
+ [2m432[0m |           ← 대회 목록
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/app/admin/tournaments/[tournamentId]/page.tsx
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at JSON.parse (<anonymous>)
+digest: "1323548622"
+TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:19604)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108279
+    at eo (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108464)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:110693
+    at Object._fromJSON (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:111249)
+    at JSON.parse (<anonymous>)
+    at eu (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108958)
+    at en (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108026)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115168
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115185
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115218
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115235
+    at t (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115458)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:19604)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108279
+    at eo (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108464)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:110693
+    at Object._fromJSON (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:111249)
+    at JSON.parse (<anonymous>)
+    at eu (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108958)
+    at en (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108026)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115168
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115185
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115218
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115235
+    at t (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115458) {
+  page: '/'
+}
+ ⨯ Error: Cannot find module './8948.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js:1:58728
+    at Object.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\admin\tournaments\[tournamentId]\scoreboard\page.js:1:58782)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:98:84
+    at async loadComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:98:26)
+    at async DevServer.findPageComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:710:36)
+    at async DevServer.findPageComponents (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:577:20)
+    at async DevServer.renderPageComponent (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1910:24)
+    at async DevServer.renderToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async NextNodeServer.handleCatchallRenderRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:816:17)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:353:24)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:377:13)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ],
+  page: '/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard'
+}
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:335
+    at Object.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:377)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:710:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\pages\\_document.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:335
+    at Object.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:377)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:710:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\pages\\_document.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\divisions\route.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\divisions\route.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@swc (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\divisions\route.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\divisions\route.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-route-loader\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@opentelemetry' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js', but to 'Error: Can't resolve './vendor-chunks/@opentelemetry' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@opentelemetry (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@opentelemetry.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/@swc' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js', but to 'Error: Can't resolve './vendor-chunks/@swc' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/@swc (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\@swc.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving './vendor-chunks/next' in C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server for build dependencies doesn't lead to expected result 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js', but to 'Error: Can't resolve './vendor-chunks/next' in 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ./vendor-chunks/next (expected C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\vendor-chunks\next.js)
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\api\admin\tournaments\[tournamentId]\players\route.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-app-loader.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\loader-runner\LoaderRunner.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\bundle5.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\webpack\webpack.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\plugins\define-env-plugin.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\swc\index.js
+<w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+<w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js

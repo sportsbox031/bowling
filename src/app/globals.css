@@ -314,3 +314,34 @@ a:hover {
   box-shadow: none;
 }
 
+
+@keyframes routePublicIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.995); filter: blur(6px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@keyframes routeAdminIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.route-transition {
+  will-change: opacity, transform, filter;
+}
+
+.route-transition--public {
+  animation: routePublicIn 180ms ease-out;
+}
+
+.route-transition--admin {
+  animation: routeAdminIn 100ms ease-out;
+}
+
+.loading-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: currentColor;
+  display: inline-block;
+  animation: pulse 1.1s ease-in-out infinite;
+}

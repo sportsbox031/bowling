@@ -3,6 +3,10 @@ import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
+import { rebuildOverallAggregate } from "@/lib/aggregates/overall";
+import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
+import { rebuildPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
 
 const MAX_SCORE = 300;
 
@@ -94,11 +98,27 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     });
 
-    // Invalidate all score-related caches
+    try {
+      const rebuildTasks: Promise<unknown>[] = [
+        rebuildPlayerRankingsAggregate(adminDb),
+        rebuildOverallAggregate(adminDb, tournamentId, eventInfo.divisionId),
+        rebuildOverallAggregate(adminDb, tournamentId),
+        rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventId),
+        rebuildPlayerProfileAggregate(adminDb, typeof playerData.shortId === "string" && playerData.shortId ? playerData.shortId : undefined, typeof playerData.name === "string" ? playerData.name : undefined),
+      ];
+      if (typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
+        rebuildTasks.push(rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventData.linkedEventId));
+      }
+      await Promise.all(rebuildTasks);
+    } catch (aggregateError) {
+      console.error("AGGREGATE_REBUILD_FAILED", aggregateError);
+    }
+
     invalidateCache(`scoreboard:${tournamentId}`);
     invalidateCache(`overall:${tournamentId}`);
     invalidateCache(`bundle-scores:${tournamentId}`);
     invalidateCache(`bundle-full:${tournamentId}`);
+    invalidateCache("players-rankings-all");
 
     return NextResponse.json({ message: "SCORE_SAVED" });
   } catch (error) {
@@ -108,3 +128,7 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+
+
+

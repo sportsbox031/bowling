@@ -740,6 +740,28 @@ export default function AdminScoreboardPage() {
   }, [draftStorageKey, scoreDraft]);
 
   // --- Lane assignment ---
+  // 드래그 중 화면 가장자리 자동 스크롤
+  const autoScrollRef = useRef<number | null>(null);
+  const handleDragAutoScroll = useCallback((e: React.DragEvent) => {
+    const EDGE = 80; // 가장자리 감지 영역 (px)
+    const SPEED = 18; // 스크롤 속도 (px/frame)
+    const y = e.clientY;
+    const h = window.innerHeight;
+
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
+
+    if (y < EDGE) {
+      const tick = () => { window.scrollBy(0, -SPEED); autoScrollRef.current = requestAnimationFrame(tick); };
+      autoScrollRef.current = requestAnimationFrame(tick);
+    } else if (y > h - EDGE) {
+      const tick = () => { window.scrollBy(0, SPEED); autoScrollRef.current = requestAnimationFrame(tick); };
+      autoScrollRef.current = requestAnimationFrame(tick);
+    }
+  }, []);
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollRef.current) { cancelAnimationFrame(autoScrollRef.current); autoScrollRef.current = null; }
+  }, []);
+
   const encodeDrag = (playerId: string, sourceLane?: number) => JSON.stringify({ playerId, sourceLane });
   const encodeTeamDrag = (teamId: string, memberIds: string[]) => JSON.stringify({ teamId, memberIds });
   const decodeDrag = (raw: string): { playerId: string; sourceLane?: number } | null => {
@@ -868,6 +890,14 @@ export default function AdminScoreboardPage() {
     }
 
     showMsg("레인이 가득 찼습니다. 교환하려면 선수 위에 드롭하세요.", "error");
+  };
+
+  const handleAssignedPlayerClick = (playerId: string) => {
+    const player = playerById.get(playerId);
+    if (!player) return;
+    const ok = window.confirm(`${player.name} 선수를 배정취소하시겠습니까?`);
+    if (!ok) return;
+    movePlayer(playerId, undefined);
   };
 
   const handleRandomAssign = async () => {
@@ -1390,7 +1420,12 @@ export default function AdminScoreboardPage() {
             </span>
           </div>
 
-          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 280px" }}>
+          <div
+            style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 280px" }}
+            onDragOver={(e) => { e.preventDefault(); handleDragAutoScroll(e); }}
+            onDragEnd={stopAutoScroll}
+            onDrop={stopAutoScroll}
+          >
             {/* Lane board */}
             <div style={{ display: "grid", gap: 8 }}>
               {lanes.map((laneNum) => {
@@ -1438,10 +1473,12 @@ export default function AdminScoreboardPage() {
                               const payload = decodeDrag(e.dataTransfer.getData("text/plain"));
                               if (payload && payload.playerId !== pid) movePlayer(payload.playerId, laneNum, payload.sourceLane, pid);
                             }}
+                            onClick={() => handleAssignedPlayerClick(pid)}
+                            title="클릭하면 미배정으로 이동합니다"
                             style={{
                               padding: "5px 10px", borderRadius: 7, fontSize: 13,
                               background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)",
-                              color: "#1e293b", cursor: "grab", fontWeight: 500,
+                              color: "#1e293b", cursor: "pointer", fontWeight: 500,
                               display: "flex", alignItems: "center", gap: 5,
                             }}
                           >
@@ -2200,6 +2237,10 @@ export default function AdminScoreboardPage() {
     </div>
   );
 }
+
+
+
+
 
 
 

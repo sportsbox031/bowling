@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 const eventKinds = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
 type EventKind = (typeof eventKinds)[number];
@@ -31,6 +33,16 @@ const getRef = (
     .doc(divisionId)
     .collection("events")
     .doc(eventId);
+
+const refreshPublicTournamentCaches = async (tournamentId: string) => {
+  if (!adminDb) return;
+  try {
+    await rebuildPublicTournamentAggregate(adminDb, tournamentId);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+};
 
 export async function GET(
   _req: NextRequest,
@@ -87,7 +99,6 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   if (Number.isFinite(input.tableShift) && Math.abs(input.tableShift) > MAX_TABLE_SHIFT) {
     return NextResponse.json({ message: "INVALID_TABLE_SHIFT" }, { status: 400 });
   }
-  // 5인조 전반/후반 연결 (null이면 필드 제거)
   updateData.linkedEventId = input.linkedEventId;
   updateData.halfType = input.halfType;
 
@@ -96,6 +107,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   }
 
   await ref.set({ ...updateData, updatedAt: new Date().toISOString() }, { merge: true });
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
   const updated = await ref.get();
   return NextResponse.json({ id: updated.id, ...(updated.data() as object) });
 }
@@ -111,5 +123,6 @@ export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: st
   }
 
   await getRef(adminDb, ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId).delete();
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
   return NextResponse.json({ message: "DELETED", id: ctx.params.eventId });
 }

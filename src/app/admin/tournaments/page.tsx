@@ -12,6 +12,7 @@ import {
   glassTdStyle,
   glassTrHoverProps,
 } from "@/components/ui";
+import PageLoading from "@/components/common/PageLoading";
 
 type Tournament = {
   id: string;
@@ -67,16 +68,24 @@ export default function TournamentManagerPage() {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
 
   const load = async () => {
-    const result = await api<{ items: Tournament[] }>("/api/admin/tournaments");
-    setItems(result.items ?? []);
+    setLoading(true);
+    try {
+      const result = await api<{ items: Tournament[] }>("/api/admin/tournaments");
+      setItems(result.items ?? []);
+    } finally {
+      setLoading(false);
+      setHasLoaded(true);
+    }
   };
 
   useEffect(() => {
     load().catch(() => {
-      setMessage("목록 조회에 실패했습니다.");
+      setMessage("대회 정보를 가져오지 못했습니다.");
       setMessageType("error");
     });
   }, []);
@@ -107,7 +116,7 @@ export default function TournamentManagerPage() {
       setEditingId(null);
       setForm(defaultForm);
       await load();
-    } catch (error) {
+    } catch {
       setMessage("저장 실패");
       setMessageType("error");
     } finally {
@@ -149,7 +158,6 @@ export default function TournamentManagerPage() {
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
-      {/* Page Header */}
       <div>
         <h1
           style={{
@@ -163,10 +171,11 @@ export default function TournamentManagerPage() {
         >
           대회 관리
         </h1>
-        <p style={{ color: "#94a3b8", fontSize: 14 }}>대회를 등록하고 관리합니다</p>
+        <p style={{ color: "#94a3b8", fontSize: 14 }}>
+          대회를 등록하고 관리합니다{loading ? " · 대회 정보를 가져오고 있습니다" : ""}
+        </p>
       </div>
 
-      {/* Message */}
       {message && (
         <GlassCard
           variant="subtle"
@@ -181,7 +190,6 @@ export default function TournamentManagerPage() {
         </GlassCard>
       )}
 
-      {/* Form Section */}
       <GlassCard variant="strong">
         <button
           type="button"
@@ -198,72 +206,19 @@ export default function TournamentManagerPage() {
           <span style={{ fontSize: 18, color: "#94a3b8", transition: "transform 0.2s", transform: formOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
         </button>
         {formOpen && <form onSubmit={saveTournament} style={{ display: "grid", gap: 16, maxWidth: 640, marginTop: 20 }}>
-          <GlassInput
-            label="대회명"
-            required
-            value={form.title}
-            onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-            placeholder="대회명을 입력하세요"
-          />
-          <GlassInput
-            label="주최"
-            required
-            value={form.host}
-            onChange={(event) => setForm((prev) => ({ ...prev, host: event.target.value }))}
-            placeholder="주최 기관을 입력하세요"
-          />
-          <GlassInput
-            label="지역"
-            required
-            value={form.region}
-            onChange={(event) => setForm((prev) => ({ ...prev, region: event.target.value }))}
-            placeholder="지역을 입력하세요"
-          />
+          <GlassInput label="대회명" required value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="대회명을 입력하세요" />
+          <GlassInput label="주최" required value={form.host} onChange={(event) => setForm((prev) => ({ ...prev, host: event.target.value }))} placeholder="주최 기관을 입력하세요" />
+          <GlassInput label="지역" required value={form.region} onChange={(event) => setForm((prev) => ({ ...prev, region: event.target.value }))} placeholder="지역을 입력하세요" />
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-            <GlassInput
-              label="연도"
-              type="number"
-              value={form.seasonYear}
-              onChange={(event) => setForm((prev) => ({ ...prev, seasonYear: Number(event.target.value) }))}
-            />
-            <GlassInput
-              label="시작 레인"
-              type="number"
-              min={1}
-              required
-              value={form.laneStart}
-              onChange={(event) => setForm((prev) => ({ ...prev, laneStart: Number(event.target.value) }))}
-            />
-            <GlassInput
-              label="끝 레인"
-              type="number"
-              min={1}
-              required
-              value={form.laneEnd}
-              onChange={(event) => setForm((prev) => ({ ...prev, laneEnd: Number(event.target.value) }))}
-            />
+            <GlassInput label="연도" type="number" value={form.seasonYear} onChange={(event) => setForm((prev) => ({ ...prev, seasonYear: Number(event.target.value) }))} />
+            <GlassInput label="시작 레인" type="number" min={1} required value={form.laneStart} onChange={(event) => setForm((prev) => ({ ...prev, laneStart: Number(event.target.value) }))} />
+            <GlassInput label="끝 레인" type="number" min={1} required value={form.laneEnd} onChange={(event) => setForm((prev) => ({ ...prev, laneEnd: Number(event.target.value) }))} />
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <GlassInput
-              label="시작일"
-              required
-              type="date"
-              value={form.startsAt}
-              onChange={(event) => setForm((prev) => ({ ...prev, startsAt: event.target.value }))}
-            />
-            <GlassInput
-              label="종료일"
-              required
-              type="date"
-              value={form.endsAt}
-              onChange={(event) => setForm((prev) => ({ ...prev, endsAt: event.target.value }))}
-            />
+            <GlassInput label="시작일" required type="date" value={form.startsAt} onChange={(event) => setForm((prev) => ({ ...prev, startsAt: event.target.value }))} />
+            <GlassInput label="종료일" required type="date" value={form.endsAt} onChange={(event) => setForm((prev) => ({ ...prev, endsAt: event.target.value }))} />
           </div>
-          <GlassSelect
-            label="상태"
-            value={form.status ?? "UPCOMING"}
-            onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as Tournament["status"] }))}
-          >
+          <GlassSelect label="상태" value={form.status ?? "UPCOMING"} onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as Tournament["status"] }))}>
             <option value="UPCOMING">예정</option>
             <option value="ONGOING">진행중</option>
             <option value="FINISHED">종료</option>
@@ -274,14 +229,7 @@ export default function TournamentManagerPage() {
               {busy ? "저장 중..." : editingId ? "수정" : "등록"}
             </GlassButton>
             {editingId && (
-              <GlassButton
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm(defaultForm);
-                }}
-              >
+              <GlassButton type="button" variant="secondary" onClick={() => { setEditingId(null); setForm(defaultForm); }}>
                 취소
               </GlassButton>
             )}
@@ -289,44 +237,43 @@ export default function TournamentManagerPage() {
         </form>}
       </GlassCard>
 
-      {/* Tournament List */}
       <div>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>
           대회 목록
         </h2>
-        <GlassTable
-          headers={["대회명", "기간", "지역", "레인", "상태", "작업"]}
-          rowCount={items.length}
-          emptyMessage="등록된 대회가 없습니다."
-        >
-          {items.map((item) => (
-            <tr key={item.id} {...glassTrHoverProps}>
-              <td style={glassTdStyle}>
-                <Link href={`/admin/tournaments/${item.id}`} style={{ fontWeight: 600 }}>
-                  {item.title}
-                </Link>
-              </td>
-              <td style={{ ...glassTdStyle, color: "#64748b", fontSize: 13 }}>
-                {item.startsAt} ~ {item.endsAt}
-              </td>
-              <td style={glassTdStyle}>{item.region}</td>
-              <td style={{ ...glassTdStyle, color: "#64748b" }}>
-                {item.laneStart}-{item.laneEnd}
-              </td>
-              <td style={glassTdStyle}>{statusBadge(item.status)}</td>
-              <td style={glassTdStyle}>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <GlassButton variant="secondary" size="sm" onClick={() => startEdit(item)}>
-                    수정
-                  </GlassButton>
-                  <GlassButton variant="danger" size="sm" onClick={() => remove(item.id)}>
-                    삭제
-                  </GlassButton>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </GlassTable>
+        {loading && items.length === 0 ? (
+          <PageLoading title="대회 목록을 준비하고 있습니다" description="관리 가능한 대회와 기본 정보를 빠르게 확인하고 있습니다." mode="admin" layout="table" />
+        ) : (
+          <GlassTable headers={["대회명", "기간", "지역", "레인", "상태", "작업"]} rowCount={items.length} emptyMessage={hasLoaded ? "등록된 대회가 없습니다." : "대회 정보를 가져오고 있습니다."}>
+            {items.map((item) => (
+              <tr key={item.id} {...glassTrHoverProps}>
+                <td style={glassTdStyle}>
+                  <Link href={`/admin/tournaments/${item.id}`} style={{ fontWeight: 600 }}>
+                    {item.title}
+                  </Link>
+                </td>
+                <td style={{ ...glassTdStyle, color: "#64748b", fontSize: 13 }}>
+                  {item.startsAt} ~ {item.endsAt}
+                </td>
+                <td style={glassTdStyle}>{item.region}</td>
+                <td style={{ ...glassTdStyle, color: "#64748b" }}>
+                  {item.laneStart}-{item.laneEnd}
+                </td>
+                <td style={glassTdStyle}>{statusBadge(item.status)}</td>
+                <td style={glassTdStyle}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <GlassButton variant="secondary" size="sm" onClick={() => startEdit(item)}>
+                      수정
+                    </GlassButton>
+                    <GlassButton variant="danger" size="sm" onClick={() => remove(item.id)}>
+                      삭제
+                    </GlassButton>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </GlassTable>
+        )}
       </div>
     </div>
   );

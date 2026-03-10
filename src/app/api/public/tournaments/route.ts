@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
+import { readPublicTournamentListAggregate, rebuildPublicTournamentListAggregate } from "@/lib/aggregates/public-tournament";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   if (!adminDb) {
@@ -19,17 +22,10 @@ export async function GET(req: NextRequest) {
     return jsonCached(cached, 60);
   }
 
-  const snapshot = await adminDb
-    .collection("tournaments")
-    .orderBy("startsAt", "desc")
-    .get();
+  const stored = await readPublicTournamentListAggregate(adminDb);
+  const source = stored ?? await rebuildPublicTournamentListAggregate(adminDb);
 
-  const all = snapshot.docs.map((doc) => {
-    const data = doc.data() as Record<string, any>;
-    return { id: doc.id, ...data };
-  });
-
-  const filtered = all.filter((t: any) => {
+  const filtered = source.items.filter((t) => {
     if (year !== null && Number.isFinite(year) && t.seasonYear !== year) {
       return false;
     }

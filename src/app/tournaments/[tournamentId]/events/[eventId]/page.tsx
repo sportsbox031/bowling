@@ -8,6 +8,7 @@ import PageTitle from "@/components/common/PageTitle";
 import PrintModeBar from "@/components/common/PrintModeBar";
 import SearchField from "@/components/common/SearchField";
 import StatusBanner from "@/components/common/StatusBanner";
+import PageLoading from "@/components/common/PageLoading";
 import RankingTable from "@/components/scoreboard/RankingTable";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { cachedFetch } from "@/lib/client-cache";
@@ -94,7 +95,7 @@ const EventScoreBoardPage = () => {
   const [tournament, setTournament] = useState<TournamentMeta | null>(null);
   const [detail, setDetail] = useState<TournamentDetailResponse | null>(null);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [printMode, setPrintMode] = useState(false);
@@ -153,6 +154,9 @@ const EventScoreBoardPage = () => {
 
   const printPages = useMemo(() => chunkItems(filteredRows, PRINT_ROWS_PER_PAGE), [filteredRows]);
   const maxGameCount = useMemo(() => Math.max(0, ...filteredRows.map((row) => row.gameScores.length)), [filteredRows]);
+  if (loading && !detail && !eventInfo) {
+    return <PageLoading title="세부종목 화면을 불러오고 있습니다" description="점수표, 순위, 팀 데이터를 빠르게 준비하고 있습니다." mode="public" layout="detail" />;
+  }
 
   return (
     <main className={printMode ? "print-mode" : undefined}>
@@ -358,3 +362,6 @@ const EventScoreBoardPage = () => {
 };
 
 export default EventScoreBoardPage;
+
+
+

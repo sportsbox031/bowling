@@ -1,12 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate, rebuildPublicTournamentListAggregate } from "@/lib/aggregates/public-tournament";
 
 const normalizeStatus = (value?: string) => {
   if (value === "ONGOING" || value === "FINISHED") {
     return value;
   }
   return "UPCOMING";
+};
+
+const refreshPublicTournamentCaches = async (tournamentId: string) => {
+  if (!adminDb) return;
+  try {
+    await Promise.all([
+      rebuildPublicTournamentAggregate(adminDb, tournamentId),
+      rebuildPublicTournamentListAggregate(adminDb),
+    ]);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+  invalidateCache("pub-tournaments:");
 };
 
 export async function GET(req: NextRequest) {
@@ -74,6 +90,7 @@ export async function POST(req: NextRequest) {
 
   const docRef = adminDb.collection("tournaments").doc();
   await docRef.set(data);
+  await refreshPublicTournamentCaches(docRef.id);
 
   return NextResponse.json({ id: docRef.id, ...data });
 }

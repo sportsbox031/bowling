@@ -2,6 +2,7 @@ import "./globals.css";
 
 import { ReactNode } from "react";
 import PublicHeader from "@/components/PublicHeader";
+import RouteTransition from "@/components/common/RouteTransition";
 
 export const metadata = {
   title: "볼링 대회 성적 관리",
@@ -13,7 +14,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="ko">
       <body>
         <PublicHeader />
-        <div>{children}</div>
+        <RouteTransition mode="public">{children}</RouteTransition>
       </body>
     </html>
   );

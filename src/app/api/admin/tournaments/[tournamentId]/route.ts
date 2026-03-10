@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate, deletePublicTournamentAggregate, rebuildPublicTournamentListAggregate } from "@/lib/aggregates/public-tournament";
 
 const getTournamentRef = (database: NonNullable<typeof adminDb>, id: string) =>
   database.collection("tournaments").doc(id);
@@ -10,6 +12,26 @@ const ensureTournamentId = (id: string | undefined) => {
     return null;
   }
   return id.trim();
+};
+
+const refreshPublicTournamentCaches = async (tournamentId: string, includeList = false) => {
+  if (!adminDb) return;
+  try {
+    if (includeList) {
+      await Promise.all([
+        rebuildPublicTournamentAggregate(adminDb, tournamentId),
+        rebuildPublicTournamentListAggregate(adminDb),
+      ]);
+    } else {
+      await rebuildPublicTournamentAggregate(adminDb, tournamentId);
+    }
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+  if (includeList) {
+    invalidateCache("pub-tournaments:");
+  }
 };
 
 export async function GET(_req: NextRequest, ctx: { params: { tournamentId: string } }) {
@@ -81,6 +103,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
     { merge: true },
   );
 
+  await refreshPublicTournamentCaches(id, true);
   const updated = await getTournamentRef(adminDb, id).get();
   return NextResponse.json({ id: updated.id, ...(updated.data() as object) });
 }
@@ -101,5 +124,15 @@ export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: st
   }
 
   await getTournamentRef(adminDb, id).delete();
+  try {
+    await Promise.all([
+      deletePublicTournamentAggregate(adminDb, id),
+      rebuildPublicTournamentListAggregate(adminDb),
+    ]);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_DELETE_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${id}`);
+  invalidateCache("pub-tournaments:");
   return NextResponse.json({ message: "DELETED", id });
 }

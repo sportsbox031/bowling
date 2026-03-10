@@ -7,6 +7,7 @@ import SearchField from "@/components/common/SearchField";
 import StatusBanner from "@/components/common/StatusBanner";
 import RankingTable from "@/components/scoreboard/RankingTable";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
+import PageLoading from "@/components/common/PageLoading";
 import { cachedFetch } from "@/lib/client-cache";
 
 type PlayerRanking = {
@@ -24,6 +25,7 @@ type PlayerRanking = {
 export default function PlayersRankingPage() {
   const [players, setPlayers] = useState<PlayerRanking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [message, setMessage] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export default function PlayersRankingPage() {
         setMessage((err as Error).message);
       } finally {
         setLoading(false);
+        setHasLoaded(true);
       }
     };
     load();
@@ -73,7 +76,7 @@ export default function PlayersRankingPage() {
         meta={
           <>
             <GlassBadge variant="info">전체 {players.length}명</GlassBadge>
-            {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
+            {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>선수 정보를 불러오고 있습니다.</span>}
           </>
         }
       />
@@ -88,12 +91,16 @@ export default function PlayersRankingPage() {
 
       {message && <StatusBanner tone="error" style={{ marginBottom: 16 }}>{message}</StatusBanner>}
 
-      <RankingTable
-        rows={rows}
-        emptyMessage={searchKeyword ? "검색 결과가 없습니다." : loading ? "불러오는 중..." : "등록된 선수가 없습니다."}
-        onSelectPlayer={(playerName) => setSelectedPlayer(playerName)}
-        showOverallOnly
-      />
+      {loading && !hasLoaded ? (
+        <PageLoading title="선수 랭킹을 불러오고 있습니다" description="누적 경기 기록과 평균 점수를 정리하고 있습니다." mode="public" layout="table" />
+      ) : (
+        <RankingTable
+          rows={rows}
+          emptyMessage={searchKeyword ? "검색 결과가 없습니다." : hasLoaded ? "등록된 선수가 없습니다." : "선수 정보를 불러오고 있습니다."}
+          onSelectPlayer={(playerName) => setSelectedPlayer(playerName)}
+          showOverallOnly
+        />
+      )}
 
       {selectedPlayer && <PlayerProfileModal playerName={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
     </main>

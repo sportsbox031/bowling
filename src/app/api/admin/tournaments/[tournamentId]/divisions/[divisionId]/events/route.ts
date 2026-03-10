@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 const eventKinds = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
 type EventKind = (typeof eventKinds)[number];
@@ -14,13 +16,22 @@ const parseEvent = (payload: any) => ({
   laneStart: Number(payload?.laneStart),
   laneEnd: Number(payload?.laneEnd),
   tableShift: Number(payload?.tableShift),
-  // 5인조 전반/후반 연결 (선택적)
   linkedEventId: typeof payload?.linkedEventId === "string" && payload.linkedEventId.trim() ? payload.linkedEventId.trim() : null,
   halfType: payload?.halfType === "FIRST" || payload?.halfType === "SECOND" ? payload.halfType : null,
 });
 
 const toCollection = (database: NonNullable<typeof adminDb>, tournamentId: string, divisionId: string) =>
   database.collection("tournaments").doc(tournamentId).collection("divisions").doc(divisionId).collection("events");
+
+const refreshPublicTournamentCaches = async (tournamentId: string) => {
+  if (!adminDb) return;
+  try {
+    await rebuildPublicTournamentAggregate(adminDb, tournamentId);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+};
 
 export async function GET(
   _req: NextRequest,
@@ -66,7 +77,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     eventInput.laneStart < 1 ||
     eventInput.laneEnd < eventInput.laneStart ||
     !eventInput.scheduleDate ||
-  Number.isNaN(eventInput.tableShift)
+    Number.isNaN(eventInput.tableShift)
   ) {
     return NextResponse.json({ message: "INVALID_PAYLOAD" }, { status: 400 });
   }
@@ -94,6 +105,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
   const ref = toCollection(adminDb, ctx.params.tournamentId, ctx.params.divisionId).doc();
   await ref.set(data);
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
 
   return NextResponse.json({ id: ref.id, ...data });
 }

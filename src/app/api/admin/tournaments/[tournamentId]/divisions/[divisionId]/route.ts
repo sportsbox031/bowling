@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
+import { invalidateCache } from "@/lib/api-cache";
+import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 import { FieldPath } from "firebase-admin/firestore";
 
@@ -100,6 +102,16 @@ const normalizeDivision = (value: any) => ({
 const getDocRef = (database: NonNullable<typeof adminDb>, tournamentId: string, divisionId: string) =>
   database.collection("tournaments").doc(tournamentId).collection("divisions").doc(divisionId);
 
+const refreshPublicTournamentCaches = async (tournamentId: string) => {
+  if (!adminDb) return;
+  try {
+    await rebuildPublicTournamentAggregate(adminDb, tournamentId);
+  } catch (error) {
+    console.error("PUBLIC_TOURNAMENT_AGGREGATE_REBUILD_FAILED", error);
+  }
+  invalidateCache(`pub-tournament:${tournamentId}`);
+};
+
 export async function GET(_req: NextRequest, ctx: { params: { tournamentId: string; divisionId: string } }) {
   const session = await verifyAdminSessionToken(_req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
@@ -148,6 +160,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   }
 
   await ref.set({ ...updateData, updatedAt: new Date().toISOString() }, { merge: true });
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
   const updated = await ref.get();
   return NextResponse.json({ id: updated.id, ...(updated.data() as object) });
 }
@@ -180,5 +193,6 @@ export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: st
   await deleteDivisionEvents(eventsRef);
 
   await divisionRef.delete();
+  await refreshPublicTournamentCaches(ctx.params.tournamentId);
   return NextResponse.json({ message: "DELETED", id: ctx.params.divisionId });
 }
