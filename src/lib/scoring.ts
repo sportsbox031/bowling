@@ -108,6 +108,7 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
       attempts,
       region: player.region,
       affiliation: player.affiliation,
+      group: player.group ?? "",
       number: player.number,
       name: player.name,
       gameScores: games,

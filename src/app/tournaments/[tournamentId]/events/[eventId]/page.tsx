@@ -22,6 +22,7 @@ type EventRow = {
   playerId: string;
   region: string;
   affiliation: string;
+  group?: string;
   number: number;
   name: string;
   gameScores: ScoreColumn[];
@@ -333,7 +334,7 @@ const EventScoreBoardPage = () => {
                     <tr key={row.playerId}>
                       <td>{row.rank}</td>
                       <td>{row.region}</td>
-                      <td>{row.affiliation}</td>
+                      <td>{row.affiliation}{row.group || ""}</td>
                       <td>{row.number}</td>
                       <td>{row.name}</td>
                       {Array.from({ length: maxGameCount }, (_, index) => (

@@ -145,6 +145,7 @@ export interface EventRankingRow {
   attempts: number;
   region: string;
   affiliation: string;
+  group?: string;
   number: number;
   name: string;
   gameScores: ScoreColumn[];

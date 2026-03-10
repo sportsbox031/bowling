@@ -82,6 +82,7 @@ const validateManualItems = (items: AssignmentItem[], eventData: {
   laneEnd: number;
   gameCount: number;
   playerIds: Set<string>;
+  maxPerLane?: number;
 }): string | AssignmentItem[] => {
   if (eventData.gameCount < 1 || !Number.isFinite(eventData.gameCount) || eventData.gameCount > 20) {
     return "INVALID_EVENT_CONFIG";
@@ -124,7 +125,7 @@ const validateManualItems = (items: AssignmentItem[], eventData: {
 
     const laneKey = `${item.gameNumber}:${item.laneNumber}`;
     const nextCount = (laneCounts.get(laneKey) ?? 0) + 1;
-    if (nextCount > MAX_PLAYERS_PER_LANE) {
+    if (nextCount > (eventData.maxPerLane ?? MAX_PLAYERS_PER_LANE)) {
       return "LANE_CAPACITY_EXCEEDED";
     }
     laneCounts.set(laneKey, nextCount);
@@ -244,11 +245,14 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
       return NextResponse.json({ message: "NO_ITEMS" }, { status: 400 });
     }
 
+    const eventKind = (eventData.kind as string) ?? "";
+    const maxPerLane = eventKind === "FIVES" ? 5 : MAX_PLAYERS_PER_LANE;
     const normalized = validateManualItems(items, {
       laneStart,
       laneEnd,
       gameCount,
       playerIds: eventPlayerIds,
+      maxPerLane,
     });
 
     if (typeof normalized === "string") {
@@ -296,10 +300,12 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   const laneCount = laneEnd - laneStart + 1;
-  if (playerIds.length > laneCount * MAX_PLAYERS_PER_LANE) {
-    console.error("[assignments] LANE_CAPACITY_EXCEEDED", { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * MAX_PLAYERS_PER_LANE });
+  const eventKind = (eventData.kind as string) ?? "";
+  const maxPerLane = eventKind === "FIVES" ? 5 : MAX_PLAYERS_PER_LANE;
+  if (playerIds.length > laneCount * maxPerLane) {
+    console.error("[assignments] LANE_CAPACITY_EXCEEDED", { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * maxPerLane });
     return NextResponse.json(
-      { message: "LANE_CAPACITY_EXCEEDED", detail: { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * MAX_PLAYERS_PER_LANE } },
+      { message: "LANE_CAPACITY_EXCEEDED", detail: { playerCount: playerIds.length, laneCount, maxCapacity: laneCount * maxPerLane } },
       { status: 400 },
     );
   }

@@ -11,6 +11,7 @@ type RankingRow = {
   rank: number;
   region: string;
   affiliation: string;
+  group?: string;
   number: number;
   name: string;
   gameScores: ScoreColumn[];
@@ -66,7 +67,7 @@ export default function RankingTable({
           <tr key={row.playerId} {...glassTrHoverProps}>
             <td style={{ ...glassTdStyle, ...getRankTextStyle(row.rank), textAlign: "center" }}>{row.rank}</td>
             <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.region}</td>
-            <td style={glassTdStyle}>{row.affiliation}</td>
+            <td style={glassTdStyle}>{row.affiliation}{row.group || ""}</td>
             <td style={{ ...glassTdStyle, textAlign: "center" }}>{row.number}</td>
             <td
               style={{
