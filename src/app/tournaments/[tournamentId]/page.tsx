@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { GlassCard, GlassButton, GlassBadge } from "@/components/ui";
 import { adminDb } from "@/lib/firebase/admin";
 import { KIND_LABELS, formatDivisionLabel } from "@/lib/constants";
+import { readPublicTournamentAggregate, rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 export const dynamic = "force-dynamic";
 
@@ -16,12 +17,14 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
   }
 
   const tournamentId = params.tournamentId;
-  const tournamentDoc = await adminDb.collection("tournaments").doc(tournamentId).get();
-  if (!tournamentDoc.exists) {
+  const aggregate = await readPublicTournamentAggregate(adminDb, tournamentId)
+    ?? await rebuildPublicTournamentAggregate(adminDb, tournamentId).catch(() => null);
+
+  if (!aggregate) {
     notFound();
   }
 
-  const tournament = { id: tournamentDoc.id, ...(tournamentDoc.data() as Record<string, unknown>) } as {
+  const tournament = aggregate.tournament as {
     id: string;
     title: string;
     region: string;
@@ -29,45 +32,12 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
     endsAt: string;
   };
 
-  const divisionsSnap = await adminDb
-    .collection("tournaments")
-    .doc(tournamentId)
-    .collection("divisions")
-    .orderBy("title")
-    .get();
+  const divisions = aggregate.divisions.map((division) => ({
+    ...division,
+    displayTitle: formatDivisionLabel(division.title, division.gender),
+  }));
 
-  const divisions = divisionsSnap.docs.map((doc) => {
-    const data = doc.data() as { title: string; code: string; gender?: string };
-    return {
-      id: doc.id,
-      title: data.title,
-      code: data.code,
-      gender: data.gender ?? "",
-      displayTitle: formatDivisionLabel(data.title, data.gender),
-    };
-  });
-
-  const eventsByDivision = await Promise.all(
-    divisions.map(async (division) => {
-      const eventsSnap = await adminDb!
-        .collection("tournaments")
-        .doc(tournamentId)
-        .collection("divisions")
-        .doc(division.id)
-        .collection("events")
-        .orderBy("scheduleDate")
-        .get();
-
-      const events = eventsSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as { title: string; kind: string; gameCount: number; scheduleDate: string }),
-      }));
-
-      return { divisionId: division.id, events };
-    }),
-  );
-
-  const eventMap = new Map(eventsByDivision.map((item) => [item.divisionId, item.events]));
+  const eventMap = new Map(aggregate.eventsByDivision.map((item) => [item.divisionId, item.events]));
 
   return (
     <main>
@@ -153,4 +123,3 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
     </main>
   );
 }
-

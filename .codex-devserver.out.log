@@ -306,3 +306,18 @@
  ✓ Compiled in 448ms (1026 modules)
  ✓ Compiled in 407ms (1012 modules)
  ✓ Compiled in 549ms (1012 modules)
+ ✓ Compiled in 1018ms (1014 modules)
+ ✓ Compiled in 215ms (1014 modules)
+ ✓ Compiled / in 386ms (530 modules)
+ GET / 500 in 1005ms
+ GET / 500 in 231ms
+ ✓ Compiled /_not-found in 277ms (1022 modules)
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 455ms
+ GET / 200 in 99ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 45ms
+ GET /_next/static/css/app/layout.css?v=1773178636192 404 in 89ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 112ms
+ GET /_next/static/chunks/main-app.js?v=1773178636192 404 in 125ms
+ GET /_next/static/chunks/app/page.js 404 in 114ms
+ GET /_next/static/chunks/app/layout.js 404 in 94ms
+ ✓ Compiled in 1891ms (1014 modules)

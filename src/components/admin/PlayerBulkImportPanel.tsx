@@ -4,6 +4,7 @@ import { ChangeEvent, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { GlassButton, GlassCard } from "@/components/ui";
 import StatusBanner from "@/components/common/StatusBanner";
+import { downloadPlayerImportTemplate } from "@/lib/admin/player-import-template";
 
 type ImportedPlayer = {
   group: string;
@@ -129,6 +130,12 @@ export default function PlayerBulkImportPanel({ tournamentId, divisionId, onImpo
   const validRows = useMemo(() => rows.filter((row) => row.errors.length === 0), [rows]);
   const invalidRows = useMemo(() => rows.filter((row) => row.errors.length > 0), [rows]);
 
+  const handleTemplateDownload = () => {
+    downloadPlayerImportTemplate();
+    setTone("info");
+    setMessage("양식을 내려받았습니다. 예시 행을 참고해 내용을 입력한 뒤 업로드해 주세요.");
+  };
+
   const handleFile = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -217,10 +224,13 @@ export default function PlayerBulkImportPanel({ tournamentId, divisionId, onImpo
         <div>
           <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1e293b", margin: 0 }}>엑셀/CSV 일괄 등록</h3>
           <p style={{ margin: "6px 0 0", color: "#64748b", fontSize: 13, lineHeight: 1.5 }}>
-            `.csv`, `.tsv`, `.xlsx` 파일을 업로드할 수 있습니다. 헤더는 group, region, affiliation, name, hand 를 사용합니다.
+            1. 양식을 다운로드한 뒤 선수 정보를 입력하고, 2. 작성한 파일을 업로드하면, 3. 미리보기 확인 후 한 번에 등록할 수 있습니다.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <GlassButton type="button" size="sm" variant="secondary" onClick={handleTemplateDownload}>
+            양식 다운로드
+          </GlassButton>
           <label style={{ display: "inline-flex", alignItems: "center" }}>
             <input type="file" accept={ACCEPTED_FILE_TYPES} onChange={handleFile} style={{ display: "none" }} />
             <span style={{ padding: "9px 14px", borderRadius: 10, background: "rgba(255,255,255,0.45)", border: "1px solid rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 13, fontWeight: 600, color: "#334155" }}>파일 선택</span>
@@ -231,8 +241,9 @@ export default function PlayerBulkImportPanel({ tournamentId, divisionId, onImpo
         </div>
       </div>
 
-      <p style={{ margin: 0, color: "#94a3b8", fontSize: 12 }}>예시 헤더: group, region, affiliation, name, hand</p>
-      <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: 12 }}>A, 수원시, OO초등학교, 홍길동, right</p>
+      <p style={{ margin: 0, color: "#94a3b8", fontSize: 12 }}>업로드 헤더: group, region, affiliation, name, hand</p>
+      <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: 12 }}>hand 값은 right 또는 left 를 사용합니다.</p>
+      <p style={{ margin: "4px 0 0", color: "#94a3b8", fontSize: 12 }}>예시 행: A, 수원시, OO초등학교, 홍길동, right</p>
       {sourceFileName && <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 12 }}>선택 파일: {sourceFileName}</p>}
 
       {message && <StatusBanner tone={tone} style={{ marginTop: 14 }}>{message}</StatusBanner>}

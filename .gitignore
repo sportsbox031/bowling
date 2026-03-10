@@ -9,3 +9,5 @@ node_modules
 !next-env.d.ts
 bowling-system-firebase-adminsdk-*.json
 firebase-service-account.json
+
+.vercel

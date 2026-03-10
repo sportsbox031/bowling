@@ -4,7 +4,7 @@
  *
  * Usage:
  *   const data = await cachedFetch<MyType>(url, ttlMs);
- *   // First call → real fetch + store. Subsequent calls within TTL → instant, no API call.
+ *   // First call -> real fetch + store. Subsequent calls within TTL -> instant, no API call.
  */
 
 type CacheEntry = { data: unknown; ts: number };
@@ -21,11 +21,9 @@ function storage(): Storage | null {
 }
 
 export function getClientCache<T>(key: string, maxAge: number): T | null {
-  // Memory first (fastest)
   const m = mem.get(key);
   if (m && Date.now() - m.ts < maxAge) return m.data as T;
 
-  // SessionStorage fallback (survives page navigations)
   const s = storage();
   if (!s) return null;
   try {
@@ -33,10 +31,10 @@ export function getClientCache<T>(key: string, maxAge: number): T | null {
     if (!raw) return null;
     const entry: CacheEntry = JSON.parse(raw);
     if (Date.now() - entry.ts < maxAge) {
-      mem.set(key, entry); // promote to memory
+      mem.set(key, entry);
       return entry.data as T;
     }
-  } catch { /* corrupted or quota exceeded */ }
+  } catch {}
   return null;
 }
 
@@ -52,16 +50,13 @@ export function setClientCache<T>(key: string, data: T): void {
   try {
     s.setItem(`cc:${key}`, JSON.stringify(entry));
   } catch {
-    // Storage quota exceeded — memory cache still works
   }
 }
 
 export function invalidateClientCache(prefix: string): void {
-  // Memory
   for (const key of mem.keys()) {
     if (key.startsWith(prefix)) mem.delete(key);
   }
-  // SessionStorage
   const s = storage();
   if (!s) return;
   const toRemove: string[] = [];
@@ -72,10 +67,6 @@ export function invalidateClientCache(prefix: string): void {
   for (const k of toRemove) s.removeItem(k);
 }
 
-/**
- * Fetch with client-side caching.
- * If cached data exists within maxAge, returns it instantly (no API call).
- */
 export async function cachedFetch<T>(
   url: string,
   maxAge: number,
@@ -87,7 +78,18 @@ export async function cachedFetch<T>(
   if (cached !== null) return cached;
 
   const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    let message = `API error: ${res.status}`;
+    try {
+      const payload = await res.json() as { message?: unknown; error?: unknown };
+      if (typeof payload.message === "string" && payload.message.trim()) {
+        message = payload.message;
+      } else if (typeof payload.error === "string" && payload.error.trim()) {
+        message = payload.error;
+      }
+    } catch {}
+    throw new Error(message);
+  }
   const data = (await res.json()) as T;
 
   setClientCache(cacheKey, data);

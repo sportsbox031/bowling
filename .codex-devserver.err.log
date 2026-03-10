@@ -2068,3 +2068,192 @@ Require stack:
 <w>  at file dependencies C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
 <w>  at file C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
 <w>  at resolve commonjs C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\webpack\loaders\next-swc-loader.js
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at JSON.parse (<anonymous>)
+digest: "1323548622"
+TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:19604)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108279
+    at eo (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108464)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:110693
+    at Object._fromJSON (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:111249)
+    at JSON.parse (<anonymous>)
+    at eu (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108958)
+    at en (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108026)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115168
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115185
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115218
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115235
+    at t (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115458)
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:19604)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108279
+    at eo (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108464)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:110693
+    at Object._fromJSON (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:111249)
+    at JSON.parse (<anonymous>)
+    at eu (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108958)
+    at en (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108026)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115168
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115185
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115218
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115235
+    at t (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115458) {
+  page: '/'
+}
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:335
+    at Object.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:377)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:710:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:33:43)
+    at require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:19604)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108279
+    at eo (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108464)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:110693
+    at Object._fromJSON (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:111249)
+    at JSON.parse (<anonymous>)
+    at eu (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108958)
+    at en (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:108026)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115168
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115185
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115218
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115235
+    at t (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:35:115458) {
+  page: '/'
+}
+ ⨯ Error: Cannot find module './1682.js'
+Require stack:
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\app\page.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\build\utils.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-middleware.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js
+- C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:198:28)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\webpack-runtime.js:162:22)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:335
+    at Object.<anonymous> (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\server\pages\_document.js:1:377)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\require.js:109:84)
+    at C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\next-server.js:710:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\webpack-runtime.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\server\\app\\page.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\require.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\load-components.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\build\\utils.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-middleware.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\dev\\hot-reloader-webpack.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-utils\\setup-dev-bundler.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\router-server.js',
+    'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\node_modules\\next\\dist\\server\\lib\\start-server.js'
+  ]
+}
+Error: ENOENT: no such file or directory, open 'C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\.next\fallback-build-manifest.json'
+    at readFileSync (node:fs:442:20)
+    at loadManifest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-manifest.js:35:54)
+    at loadManifestWithRetries (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-components.js:40:51)
+    at async loadDefaultErrorComponentsImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\load-default-error-components.js:30:24)
+    at async DevServer.getFallbackErrorComponents (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:594:16)
+    at async DevServer.renderErrorToResponseImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:2203:40)
+    at async pipe.req.req (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:2056:30)
+    at async DevServer.pipeImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\base-server.js:920:25)
+    at async C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:174:21)
+    at async requestHandlerImpl (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\router-server.js:389:24)
+    at async Server.requestListener (C:\Users\pkmlo\OneDrive\Desktop\AI관련자료\bowling\node_modules\next\dist\server\lib\start-server.js:141:13) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\pkmlo\\OneDrive\\Desktop\\AI관련자료\\bowling\\.next\\fallback-build-manifest.json'
+}

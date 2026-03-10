@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
+import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,7 +12,10 @@ export async function GET(req: NextRequest) {
     const divisionId = url.searchParams.get("divisionId") ?? undefined;
     const squadId = url.searchParams.get("squadId") ?? undefined;
 
-    if (!adminDb || !tournamentId || !eventId) {
+    if (!adminDb) {
+      return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
+    }
+    if (!tournamentId || !eventId) {
       return NextResponse.json({ message: "INVALID_QUERY" }, { status: 400 });
     }
 
@@ -88,6 +92,12 @@ export async function GET(req: NextRequest) {
     setCache(cacheKey, result, 60000);
     return jsonCached(result, 30);
   } catch (error) {
+    if (isFirestoreQuotaExceededError(error)) {
+      return NextResponse.json(
+        { code: "QUOTA_EXCEEDED", message: getQuotaExceededMessage("레인 배정을 불러오는") },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
       { message: "ASSIGNMENTS_FETCH_FAILED", error: String((error as Error).message) },
       { status: 500 },

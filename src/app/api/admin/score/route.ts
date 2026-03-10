@@ -3,12 +3,15 @@ import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { invalidateCache } from "@/lib/api-cache";
-import { rebuildPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
+import { rebuildPlayerRankingsAggregate, readPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
 import { rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
-import { rebuildPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
+import { rebuildPlayerProfileAggregate, readPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
+import { isAggregateFresh } from "@/lib/aggregates/freshness";
 
 const MAX_SCORE = 300;
+const PLAYER_RANKINGS_MAX_AGE_MS = 5 * 60 * 1000;
+const PLAYER_PROFILE_MAX_AGE_MS = 5 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -100,12 +103,23 @@ export async function POST(req: NextRequest) {
 
     try {
       const rebuildTasks: Promise<unknown>[] = [
-        rebuildPlayerRankingsAggregate(adminDb),
         rebuildOverallAggregate(adminDb, tournamentId, eventInfo.divisionId),
         rebuildOverallAggregate(adminDb, tournamentId),
         rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventId),
-        rebuildPlayerProfileAggregate(adminDb, typeof playerData.shortId === "string" && playerData.shortId ? playerData.shortId : undefined, typeof playerData.name === "string" ? playerData.name : undefined),
       ];
+
+      const existingRankings = await readPlayerRankingsAggregate(adminDb);
+      if (!isAggregateFresh(existingRankings?.updatedAt, PLAYER_RANKINGS_MAX_AGE_MS)) {
+        rebuildTasks.push(rebuildPlayerRankingsAggregate(adminDb));
+      }
+
+      const playerShortId = typeof playerData.shortId === "string" && playerData.shortId ? playerData.shortId : undefined;
+      const playerName = typeof playerData.name === "string" ? playerData.name : undefined;
+      const existingProfile = await readPlayerProfileAggregate(adminDb, playerShortId, playerName);
+      if (!isAggregateFresh(existingProfile?.updatedAt, PLAYER_PROFILE_MAX_AGE_MS)) {
+        rebuildTasks.push(rebuildPlayerProfileAggregate(adminDb, playerShortId, playerName));
+      }
+
       if (typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
         rebuildTasks.push(rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventData.linkedEventId));
       }
@@ -128,7 +142,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-
-
-

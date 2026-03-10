@@ -3,9 +3,9 @@ import { adminDb } from "@/lib/firebase/admin";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
+import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
 
 export const dynamic = "force-dynamic";
-
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,11 +14,11 @@ export async function GET(req: NextRequest) {
     const eventId = url.searchParams.get("eventId");
     const divisionId = url.searchParams.get("divisionId") ?? undefined;
 
-    if (!adminDb || !tournamentId || !eventId) {
-      return NextResponse.json(
-        { message: "INVALID_QUERY" },
-        { status: 400 },
-      );
+    if (!adminDb) {
+      return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
+    }
+    if (!tournamentId || !eventId) {
+      return NextResponse.json({ message: "INVALID_QUERY" }, { status: 400 });
     }
 
     const cacheKey = `scoreboard:${tournamentId}:${divisionId}:${eventId}`;
@@ -52,11 +52,15 @@ export async function GET(req: NextRequest) {
     setCache(cacheKey, result, 60000);
     return jsonCached(result, 60);
   } catch (error) {
+    if (isFirestoreQuotaExceededError(error)) {
+      return NextResponse.json(
+        { code: "QUOTA_EXCEEDED", message: getQuotaExceededMessage("점수표를 불러오는") },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
       { message: "LEADERBOARD_FAILED", error: String((error as Error).message) },
       { status: 500 },
     );
   }
 }
-
-
