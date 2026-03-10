@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildEventLeaderboard } from "@/lib/scoring";
+import { buildEventLeaderboard, buildTeamLeaderboard, buildFivesLinkedLeaderboard } from "@/lib/scoring";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
+import type { EventType, Player, Team } from "@/lib/models";
+
+const TEAM_EVENT_KINDS: EventType[] = ["DOUBLES", "TRIPLES", "FIVES"];
 
 export async function GET(req: NextRequest) {
   try {
@@ -81,8 +84,68 @@ export async function GET(req: NextRequest) {
 
     const leaderboard = buildEventLeaderboard({ players, scores, gameCount: eventDoc.gameCount ?? 1 });
 
+    const isTeamEvent = TEAM_EVENT_KINDS.includes(eventDoc.kind as EventType);
+    let teamRows = null;
+
+    if (isTeamEvent) {
+      const teamsSnap = await event.ref.collection("teams").get();
+      const teams = teamsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Team));
+
+      if (teams.length > 0) {
+        const playerMap = new Map<string, Player>(players.map((p) => [p.id, p]));
+        const teamLeaderboard = buildTeamLeaderboard({
+          teams,
+          playerMap,
+          individualRows: leaderboard.rows,
+        });
+        teamRows = teamLeaderboard.rows;
+
+        // 5인조 전반/후반 연결 처리
+        if (eventDoc.kind === "FIVES" && eventDoc.linkedEventId) {
+          const linkedEvent = await resolveEventRef(adminDb!, tournamentId, eventDoc.linkedEventId);
+          if (linkedEvent) {
+            const [linkedTeamsSnap, linkedScoresSnap, linkedEventDoc] = await Promise.all([
+              linkedEvent.ref.collection("teams").get(),
+              linkedEvent.ref.collection("scores").get(),
+              linkedEvent.ref.get(),
+            ]);
+            const linkedTeams = linkedTeamsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Team));
+            const linkedScores = linkedScoresSnap.docs.map((doc) => {
+              const d = doc.data();
+              return {
+                id: doc.id, tournamentId, eventId: eventDoc.linkedEventId,
+                playerId: d.playerId, gameNumber: d.gameNumber,
+                laneNumber: d.laneNumber ?? 0, score: d.score,
+                createdAt: d.updatedAt ?? "",
+              };
+            });
+            const linkedEventData = linkedEventDoc.data() ?? {};
+            const linkedLeaderboard = buildEventLeaderboard({
+              players,
+              scores: linkedScores,
+              gameCount: linkedEventData.gameCount ?? 1,
+            });
+            const linkedTeamLeaderboard = buildTeamLeaderboard({
+              teams: linkedTeams,
+              playerMap,
+              individualRows: linkedLeaderboard.rows,
+            });
+
+            // 현재 이벤트가 전반인지 후반인지에 따라 순서 결정
+            const isFirstHalf = eventDoc.halfType === "FIRST";
+            const fivesResult = buildFivesLinkedLeaderboard({
+              firstHalfRows: isFirstHalf ? teamRows : linkedTeamLeaderboard.rows,
+              secondHalfRows: isFirstHalf ? linkedTeamLeaderboard.rows : teamRows,
+            });
+            teamRows = fivesResult.rows;
+          }
+        }
+      }
+    }
+
     const result = {
       ...leaderboard,
+      ...(teamRows !== null ? { teamRows } : {}),
       event: {
         id: eventId,
         title: eventDoc.title,
@@ -92,6 +155,8 @@ export async function GET(req: NextRequest) {
         laneStart: eventDoc.laneStart,
         laneEnd: eventDoc.laneEnd,
         tableShift: eventDoc.tableShift,
+        linkedEventId: eventDoc.linkedEventId ?? null,
+        halfType: eventDoc.halfType ?? null,
       },
     };
 

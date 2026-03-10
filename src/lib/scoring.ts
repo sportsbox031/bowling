@@ -4,6 +4,9 @@ import {
   Player,
   ScoreColumn,
   ScoreRow,
+  Team,
+  TeamMemberRow,
+  TeamRankingRow,
 } from "./models";
 
 export const MAX_GAME_COUNT = 6;
@@ -133,6 +136,140 @@ export const buildEventLeaderboard = (input: EventRankingInput): EventRankingRes
 
   return { rows: finalRows };
 }
+
+export interface TeamRankingInput {
+  teams: Team[];
+  playerMap: Map<string, Player>;
+  individualRows: EventRankingRow[];
+}
+
+export interface TeamRankingResult {
+  rows: TeamRankingRow[];
+}
+
+export const buildTeamLeaderboard = (input: TeamRankingInput): TeamRankingResult => {
+  const individualByPlayer = new Map<string, EventRankingRow>();
+  for (const row of input.individualRows) {
+    individualByPlayer.set(row.playerId, row);
+  }
+
+  const baseRows: Omit<TeamRankingRow, "rank" | "tieRank" | "pinDiff">[] = input.teams.map((team) => {
+    const members: TeamMemberRow[] = team.memberIds.map((pid) => {
+      const player = input.playerMap.get(pid);
+      const row = individualByPlayer.get(pid);
+      return {
+        playerId: pid,
+        name: player?.name ?? "",
+        affiliation: player?.affiliation ?? "",
+        region: player?.region ?? "",
+        number: player?.number ?? 0,
+        gameScores: row?.gameScores ?? [],
+        total: row?.total ?? 0,
+      };
+    });
+
+    const teamTotal = team.teamType === "NORMAL"
+      ? members.reduce((sum, m) => sum + m.total, 0)
+      : 0;
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      teamType: team.teamType,
+      members,
+      teamTotal,
+    };
+  });
+
+  // NORMAL 팀만 순위 산정, MAKEUP은 뒤에 붙임
+  const normalRows = baseRows.filter((r) => r.teamType === "NORMAL");
+  const makeupRows = baseRows.filter((r) => r.teamType === "MAKEUP");
+
+  const sortedNormal = [...normalRows].sort((a, b) => b.teamTotal - a.teamTotal);
+  const leaderTotal = sortedNormal[0]?.teamTotal ?? 0;
+
+  const rankMap = new Map<number, number>();
+  sortedNormal.forEach((row, idx) => {
+    if (!rankMap.has(row.teamTotal)) {
+      rankMap.set(row.teamTotal, idx + 1);
+    }
+  });
+
+  const rankedNormal: TeamRankingRow[] = sortedNormal.map((row) => ({
+    ...row,
+    rank: rankMap.get(row.teamTotal) ?? 0,
+    tieRank: rankMap.get(row.teamTotal) ?? 0,
+    pinDiff: Math.max(0, leaderTotal - row.teamTotal),
+  }));
+
+  const unrankedMakeup: TeamRankingRow[] = makeupRows.map((row) => ({
+    ...row,
+    rank: 0,
+    tieRank: 0,
+    pinDiff: 0,
+  }));
+
+  return { rows: [...rankedNormal, ...unrankedMakeup] };
+};
+
+export interface FivesLinkedInput {
+  firstHalfRows: TeamRankingRow[];
+  secondHalfRows: TeamRankingRow[];
+}
+
+export interface FivesLinkedResult {
+  rows: TeamRankingRow[];
+}
+
+/**
+ * 5인조 전반+후반 팀점수 합산 리더보드.
+ * 전반/후반 팀을 teamName으로 매칭합니다.
+ */
+export const buildFivesLinkedLeaderboard = (input: FivesLinkedInput): FivesLinkedResult => {
+  const secondHalfByName = new Map<string, TeamRankingRow>();
+  for (const row of input.secondHalfRows) {
+    if (row.teamType === "NORMAL") {
+      secondHalfByName.set(row.teamName, row);
+    }
+  }
+
+  const combined: TeamRankingRow[] = [];
+
+  for (const firstRow of input.firstHalfRows) {
+    if (firstRow.teamType !== "NORMAL") {
+      continue;
+    }
+    const secondRow = secondHalfByName.get(firstRow.teamName);
+    const secondTotal = secondRow?.teamTotal ?? 0;
+    combined.push({
+      ...firstRow,
+      teamTotal: firstRow.teamTotal + secondTotal,
+      // members는 전반 기준으로 표시 (후반 교체 선수는 별도 표시 불가)
+      rank: 0,
+      tieRank: 0,
+      pinDiff: 0,
+    });
+  }
+
+  const sorted = [...combined].sort((a, b) => b.teamTotal - a.teamTotal);
+  const leaderTotal = sorted[0]?.teamTotal ?? 0;
+
+  const rankMap = new Map<number, number>();
+  sorted.forEach((row, idx) => {
+    if (!rankMap.has(row.teamTotal)) {
+      rankMap.set(row.teamTotal, idx + 1);
+    }
+  });
+
+  const rows: TeamRankingRow[] = sorted.map((row) => ({
+    ...row,
+    rank: rankMap.get(row.teamTotal) ?? 0,
+    tieRank: rankMap.get(row.teamTotal) ?? 0,
+    pinDiff: Math.max(0, leaderTotal - row.teamTotal),
+  }));
+
+  return { rows };
+};
 
 export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRankingResult => {
   const merged: Map<string, OverallRankingRow> = new Map();

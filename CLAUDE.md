@@ -19,7 +19,7 @@ npm run start    # Start production server
 npm run lint     # Next.js ESLint
 ```
 
-No test framework is configured yet. Type-check via `npm run build` (runs `next build` which enforces strict TS). Zero external dependencies beyond Next.js, React, Firebase, and firebase-admin.
+No test framework is configured yet. Type-check via `npm run build` (runs `next build` which enforces strict TS). Requires Node 20+. External dependencies: Next.js 14.2, React 18, Firebase, firebase-admin, and `xlsx` (Excel export).
 
 ## Architecture
 

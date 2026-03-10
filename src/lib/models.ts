@@ -4,9 +4,22 @@ export type EventType = "SINGLE" | "DOUBLES" | "TRIPLES" | "FOURS" | "FIVES" | "
 
 export type GenderCategory = "M" | "F" | "MIXED";
 
-export interface TeamGroup {
+export type TeamType = "NORMAL" | "MAKEUP";
+
+export type HalfType = "FIRST" | "SECOND";
+
+/** 팀 게임(2인조/3인조/5인조) 팀 구성 */
+export interface Team {
   id: string;
-  label: string;
+  tournamentId: string;
+  divisionId: string;
+  eventId: string;
+  name: string;           // NORMAL: 소속명, MAKEUP: "혼성팀 N"
+  teamType: TeamType;     // 소속 동일 = NORMAL, 다르면 = MAKEUP
+  memberIds: string[];    // 출전 선수 ID 목록 (순서 있음)
+  rosterIds?: string[];   // 5인조 전용: 교체 가능 전체 로스터
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Tournament {
@@ -49,6 +62,10 @@ export interface EventSpec {
   tableShift: number; // 예: +2, -2
   createdAt: string;
   updatedAt: string;
+  // 팀 게임 전용 (DOUBLES/TRIPLES/FIVES)
+  teamSize?: number;          // 2, 3, 5
+  linkedEventId?: string;     // 5인조 전반↔후반 연결
+  halfType?: HalfType;        // 5인조 전반/후반 구분
 }
 
 export interface Player {
@@ -98,6 +115,27 @@ export interface GameAssignment {
 export interface ScoreColumn {
   gameNumber: number;
   score: number | null;
+}
+
+export interface TeamMemberRow {
+  playerId: string;
+  name: string;
+  affiliation: string;
+  region: string;
+  number: number;
+  gameScores: ScoreColumn[];
+  total: number;
+}
+
+export interface TeamRankingRow {
+  teamId: string;
+  teamName: string;
+  teamType: TeamType;
+  rank: number;
+  tieRank: number;
+  members: TeamMemberRow[];
+  teamTotal: number;  // MAKEUP = 0 (미합산)
+  pinDiff: number;
 }
 
 export interface EventRankingRow {

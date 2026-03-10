@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -31,6 +31,8 @@ type Event = {
   laneStart: number;
   laneEnd: number;
   tableShift: number;
+  linkedEventId?: string;
+  halfType?: "FIRST" | "SECOND";
 };
 
 type Player = {
@@ -90,6 +92,8 @@ export default function TournamentDetailPage() {
     laneStart: 1,
     laneEnd: 1,
     tableShift: 1,
+    linkedEventId: "" as string,
+    halfType: "" as "" | "FIRST" | "SECOND",
   });
 
   // Player form
@@ -125,13 +129,13 @@ export default function TournamentDetailPage() {
   };
 
   // --- Data loading ---
-  const loadTournament = async () => {
+  const loadTournament = useCallback(async () => {
     const result = await api<{ items?: TournamentDetail[] }>(`/api/admin/tournaments`);
     const found = result.items?.find((item) => item.id === tournamentId);
     if (found) setTournament(found);
-  };
+  }, [tournamentId]);
 
-  const loadDivisions = async () => {
+  const loadDivisions = useCallback(async () => {
     if (!tournamentId) return;
     const result = await api<{ items: Division[] }>(`/api/admin/tournaments/${tournamentId}/divisions`);
     const items = result.items ?? [];
@@ -142,31 +146,31 @@ export default function TournamentDetailPage() {
     if (items.length === 0) {
       setActiveDivisionId("");
     }
-  };
+  }, [tournamentId, activeDivisionId]);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     if (!tournamentId || !activeDivisionId) { setEvents([]); return; }
     const result = await api<{ items: Event[] }>(
       `/api/admin/tournaments/${tournamentId}/divisions/${activeDivisionId}/events`,
     );
     setEvents(result.items ?? []);
-  };
+  }, [tournamentId, activeDivisionId]);
 
-  const loadPlayers = async () => {
+  const loadPlayers = useCallback(async () => {
     if (!tournamentId) return;
     const filter = activeDivisionId ? `?divisionId=${activeDivisionId}` : "";
     const result = await api<{ items: Player[] }>(`/api/admin/tournaments/${tournamentId}/players${filter}`);
     setPlayers(result.items ?? []);
-  };
+  }, [tournamentId, activeDivisionId]);
 
   // --- Reset helpers ---
   const resetDivisionForm = () => { setDivisionForm({ title: "", gender: "M" }); setEditingDivisionId(""); };
-  const resetEventForm = () => { setEventForm({ title: "", kind: "SINGLE", gameCount: 1, scheduleDate: "", laneStart: 1, laneEnd: 1, tableShift: 1 }); setEditingEventId(""); };
+  const resetEventForm = () => { setEventForm({ title: "", kind: "SINGLE", gameCount: 1, scheduleDate: "", laneStart: 1, laneEnd: 1, tableShift: 1, linkedEventId: "", halfType: "" }); setEditingEventId(""); };
   const resetPlayerForm = () => { setPlayerForm({ group: "A", region: "", affiliation: "", name: "", hand: "right" }); setEditingPlayerId(""); };
 
-  useEffect(() => { loadTournament(); }, [tournamentId]);
-  useEffect(() => { loadDivisions().catch(() => showMessage("종별을 불러올 수 없습니다.", "error")); }, [tournamentId]);
-  useEffect(() => { loadEvents(); loadPlayers(); }, [tournamentId, activeDivisionId]);
+  useEffect(() => { loadTournament(); }, [loadTournament]);
+  useEffect(() => { loadDivisions().catch(() => showMessage("종별을 불러올 수 없습니다.", "error")); }, [loadDivisions]);
+  useEffect(() => { loadEvents(); loadPlayers(); }, [loadEvents, loadPlayers]);
 
   // --- CRUD Handlers ---
   const saveDivision = async (e: FormEvent<HTMLFormElement>) => {
@@ -445,6 +449,44 @@ export default function TournamentDetailPage() {
                   <GlassInput label="끝 레인" type="number" min={1} value={eventForm.laneEnd}
                     onChange={(e) => setEventForm((p) => ({ ...p, laneEnd: Number(e.target.value) }))} />
                 </div>
+
+                {/* 5인조 전반/후반 연결 설정 */}
+                {eventForm.kind === "FIVES" && (
+                  <div style={{ padding: "12px 14px", background: "rgba(99,102,241,0.06)", borderRadius: 10, border: "1px solid rgba(99,102,241,0.15)" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 10 }}>
+                      5인조 전반/후반 설정
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <GlassSelect
+                        label="전반/후반 구분"
+                        value={eventForm.halfType}
+                        onChange={(e) => setEventForm((p) => ({ ...p, halfType: e.target.value as "" | "FIRST" | "SECOND" }))}
+                      >
+                        <option value="">미설정</option>
+                        <option value="FIRST">전반</option>
+                        <option value="SECOND">후반</option>
+                      </GlassSelect>
+                      <GlassSelect
+                        label="연결된 이벤트 (전반↔후반)"
+                        value={eventForm.linkedEventId}
+                        onChange={(e) => setEventForm((p) => ({ ...p, linkedEventId: e.target.value }))}
+                      >
+                        <option value="">미연결</option>
+                        {events
+                          .filter((ev) => ev.kind === "FIVES" && ev.id !== editingEventId)
+                          .map((ev) => (
+                            <option key={ev.id} value={ev.id}>
+                              {ev.title} ({ev.halfType === "FIRST" ? "전반" : ev.halfType === "SECOND" ? "후반" : "미설정"})
+                            </option>
+                          ))}
+                      </GlassSelect>
+                    </div>
+                    <p style={{ fontSize: 12, color: "#94a3b8", marginTop: 8, marginBottom: 0 }}>
+                      전반과 후반 이벤트를 서로 연결하면 팀 종합점수가 자동으로 합산됩니다.
+                    </p>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", gap: 8 }}>
                   <GlassButton type="submit" disabled={busy}>
                     {busy ? "저장중..." : editingEventId ? "세부종목 수정" : "세부종목 등록"}
@@ -472,7 +514,7 @@ export default function TournamentDetailPage() {
                         <div style={{ display: "flex", gap: 6 }}>
                           <GlassButton variant="secondary" size="sm" onClick={() => {
                             setEditingEventId(ev.id);
-                            setEventForm({ title: ev.title, kind: ev.kind, gameCount: ev.gameCount, scheduleDate: ev.scheduleDate, laneStart: ev.laneStart, laneEnd: ev.laneEnd, tableShift: ev.tableShift });
+                            setEventForm({ title: ev.title, kind: ev.kind, gameCount: ev.gameCount, scheduleDate: ev.scheduleDate, laneStart: ev.laneStart, laneEnd: ev.laneEnd, tableShift: ev.tableShift, linkedEventId: ev.linkedEventId ?? "", halfType: ev.halfType ?? "" });
                           }}>수정</GlassButton>
                           <GlassButton variant="danger" size="sm" onClick={() => deleteEvent(ev.id)}>삭제</GlassButton>
                         </div>

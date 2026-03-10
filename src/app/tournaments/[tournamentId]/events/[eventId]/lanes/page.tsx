@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GlassBadge, GlassCard, GlassInput, GlassTable, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PrintModeBar from "@/components/common/PrintModeBar";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
@@ -65,7 +65,7 @@ const LaneAssignmentPage = () => {
   const hasSquads = squads.length > 0;
   selectedSquadIdRef.current = hasSquads ? selectedSquadId : null;
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!tournamentId || !eventId) return;
     setLoading(true);
     try {
@@ -91,17 +91,17 @@ const LaneAssignmentPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [divisionId, eventId, tournamentId, tournamentTitle]);
 
   useEffect(() => {
     load();
-  }, [tournamentId, eventId, divisionId]);
+  }, [load]);
 
   useEffect(() => {
     if (hasSquads && selectedSquadId) {
       load();
     }
-  }, [selectedSquadId]);
+  }, [hasSquads, load, selectedSquadId]);
 
   const gameCount = eventInfo?.gameCount ?? 0;
   const tableShift = eventInfo?.tableShift ?? 0;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { getLaneForGame } from "@/lib/lane";
@@ -55,6 +55,8 @@ type EventInfo = {
   laneStart: number;
   laneEnd: number;
   tableShift: number;
+  linkedEventId?: string;
+  halfType?: "FIRST" | "SECOND";
 };
 
 type Assignment = {
@@ -77,13 +79,54 @@ type Participant = {
   squadId?: string;
 };
 
+type Team = {
+  id: string;
+  name: string;
+  teamType: "NORMAL" | "MAKEUP";
+  memberIds: string[];
+  rosterIds?: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+type TeamMemberRow = {
+  playerId: string;
+  name: string;
+  affiliation: string;
+  region: string;
+  number: number;
+  gameScores: ScoreColumn[];
+  total: number;
+};
+
+type TeamRankingRow = {
+  teamId: string;
+  teamName: string;
+  teamType: "NORMAL" | "MAKEUP";
+  rank: number;
+  tieRank: number;
+  members: TeamMemberRow[];
+  teamTotal: number;
+  pinDiff: number;
+};
+
+const TEAM_EVENT_KINDS = ["DOUBLES", "TRIPLES", "FIVES"] as const;
+type TeamEventKind = typeof TEAM_EVENT_KINDS[number];
+
+const TEAM_SIZE_MAP: Record<TeamEventKind, number> = {
+  DOUBLES: 2,
+  TRIPLES: 3,
+  FIVES: 5,
+};
+
 type ApiList<T> = { items: T[] };
 type ApiError = { message?: string };
-type ScoreboardTab = "participants" | "lane" | "score" | "event-rank" | "overall-rank";
+type ScoreboardTab = "participants" | "lane" | "score" | "event-rank" | "overall-rank" | "teams";
 const PARTICIPANT_VIEW_ALL = "ALL";
 
 const TAB_LABELS: Record<ScoreboardTab, string> = {
   participants: "📋 출전선수등록",
+  teams: "👥 팀 편성",
   lane: "🎳 레인 배정",
   score: "📝 점수 입력",
   "event-rank": "🏆 세부순위",
@@ -166,12 +209,18 @@ export default function AdminScoreboardPage() {
   const [squads, setSquads] = useState<Squad[]>([]);
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
   const [participantViewSquadId, setParticipantViewSquadId] = useState<string>(PARTICIPANT_VIEW_ALL);
+  const [teamsViewSquadId, setTeamsViewSquadId] = useState<string>(PARTICIPANT_VIEW_ALL);
   const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [participantSearch, setParticipantSearch] = useState("");
   const [participantNumberInput, setParticipantNumberInput] = useState("");
   const [eventRows, setEventRows] = useState<EventLeaderboardRow[]>([]);
   const [overallRows, setOverallRows] = useState<OverallLeaderboardRow[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [teamRows, setTeamRows] = useState<TeamRankingRow[]>([]);
+  const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState<Set<string>>(new Set());
+  // 5인조 로스터 편집: { teamId, rosterIds, memberIds }
+  const [editingRoster, setEditingRoster] = useState<{ teamId: string; rosterIds: string[]; memberIds: string[] } | null>(null);
   const [selectedGame, setSelectedGame] = useState(1);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
@@ -249,6 +298,55 @@ export default function AdminScoreboardPage() {
     return m;
   }, [allPlayers]);
 
+  const isTeamEvent = useMemo(
+    () => TEAM_EVENT_KINDS.includes(event?.kind as TeamEventKind),
+    [event],
+  );
+
+  const teamSize = useMemo(
+    () => isTeamEvent ? TEAM_SIZE_MAP[event!.kind as TeamEventKind] : 0,
+    [isTeamEvent, event],
+  );
+
+  // 출전선수 중 아직 팀에 배정되지 않은 선수
+  const assignedToTeamIds = useMemo(
+    () => new Set(teams.flatMap((t) => t.memberIds)),
+    [teams],
+  );
+
+  // 출전선수 ID Set (participantList 기반)
+  const participantPlayerIds = useMemo(
+    () => new Set(participantList.map((p) => p.playerId ?? p.id)),
+    [participantList],
+  );
+
+  const unteamedParticipants = useMemo(
+    () => allPlayers.filter(
+      (p) => participantPlayerIds.has(p.id) && !assignedToTeamIds.has(p.id),
+    ),
+    [allPlayers, participantPlayerIds, assignedToTeamIds],
+  );
+
+  // 팀 탭 스쿼드 필터
+  const teamsViewSquadPlayerIds = useMemo(() => {
+    if (!hasSquads || teamsViewSquadId === PARTICIPANT_VIEW_ALL) return null;
+    return new Set(participantList.filter((p) => p.squadId === teamsViewSquadId).map((p) => p.playerId ?? p.id));
+  }, [hasSquads, teamsViewSquadId, participantList]);
+
+  const squadFilteredUnteamedParticipants = useMemo(
+    () => teamsViewSquadPlayerIds
+      ? unteamedParticipants.filter((p) => teamsViewSquadPlayerIds.has(p.id))
+      : unteamedParticipants,
+    [unteamedParticipants, teamsViewSquadPlayerIds],
+  );
+
+  const squadFilteredTeams = useMemo(
+    () => teamsViewSquadPlayerIds
+      ? teams.filter((team) => team.memberIds.some((mid) => teamsViewSquadPlayerIds.has(mid)))
+      : teams,
+    [teams, teamsViewSquadPlayerIds],
+  );
+
   const lanes = useMemo(() => event ? range(event.laneStart, event.laneEnd) : [], [event]);
   const visibleAssignments = useMemo(
     () => hasSquads && selectedSquadId
@@ -268,6 +366,31 @@ export default function AdminScoreboardPage() {
     () => players.filter((p) => !hasPlayerInBoard(currentBoard, p.id)),
     [currentBoard, players],
   );
+
+  // 팀 이벤트: 레인 미배정 팀 (출전 멤버 전원 미배정인 팀)
+  const unassignedTeams = useMemo(() => {
+    if (!isTeamEvent) return [];
+    return teams.filter((team) => {
+      const activeMembers = team.memberIds.filter((pid) => participantPlayerIds.has(pid));
+      return activeMembers.length > 0 && activeMembers.every((pid) => !hasPlayerInBoard(currentBoard, pid));
+    });
+  }, [isTeamEvent, teams, participantPlayerIds, currentBoard]);
+
+  // 팀에 속하지 않거나 팀이 부분배정된 미배정 선수
+  const unassignedNonTeamPlayers = useMemo(() => {
+    if (!isTeamEvent || teams.length === 0) return unassignedPlayers;
+    const fullyUnassignedTeamMemberIds = new Set(unassignedTeams.flatMap((t) => t.memberIds));
+    return unassignedPlayers.filter((p) => !fullyUnassignedTeamMemberIds.has(p.id));
+  }, [isTeamEvent, teams, unassignedPlayers, unassignedTeams]);
+
+  // 플레이어 ID → 팀 이름 맵 (레인 보드 표시용)
+  const playerTeamNameMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const team of teams) {
+      for (const pid of team.memberIds) m.set(pid, team.name);
+    }
+    return m;
+  }, [teams]);
 
   const bundleUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/bundle`;
   const draftStorageKey = `${tournamentId}:${divisionId}:${eventId}:game-${selectedGame}:lane-${selectedScoreLane}`;
@@ -364,6 +487,80 @@ export default function AdminScoreboardPage() {
     } catch (err) { showMsg((err as Error).message || "스쿼드 생성 실패", "error"); }
   };
 
+  const teamsUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/teams`;
+
+  const toggleTeamMemberSelection = (playerId: string) => {
+    setSelectedTeamMemberIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(playerId)) next.delete(playerId);
+      else next.add(playerId);
+      return next;
+    });
+  };
+
+  const handleCreateTeam = async () => {
+    if (selectedTeamMemberIds.size === 0) return;
+    try {
+      const memberIds = [...selectedTeamMemberIds];
+      // 5인조는 rosterIds를 초기 멤버와 동일하게 설정 (이후 선수교체로 확장 가능)
+      const body = event?.kind === "FIVES"
+        ? { memberIds, rosterIds: memberIds }
+        : { memberIds };
+
+      const res = await fetch(teamsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const msg = body?.message;
+        if (msg === "MEMBER_ALREADY_IN_TEAM") throw new Error("이미 다른 팀에 속한 선수가 포함되어 있습니다.");
+        if (msg === "INVALID_PAYLOAD") throw new Error("팀 생성에 필요한 최소 인원(2명)이 필요합니다.");
+        throw new Error(msg || "팀 생성 실패");
+      }
+      const created: Team = await res.json();
+      setTeams((prev) => [...prev, created]);
+      setSelectedTeamMemberIds(new Set());
+      showMsg(`팀 "${created.name}" 생성됨 (${created.teamType === "NORMAL" ? "정상팀" : "혼성팀"})`);
+      // 팀 리더보드 갱신
+      await loadScores();
+    } catch (err) { showMsg((err as Error).message || "팀 생성 실패", "error"); }
+  };
+
+  const handleSaveRoster = async () => {
+    if (!editingRoster) return;
+    const { teamId, rosterIds, memberIds } = editingRoster;
+    if (memberIds.length !== teamSize) {
+      showMsg(`출전 선수는 정확히 ${teamSize}명이어야 합니다.`, "error");
+      return;
+    }
+    try {
+      const res = await fetch(`${teamsUrl}/${teamId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rosterIds, memberIds }),
+      });
+      if (!res.ok) throw new Error(await parseError(res));
+      const updated: Team = await res.json();
+      setTeams((prev) => prev.map((t) => t.id === teamId ? updated : t));
+      setEditingRoster(null);
+      showMsg("로스터가 저장되었습니다.");
+      await loadScores();
+    } catch (err) { showMsg((err as Error).message || "로스터 저장 실패", "error"); }
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!window.confirm("팀을 삭제하시겠습니까? 선수 점수는 유지됩니다.")) return;
+    try {
+      const res = await fetch(`${teamsUrl}/${teamId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(await parseError(res));
+      setTeams((prev) => prev.filter((t) => t.id !== teamId));
+      setTeamRows((prev) => prev.filter((r) => r.teamId !== teamId));
+      showMsg("팀이 삭제되었습니다.");
+    } catch (err) { showMsg((err as Error).message || "팀 삭제 실패", "error"); }
+  };
+
   // Consolidated loaders using bundle API
   const loadAssignments = async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
@@ -377,12 +574,13 @@ export default function AdminScoreboardPage() {
     if (!tournamentId || !divisionId || !eventId) return;
     const res = await fetch(`${bundleUrl}?only=scores`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as { eventRows: EventLeaderboardRow[]; overallRows: OverallLeaderboardRow[] };
+    const data = await res.json() as { eventRows: EventLeaderboardRow[]; overallRows: OverallLeaderboardRow[]; teamRows?: TeamRankingRow[] };
     setEventRows(data.eventRows ?? []);
     setOverallRows(data.overallRows ?? []);
+    if (data.teamRows) setTeamRows(data.teamRows);
   };
 
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     if (!tournamentId || !divisionId || !eventId) return;
     setLoading(true);
     const controller = new AbortController();
@@ -395,6 +593,8 @@ export default function AdminScoreboardPage() {
       setParticipantList(data.participants ?? []);
       setSquads(data.squads ?? []);
       setAssignments(data.assignments ?? []);
+      setTeams(data.teams ?? []);
+      setTeamRows(data.teamRows ?? []);
       setEventRows(data.eventRows ?? []);
       setOverallRows(data.overallRows ?? []);
       if (data.event) {
@@ -404,13 +604,13 @@ export default function AdminScoreboardPage() {
       if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "조회 실패", "error");
     } finally { setLoading(false); }
     return controller;
-  };
+  }, [bundleUrl, divisionId, eventId, tournamentId]);
 
   useEffect(() => {
     let ctrl: AbortController | null = null;
     (async () => { ctrl = await loadAll() ?? null; })();
     return () => { ctrl?.abort(); };
-  }, [tournamentId, divisionId, eventId]);
+  }, [loadAll]);
 
   // Derive scoreDraft from existing eventRows and restore temporary drafts.
   const prevGameRef = useRef(selectedGame);
@@ -449,9 +649,34 @@ export default function AdminScoreboardPage() {
 
   // --- Lane assignment ---
   const encodeDrag = (playerId: string, sourceLane?: number) => JSON.stringify({ playerId, sourceLane });
+  const encodeTeamDrag = (teamId: string, memberIds: string[]) => JSON.stringify({ teamId, memberIds });
   const decodeDrag = (raw: string): { playerId: string; sourceLane?: number } | null => {
     try { const p = JSON.parse(raw); return typeof p?.playerId === "string" ? p : null; }
     catch { return null; }
+  };
+  const decodeTeamDrag = (raw: string): { teamId: string; memberIds: string[] } | null => {
+    try { const p = JSON.parse(raw); return typeof p?.teamId === "string" && Array.isArray(p.memberIds) ? p : null; }
+    catch { return null; }
+  };
+
+  // 팀 전체를 레인에 배정 (수용 인원 초과 시 경고)
+  const moveTeam = (memberIds: string[], toLane?: number) => {
+    if (!toLane) {
+      // 레인 해제: 팀 멤버 전체 해제
+      for (const pid of memberIds) movePlayer(pid, undefined);
+      return;
+    }
+    const targetPlayers = currentBoard[toLane] ?? [];
+    const unassigned = memberIds.filter((pid) => !hasPlayerInBoard(currentBoard, pid));
+    if (targetPlayers.length + unassigned.length > MAX_PER_LANE) {
+      showMsg(`레인 수용 초과: ${toLane}번 레인에 최대 ${MAX_PER_LANE}명까지 배정 가능합니다.`, "error");
+      return;
+    }
+    for (const pid of memberIds) {
+      if (!hasPlayerInBoard(currentBoard, pid)) {
+        movePlayer(pid, toLane);
+      }
+    }
   };
 
   // 1G 배정 기준으로 나머지 게임 배정을 table shift로 재생성
@@ -828,7 +1053,7 @@ export default function AdminScoreboardPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", borderRadius: "12px 12px 0 0", overflowX: "auto" }}>
-        {(Object.keys(TAB_LABELS) as ScoreboardTab[]).map((tab) => (
+        {(Object.keys(TAB_LABELS) as ScoreboardTab[]).filter((tab) => tab !== "teams" || isTeamEvent).map((tab) => (
           <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
             {TAB_LABELS[tab]}
           </button>
@@ -1069,6 +1294,7 @@ export default function AdminScoreboardPage() {
             </GlassButton>
             <span style={{ alignSelf: "center", fontSize: 13, color: "#64748b" }}>
               총 {players.length}명 · 미배정 {unassignedPlayers.length}명
+              {isTeamEvent && teams.length > 0 && ` · 미배정 팀 ${unassignedTeams.length}팀`}
             </span>
           </div>
 
@@ -1083,7 +1309,10 @@ export default function AdminScoreboardPage() {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
                       e.preventDefault();
-                      const payload = decodeDrag(e.dataTransfer.getData("text/plain"));
+                      const raw = e.dataTransfer.getData("text/plain");
+                      const teamPayload = decodeTeamDrag(raw);
+                      if (teamPayload) { moveTeam(teamPayload.memberIds, laneNum); return; }
+                      const payload = decodeDrag(raw);
                       if (payload) movePlayer(payload.playerId, laneNum, payload.sourceLane);
                     }}
                     style={{
@@ -1104,6 +1333,7 @@ export default function AdminScoreboardPage() {
                       {playerIds.map((pid) => {
                         const p = playerById.get(pid);
                         if (!p) return null;
+                        const teamName = playerTeamNameMap.get(pid);
                         return (
                           <div
                             key={pid}
@@ -1120,9 +1350,15 @@ export default function AdminScoreboardPage() {
                               padding: "5px 10px", borderRadius: 7, fontSize: 13,
                               background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.2)",
                               color: "#1e293b", cursor: "grab", fontWeight: 500,
+                              display: "flex", alignItems: "center", gap: 5,
                             }}
                           >
-                            {p.number} {p.name}
+                            <span>{p.number} {p.name}</span>
+                            {teamName && (
+                              <span style={{ fontSize: 10, color: "#6366f1", background: "rgba(99,102,241,0.15)", padding: "1px 5px", borderRadius: 4, fontWeight: 600 }}>
+                                {teamName}
+                              </span>
+                            )}
                           </div>
                         );
                       })}
@@ -1137,35 +1373,90 @@ export default function AdminScoreboardPage() {
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => {
                 e.preventDefault();
-                const payload = decodeDrag(e.dataTransfer.getData("text/plain"));
+                const raw = e.dataTransfer.getData("text/plain");
+                const teamPayload = decodeTeamDrag(raw);
+                if (teamPayload) { moveTeam(teamPayload.memberIds, undefined); return; }
+                const payload = decodeDrag(raw);
                 if (payload) movePlayer(payload.playerId, undefined, payload.sourceLane);
               }}
-              style={{ background: "rgba(255,255,255,0.15)", border: "1.5px dashed rgba(203,213,225,0.5)", borderRadius: 10, padding: 12 }}
+              style={{ display: "flex", flexDirection: "column", gap: 12 }}
             >
-              <p style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 10 }}>
-                미배정 선수 ({unassignedPlayers.length})
-              </p>
-              {unassignedPlayers.length === 0 ? (
-                <p style={{ color: "#94a3b8", fontSize: 13 }}>모든 선수 배정 완료 ✓</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {unassignedPlayers.map((p) => (
-                    <div
-                      key={p.id}
-                      draggable
-                      onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeDrag(p.id))}
-                      style={{
-                        padding: "7px 10px", borderRadius: 7, fontSize: 13,
-                        background: "rgba(255,255,255,0.4)", border: "1px solid rgba(203,213,225,0.4)",
-                        cursor: "grab", color: "#334155",
-                      }}
-                    >
-                      <span style={{ fontWeight: 600 }}>{p.number} {p.name}</span>
-                      <span style={{ color: "#94a3b8", marginLeft: 6, fontSize: 12 }}>{p.affiliation}</span>
+              {/* 미배정 팀 */}
+              {isTeamEvent && teams.length > 0 && (
+                <div style={{ background: "rgba(99,102,241,0.06)", border: "1.5px dashed rgba(99,102,241,0.25)", borderRadius: 10, padding: 12 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 10 }}>
+                    미배정 팀 ({unassignedTeams.length})
+                  </p>
+                  {unassignedTeams.length === 0 ? (
+                    <p style={{ color: "#94a3b8", fontSize: 13 }}>모든 팀 배정 완료 ✓</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {unassignedTeams.map((team) => {
+                        const memberPlayers = team.memberIds.map((mid) => playerById.get(mid)).filter(Boolean) as typeof players;
+                        return (
+                          <div
+                            key={team.id}
+                            draggable
+                            onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeTeamDrag(team.id, team.memberIds))}
+                            style={{
+                              padding: "8px 10px", borderRadius: 8, fontSize: 13,
+                              background: "rgba(255,255,255,0.5)", border: "1px solid rgba(99,102,241,0.2)",
+                              cursor: "grab", color: "#334155",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span style={{ fontWeight: 700, color: "#4f46e5" }}>{team.name}</span>
+                              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                {team.teamType === "MAKEUP" && (
+                                  <span style={{ fontSize: 10, color: "#f97316", background: "rgba(249,115,22,0.1)", padding: "1px 5px", borderRadius: 4 }}>혼성</span>
+                                )}
+                                <GlassButton size="sm" variant="ghost" onClick={() => moveTeam(team.memberIds, lanes[0])}>
+                                  배정
+                                </GlassButton>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                              {memberPlayers.map((mp) => (
+                                <span key={mp.id} style={{ fontSize: 11, color: "#64748b", background: "rgba(100,116,139,0.1)", padding: "1px 6px", borderRadius: 4 }}>
+                                  {mp.number} {mp.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
+
+              {/* 미배정 선수 */}
+              <div style={{ background: "rgba(255,255,255,0.15)", border: "1.5px dashed rgba(203,213,225,0.5)", borderRadius: 10, padding: 12 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 10 }}>
+                  {isTeamEvent && teams.length > 0 ? `미배정 선수 (팀 미편성, ${unassignedNonTeamPlayers.length})` : `미배정 선수 (${unassignedPlayers.length})`}
+                </p>
+                {(isTeamEvent && teams.length > 0 ? unassignedNonTeamPlayers : unassignedPlayers).length === 0 ? (
+                  <p style={{ color: "#94a3b8", fontSize: 13 }}>모든 선수 배정 완료 ✓</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {(isTeamEvent && teams.length > 0 ? unassignedNonTeamPlayers : unassignedPlayers).map((p) => (
+                      <div
+                        key={p.id}
+                        draggable
+                        onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeDrag(p.id))}
+                        style={{
+                          padding: "7px 10px", borderRadius: 7, fontSize: 13,
+                          background: "rgba(255,255,255,0.4)", border: "1px solid rgba(203,213,225,0.4)",
+                          cursor: "grab", color: "#334155",
+                        }}
+                      >
+                        <span style={{ fontWeight: 600 }}>{p.number} {p.name}</span>
+                        <span style={{ color: "#94a3b8", marginLeft: 6, fontSize: 12 }}>{p.affiliation}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </GlassCard>
@@ -1375,10 +1666,321 @@ export default function AdminScoreboardPage() {
         </GlassCard>
       )}
 
+      {/* ===== Tab: 팀 편성 ===== */}
+      {activeTab === "teams" && isTeamEvent && (
+        <GlassCard>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasSquads ? 10 : 18, flexWrap: "wrap", gap: 10 }}>
+            <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", margin: 0 }}>
+              팀 편성 ({teamSize}인조)
+            </h2>
+            <GlassBadge variant="info">
+              {teams.length}팀 편성됨 / 미배정 {unteamedParticipants.length}명
+            </GlassBadge>
+          </div>
+
+          {/* 스쿼드 필터 */}
+          {hasSquads && (
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
+                <button
+                  type="button"
+                  onClick={() => setTeamsViewSquadId(PARTICIPANT_VIEW_ALL)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? 700 : 500,
+                    color: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "#fff" : "#475569",
+                    background: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "linear-gradient(135deg, #0f766e, #14b8a6)" : "rgba(255,255,255,0.4)",
+                    border: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "1px solid rgba(20,184,166,0.35)" : "1px solid rgba(203,213,225,0.4)",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  전체
+                </button>
+                {squads.map((sq) => {
+                  const isSelected = teamsViewSquadId === sq.id;
+                  const sqTeamCount = teams.filter((team) => team.memberIds.some((mid) => participantList.some((p) => (p.playerId ?? p.id) === mid && p.squadId === sq.id))).length;
+                  const sqUnteamedCount = unteamedParticipants.filter((p) => participantList.some((pt) => (pt.playerId ?? pt.id) === p.id && pt.squadId === sq.id)).length;
+                  return (
+                    <button
+                      key={`teams-squad-${sq.id}`}
+                      type="button"
+                      onClick={() => setTeamsViewSquadId(sq.id)}
+                      style={{
+                        padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
+                        color: isSelected ? "#fff" : "#475569",
+                        background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
+                        border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      {sq.name} ({sqTeamCount}팀 · 미배정 {sqUnteamedCount}명)
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 팀 생성 UI */}
+          <div style={{ marginBottom: 20, padding: "16px", background: "rgba(255,255,255,0.15)", borderRadius: 12, border: "1px solid rgba(99,102,241,0.15)" }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 10 }}>
+              팀 생성 — {hasSquads && teamsViewSquadId !== PARTICIPANT_VIEW_ALL ? `${squads.find((s) => s.id === teamsViewSquadId)?.name ?? "선택 스쿼드"} ` : ""}출전선수 중 {teamSize}명 선택 후 생성
+              {selectedTeamMemberIds.size > 0 && (
+                <span style={{ marginLeft: 8, color: selectedTeamMemberIds.size === teamSize ? "#16a34a" : "#6366f1" }}>
+                  ({selectedTeamMemberIds.size}/{teamSize}명 선택됨)
+                </span>
+              )}
+            </div>
+
+            {squadFilteredUnteamedParticipants.length === 0 ? (
+              <p style={{ color: "#94a3b8", fontSize: 13, margin: 0 }}>미배정 출전선수가 없습니다.</p>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                {squadFilteredUnteamedParticipants.map((player) => {
+                  const isSelected = selectedTeamMemberIds.has(player.id);
+                  return (
+                    <button
+                      key={player.id}
+                      onClick={() => toggleTeamMemberSelection(player.id)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: isSelected ? 700 : 500,
+                        color: isSelected ? "#fff" : "#334155",
+                        background: isSelected
+                          ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                          : "rgba(255,255,255,0.5)",
+                        border: isSelected
+                          ? "1px solid rgba(99,102,241,0.5)"
+                          : "1px solid rgba(203,213,225,0.5)",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      #{player.number} {player.name}
+                      <span style={{ fontSize: 11, opacity: 0.75, marginLeft: 4 }}>({player.affiliation})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <GlassButton
+                onClick={handleCreateTeam}
+                disabled={selectedTeamMemberIds.size === 0 || loading}
+                variant="primary"
+                size="sm"
+              >
+                팀 생성
+              </GlassButton>
+              {selectedTeamMemberIds.size > 0 && (
+                <GlassButton
+                  onClick={() => setSelectedTeamMemberIds(new Set())}
+                  variant="ghost"
+                  size="sm"
+                >
+                  선택 해제
+                </GlassButton>
+              )}
+            </div>
+          </div>
+
+          {/* 편성된 팀 목록 */}
+          {squadFilteredTeams.length === 0 ? (
+            <p style={{ color: "#94a3b8", fontSize: 14, textAlign: "center", padding: "20px 0" }}>
+              {teams.length === 0 ? "편성된 팀이 없습니다. 위에서 선수를 선택하여 팀을 생성해 주세요." : "해당 스쿼드에 편성된 팀이 없습니다."}
+            </p>
+          ) : (
+            <div style={{ display: "grid", gap: 10 }}>
+              {squadFilteredTeams.map((team) => {
+                const isNormal = team.teamType === "NORMAL";
+                return (
+                  <div key={team.id}>
+                  <div
+                    style={{
+                      padding: "14px 16px",
+                      borderRadius: 10,
+                      background: isNormal ? "rgba(99,102,241,0.06)" : "rgba(251,146,60,0.06)",
+                      border: `1px solid ${isNormal ? "rgba(99,102,241,0.2)" : "rgba(251,146,60,0.2)"}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                      <GlassBadge variant={isNormal ? "success" : "warning"}>
+                        {isNormal ? "정상" : "혼성"}
+                      </GlassBadge>
+                      <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 14 }}>{team.name}</span>
+                      <span style={{ color: "#64748b", fontSize: 13 }}>
+                        {team.memberIds.map((pid) => {
+                          const p = playerById.get(pid);
+                          return p ? `${p.name}(${p.affiliation})` : pid;
+                        }).join(" · ")}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      {/* 5인조: 로스터/선수교체 버튼 */}
+                      {event?.kind === "FIVES" && (
+                        <GlassButton
+                          onClick={() => setEditingRoster({
+                            teamId: team.id,
+                            rosterIds: team.rosterIds ?? [...team.memberIds],
+                            memberIds: [...team.memberIds],
+                          })}
+                          variant="secondary"
+                          size="sm"
+                        >
+                          선수교체
+                        </GlassButton>
+                      )}
+                      <GlassButton
+                        onClick={() => handleDeleteTeam(team.id)}
+                        variant="ghost"
+                        size="sm"
+                        style={{ color: "#ef4444" }}
+                      >
+                        삭제
+                      </GlassButton>
+                    </div>
+                  </div>
+
+                  {/* 5인조 로스터 편집 패널 */}
+                  {event?.kind === "FIVES" && editingRoster?.teamId === team.id && (
+                    <div style={{ marginTop: 12, padding: "14px", background: "rgba(255,255,255,0.2)", borderRadius: 10, border: "1px solid rgba(99,102,241,0.2)" }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 10 }}>
+                        로스터 관리 — 전체 엔트리에 추가/제거, 출전 선수 {teamSize}명 선택
+                      </div>
+
+                      {/* 로스터에 추가 가능한 선수 (출전선수 중 이 팀 미소속) */}
+                      <div style={{ marginBottom: 10 }}>
+                        <span style={{ fontSize: 12, color: "#64748b", marginBottom: 6, display: "block" }}>로스터 추가 가능 선수:</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {allPlayers
+                            .filter((p) =>
+                              participantPlayerIds.has(p.id) &&
+                              !editingRoster.rosterIds.includes(p.id)
+                            )
+                            .map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={() => setEditingRoster((prev) => prev ? { ...prev, rosterIds: [...prev.rosterIds, p.id] } : prev)}
+                                style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, color: "#475569", background: "rgba(255,255,255,0.5)", border: "1px solid rgba(203,213,225,0.5)", cursor: "pointer", fontFamily: "inherit" }}
+                              >
+                                + #{p.number} {p.name}
+                              </button>
+                            ))
+                          }
+                        </div>
+                      </div>
+
+                      {/* 로스터 선수 목록 (출전 선택) */}
+                      <div style={{ marginBottom: 10 }}>
+                        <span style={{ fontSize: 12, color: "#64748b", marginBottom: 6, display: "block" }}>
+                          로스터 ({editingRoster.rosterIds.length}명) — 출전 선수 {teamSize}명 선택:
+                          <span style={{ marginLeft: 6, color: editingRoster.memberIds.length === teamSize ? "#16a34a" : "#f59e0b" }}>
+                            {editingRoster.memberIds.length}/{teamSize}명 선택됨
+                          </span>
+                        </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {editingRoster.rosterIds.map((pid) => {
+                            const p = playerById.get(pid);
+                            const isSelected = editingRoster.memberIds.includes(pid);
+                            return (
+                              <button
+                                key={pid}
+                                onClick={() => setEditingRoster((prev) => {
+                                  if (!prev) return prev;
+                                  const nextMembers = isSelected
+                                    ? prev.memberIds.filter((id) => id !== pid)
+                                    : [...prev.memberIds, pid];
+                                  return { ...prev, memberIds: nextMembers };
+                                })}
+                                style={{
+                                  padding: "5px 10px", borderRadius: 7, fontSize: 12,
+                                  fontWeight: isSelected ? 700 : 500,
+                                  color: isSelected ? "#fff" : "#334155",
+                                  background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.5)",
+                                  border: `1px solid ${isSelected ? "rgba(99,102,241,0.4)" : "rgba(203,213,225,0.5)"}`,
+                                  cursor: "pointer", fontFamily: "inherit",
+                                }}
+                              >
+                                {isSelected ? "✓ " : ""}{p ? `#${p.number} ${p.name}` : pid}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <GlassButton onClick={handleSaveRoster} variant="primary" size="sm" disabled={editingRoster.memberIds.length !== teamSize}>
+                          저장
+                        </GlassButton>
+                        <GlassButton onClick={() => setEditingRoster(null)} variant="ghost" size="sm">취소</GlassButton>
+                      </div>
+                    </div>
+                  )}
+                  </div>
+                );
+            })}
+            </div>
+          )}
+        </GlassCard>
+      )}
+
       {/* ===== Tab: 세부순위 ===== */}
       {activeTab === "event-rank" && (
         <GlassCard>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>세부종목 순위</h2>
+          {isTeamEvent && teamRows.length > 0 && (
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#475569", marginBottom: 12 }}>팀 순위</h3>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: "rgba(99,102,241,0.08)" }}>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "center", width: 48 }}>순위</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left" }}>팀명</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "center", width: 56 }}>구분</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left" }}>멤버</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>팀합계</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>핀차</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamRows.map((row) => (
+                      <tr key={row.teamId} {...glassTrHoverProps}>
+                        <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700, color: row.rank === 1 ? "#f59e0b" : "#1e293b" }}>
+                          {row.rank > 0 ? row.rank : "—"}
+                        </td>
+                        <td style={{ ...glassTdStyle, fontWeight: 700 }}>{row.teamName}</td>
+                        <td style={{ ...glassTdStyle, textAlign: "center" }}>
+                          <GlassBadge variant={row.teamType === "NORMAL" ? "success" : "warning"} style={{ fontSize: 11 }}>
+                            {row.teamType === "NORMAL" ? "정상" : "혼성"}
+                          </GlassBadge>
+                        </td>
+                        <td style={{ ...glassTdStyle, color: "#475569" }}>
+                          {row.members.map((m) => `${m.name}(${m.total})`).join(" · ")}
+                        </td>
+                        <td style={{ ...glassTdStyle, textAlign: "right", fontWeight: 700, color: "#6366f1" }}>
+                          {row.teamType === "NORMAL" ? row.teamTotal : "—"}
+                        </td>
+                        <td style={{ ...glassTdStyle, textAlign: "right", color: "#64748b" }}>
+                          {row.teamType === "NORMAL" ? (row.pinDiff > 0 ? `-${row.pinDiff}` : "0") : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#475569", margin: "24px 0 12px" }}>개인 순위</h3>
+            </div>
+          )}
           <RankingTable rows={eventRows} emptyMessage="순위 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} />
         </GlassCard>
       )}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GlassBadge, GlassButton } from "@/components/ui";
 import PageTitle from "@/components/common/PageTitle";
 import PrintModeBar from "@/components/common/PrintModeBar";
@@ -73,7 +73,7 @@ export default function TournamentOverallPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [printMode, setPrintMode] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!tournamentId) return;
     setLoading(true);
     setMessage("");
@@ -87,11 +87,11 @@ export default function TournamentOverallPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [divisionId, tournamentId]);
 
   useEffect(() => {
     load();
-  }, [tournamentId, divisionId]);
+  }, [load]);
 
   const filteredRows = useMemo(() => {
     const kw = searchKeyword.trim().toLowerCase();

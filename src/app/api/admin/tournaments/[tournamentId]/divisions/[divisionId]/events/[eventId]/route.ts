@@ -14,6 +14,8 @@ const parseEvent = (payload: any) => ({
   laneStart: Number(payload?.laneStart),
   laneEnd: Number(payload?.laneEnd),
   tableShift: Number(payload?.tableShift),
+  linkedEventId: typeof payload?.linkedEventId === "string" && payload.linkedEventId.trim() ? payload.linkedEventId.trim() : null,
+  halfType: payload?.halfType === "FIRST" || payload?.halfType === "SECOND" ? payload.halfType : null,
 });
 
 const getRef = (
@@ -66,7 +68,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   }
 
   const input = parseEvent(await req.json());
-  const updateData: Record<string, string | number> = {};
+  const updateData: Record<string, string | number | null> = {};
   if (input.title) updateData.title = input.title;
   if (input.kind && eventKinds.includes(input.kind as EventKind)) updateData.kind = input.kind;
   if (Number.isFinite(input.gameCount) && input.gameCount >= 1 && input.gameCount <= 6) {
@@ -85,6 +87,9 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   if (Number.isFinite(input.tableShift) && Math.abs(input.tableShift) > MAX_TABLE_SHIFT) {
     return NextResponse.json({ message: "INVALID_TABLE_SHIFT" }, { status: 400 });
   }
+  // 5인조 전반/후반 연결 (null이면 필드 제거)
+  updateData.linkedEventId = input.linkedEventId;
+  updateData.halfType = input.halfType;
 
   if (Object.keys(updateData).length === 0) {
     return NextResponse.json({ message: "NO_FIELDS" }, { status: 400 });

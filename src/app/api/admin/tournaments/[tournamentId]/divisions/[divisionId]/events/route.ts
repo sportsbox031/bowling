@@ -14,6 +14,9 @@ const parseEvent = (payload: any) => ({
   laneStart: Number(payload?.laneStart),
   laneEnd: Number(payload?.laneEnd),
   tableShift: Number(payload?.tableShift),
+  // 5인조 전반/후반 연결 (선택적)
+  linkedEventId: typeof payload?.linkedEventId === "string" && payload.linkedEventId.trim() ? payload.linkedEventId.trim() : null,
+  halfType: payload?.halfType === "FIRST" || payload?.halfType === "SECOND" ? payload.halfType : null,
 });
 
 const toCollection = (database: NonNullable<typeof adminDb>, tournamentId: string, divisionId: string) =>
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   const now = new Date().toISOString();
-  const data = {
+  const data: Record<string, unknown> = {
     tournamentId: ctx.params.tournamentId,
     divisionId: ctx.params.divisionId,
     title: eventInput.title,
@@ -85,6 +88,9 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     createdAt: now,
     updatedAt: now,
   };
+
+  if (eventInput.linkedEventId) data.linkedEventId = eventInput.linkedEventId;
+  if (eventInput.halfType) data.halfType = eventInput.halfType;
 
   const ref = toCollection(adminDb, ctx.params.tournamentId, ctx.params.divisionId).doc();
   await ref.set(data);

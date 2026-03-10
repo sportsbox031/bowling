@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildEventLeaderboard, buildOverallLeaderboard, MAX_GAME_COUNT } from "@/lib/scoring";
+import { buildEventLeaderboard, buildOverallLeaderboard, buildTeamLeaderboard, MAX_GAME_COUNT } from "@/lib/scoring";
 import { getCached, setCache } from "@/lib/api-cache";
 import type { Firestore } from "firebase-admin/firestore";
+import type { EventType, Player, Team } from "@/lib/models";
+
+const TEAM_EVENT_KINDS: EventType[] = ["DOUBLES", "TRIPLES", "FIVES"];
 
 /**
  * Consolidated API: returns event, players, participants, squads,
@@ -136,7 +139,24 @@ export async function GET(
     });
     const overall = await buildOverallForDivision(adminDb, tournamentId, divisionId, eventId, eventLeaderboard.rows, players);
 
-    const result = { eventRows: eventLeaderboard.rows, overallRows: overall.rows };
+    // 팀 이벤트 polling 시에도 팀 리더보드 갱신
+    const isTeamEvent = TEAM_EVENT_KINDS.includes(eventData.kind as EventType);
+    let teamRows = null;
+    if (isTeamEvent) {
+      const teamsSnap = await eventRef.collection("teams").get();
+      const teams = teamsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Team));
+      if (teams.length > 0) {
+        const playerMap = new Map<string, Player>(players.map((p: Player) => [p.id, p]));
+        const teamLeaderboard = buildTeamLeaderboard({ teams, playerMap, individualRows: eventLeaderboard.rows });
+        teamRows = teamLeaderboard.rows;
+      }
+    }
+
+    const result = {
+      eventRows: eventLeaderboard.rows,
+      overallRows: overall.rows,
+      ...(teamRows !== null ? { teamRows } : {}),
+    };
     setCache(cacheKey, result, 10000);
     return NextResponse.json(result);
   }
@@ -146,7 +166,7 @@ export async function GET(
   const cached = getCached<object>(cacheKey);
   if (cached) return NextResponse.json(cached);
 
-  const [eventDoc, playersSnap, participantsSnap, squadsSnap, assignmentsSnap, scoresSnap] =
+  const [eventDoc, playersSnap, participantsSnap, squadsSnap, assignmentsSnap, scoresSnap, teamsSnap] =
     await Promise.all([
       eventRef.get(),
       adminDb.collection("tournaments").doc(tournamentId)
@@ -155,6 +175,7 @@ export async function GET(
       eventRef.collection("squads").orderBy("createdAt").get(),
       eventRef.collection("assignments").orderBy("gameNumber").get(),
       eventRef.collection("scores").get(),
+      eventRef.collection("teams").orderBy("createdAt").get(),
     ]);
 
   if (!eventDoc.exists) {
@@ -169,6 +190,7 @@ export async function GET(
   const squads = squadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const assignments = assignmentsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const scores = scoresSnap.docs.map((doc) => mapScoreDoc(doc, tournamentId, eventId));
+  const teams = teamsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Team));
 
   const eventLeaderboard = buildEventLeaderboard({
     players: allPlayers,
@@ -177,14 +199,29 @@ export async function GET(
   });
   const overall = await buildOverallForDivision(adminDb, tournamentId, divisionId, eventId, eventLeaderboard.rows, allPlayers);
 
+  // 팀 이벤트인 경우 팀 리더보드 계산
+  const isTeamEvent = TEAM_EVENT_KINDS.includes(eventData.kind as EventType);
+  let teamRows = null;
+  if (isTeamEvent && teams.length > 0) {
+    const playerMap = new Map<string, Player>(allPlayers.map((p: Player) => [p.id, p]));
+    const teamLeaderboard = buildTeamLeaderboard({
+      teams,
+      playerMap,
+      individualRows: eventLeaderboard.rows,
+    });
+    teamRows = teamLeaderboard.rows;
+  }
+
   const result = {
     event: eventData,
     players: allPlayers,
     participants,
     squads,
     assignments,
+    teams,
     eventRows: eventLeaderboard.rows,
     overallRows: overall.rows,
+    ...(teamRows !== null ? { teamRows } : {}),
   };
 
   setCache(cacheKey, result, 15000);
