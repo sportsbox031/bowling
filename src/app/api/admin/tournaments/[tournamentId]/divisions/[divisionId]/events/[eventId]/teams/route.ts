@@ -36,7 +36,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const rosterIds: string[] | undefined = Array.isArray(body?.rosterIds) ? body.rosterIds : undefined;
   const nameOverride: string | undefined = typeof body?.name === "string" && body.name.trim() ? body.name.trim() : undefined;
 
-  if (memberIds.length < 2) {
+  if (memberIds.length < 1) {
     return NextResponse.json({ message: "INVALID_PAYLOAD" }, { status: 400 });
   }
 
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const affiliations = playerDocs.map((d) => (d.data()?.affiliation as string | undefined) ?? "");
   const uniqueAffiliations = new Set(affiliations.filter(Boolean));
 
-  const teamType: TeamType = uniqueAffiliations.size === 1 ? "NORMAL" : "MAKEUP";
+  const teamType: TeamType = memberIds.length >= 2 && uniqueAffiliations.size === 1 ? "NORMAL" : "MAKEUP";
   let teamName: string;
   if (nameOverride) {
     teamName = nameOverride;

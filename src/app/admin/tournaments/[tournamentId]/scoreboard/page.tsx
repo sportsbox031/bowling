@@ -1724,10 +1724,10 @@ export default function AdminScoreboardPage() {
           {/* 팀 생성 UI */}
           <div style={{ marginBottom: 20, padding: "16px", background: "rgba(255,255,255,0.15)", borderRadius: 12, border: "1px solid rgba(99,102,241,0.15)" }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 10 }}>
-              팀 생성 — {hasSquads && teamsViewSquadId !== PARTICIPANT_VIEW_ALL ? `${squads.find((s) => s.id === teamsViewSquadId)?.name ?? "선택 스쿼드"} ` : ""}출전선수 중 {teamSize}명 선택 후 생성
+              팀 생성 — {hasSquads && teamsViewSquadId !== PARTICIPANT_VIEW_ALL ? `${squads.find((s) => s.id === teamsViewSquadId)?.name ?? "선택 스쿼드"} ` : ""}출전선수 1명 이상 선택 후 생성 (1명 선택 시 혼성팀)
               {selectedTeamMemberIds.size > 0 && (
-                <span style={{ marginLeft: 8, color: selectedTeamMemberIds.size === teamSize ? "#16a34a" : "#6366f1" }}>
-                  ({selectedTeamMemberIds.size}/{teamSize}명 선택됨)
+                <span style={{ marginLeft: 8, color: selectedTeamMemberIds.size >= teamSize ? "#16a34a" : "#6366f1" }}>
+                  ({selectedTeamMemberIds.size}명 선택됨)
                 </span>
               )}
             </div>
