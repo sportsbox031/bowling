@@ -55,6 +55,12 @@ const buildOverallForDivision = async (
     .collection("divisions").doc(divisionId)
     .collection("events").get();
 
+  // 이벤트 제목 맵 구성
+  const eventTitleMap: Record<string, string> = {};
+  for (const doc of eventsSnap.docs) {
+    eventTitleMap[doc.id] = doc.data().title ?? doc.id;
+  }
+
   const otherEventDocs = eventsSnap.docs.filter((d) => d.id !== currentEventId);
   if (otherEventDocs.length > 0) {
     const otherScores = await Promise.all(
@@ -72,10 +78,12 @@ const buildOverallForDivision = async (
     }
   }
 
-  return buildOverallLeaderboard({
+  const result = buildOverallLeaderboard({
     playerIds: players.map((p) => p.id),
     eventRowsByEventId,
   });
+
+  return { ...result, eventTitleMap };
 };
 
 export async function GET(
@@ -155,6 +163,7 @@ export async function GET(
     const result = {
       eventRows: eventLeaderboard.rows,
       overallRows: overall.rows,
+      eventTitleMap: overall.eventTitleMap,
       ...(teamRows !== null ? { teamRows } : {}),
     };
     setCache(cacheKey, result, 10000);
@@ -221,6 +230,7 @@ export async function GET(
     teams,
     eventRows: eventLeaderboard.rows,
     overallRows: overall.rows,
+    eventTitleMap: overall.eventTitleMap,
     ...(teamRows !== null ? { teamRows } : {}),
   };
 

@@ -300,12 +300,14 @@ export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRank
     let total = 0;
     let attempts = 0;
     let gameCount = 0;
+    const eventTotals: Record<string, number> = {};
 
-    for (const eventRows of Object.values(input.eventRowsByEventId)) {
+    for (const [eventId, eventRows] of Object.entries(input.eventRowsByEventId)) {
       const row = eventRows.find((item) => item.playerId === playerId);
       if (!row) {
         continue;
       }
+      eventTotals[eventId] = row.total;
       row.gameScores.forEach((game, index) => {
         if (game.score === null) {
           return;
@@ -336,6 +338,7 @@ export const buildOverallLeaderboard = (input: OverallRankingInput): OverallRank
       average,
       pinDiff: 0,
       gameCount,
+      eventTotals,
     });
   }
 

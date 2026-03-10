@@ -167,4 +167,5 @@ export interface OverallRankingRow {
   average: number;
   pinDiff: number;
   gameCount: number;
+  eventTotals?: Record<string, number>;
 }

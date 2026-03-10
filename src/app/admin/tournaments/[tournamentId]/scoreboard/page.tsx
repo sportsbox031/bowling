@@ -35,7 +35,7 @@ type EventLeaderboardRow = {
   pinDiff: number;
 };
 
-type OverallLeaderboardRow = EventLeaderboardRow & { gameCount: number };
+type OverallLeaderboardRow = EventLeaderboardRow & { gameCount: number; eventTotals?: Record<string, number> };
 
 type Player = {
   id: string;
@@ -217,6 +217,7 @@ export default function AdminScoreboardPage() {
   const [participantNumberInput, setParticipantNumberInput] = useState("");
   const [eventRows, setEventRows] = useState<EventLeaderboardRow[]>([]);
   const [overallRows, setOverallRows] = useState<OverallLeaderboardRow[]>([]);
+  const [eventTitleMap, setEventTitleMap] = useState<Record<string, string>>({});
   const [teams, setTeams] = useState<Team[]>([]);
   const [teamRows, setTeamRows] = useState<TeamRankingRow[]>([]);
   const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState<Set<string>>(new Set());
@@ -597,9 +598,10 @@ export default function AdminScoreboardPage() {
     if (!tournamentId || !divisionId || !eventId) return;
     const res = await fetch(`${bundleUrl}?only=scores`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
-    const data = await res.json() as { eventRows: EventLeaderboardRow[]; overallRows: OverallLeaderboardRow[]; teamRows?: TeamRankingRow[] };
+    const data = await res.json() as { eventRows: EventLeaderboardRow[]; overallRows: OverallLeaderboardRow[]; teamRows?: TeamRankingRow[]; eventTitleMap?: Record<string, string> };
     setEventRows(data.eventRows ?? []);
     setOverallRows(data.overallRows ?? []);
+    if (data.eventTitleMap) setEventTitleMap(data.eventTitleMap);
     if (data.teamRows) setTeamRows(data.teamRows);
   };
 
@@ -620,6 +622,7 @@ export default function AdminScoreboardPage() {
       setTeamRows(data.teamRows ?? []);
       setEventRows(data.eventRows ?? []);
       setOverallRows(data.overallRows ?? []);
+      if (data.eventTitleMap) setEventTitleMap(data.eventTitleMap);
       if (data.event) {
         setSelectedGame((prev) => (prev < 1 || prev > data.event.gameCount ? 1 : prev));
       }
@@ -1977,6 +1980,7 @@ export default function AdminScoreboardPage() {
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "center", width: 56 }}>구분</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left" }}>멤버</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>팀합계</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>평균</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>핀차</th>
                     </tr>
                   </thead>
@@ -1998,8 +2002,13 @@ export default function AdminScoreboardPage() {
                         <td style={{ ...glassTdStyle, textAlign: "right", fontWeight: 700, color: "#6366f1" }}>
                           {row.teamType === "NORMAL" ? row.teamTotal : "—"}
                         </td>
+                        <td style={{ ...glassTdStyle, textAlign: "right", color: "#475569" }}>
+                          {row.teamType === "NORMAL" && row.members.length > 0
+                            ? (row.teamTotal / row.members.length).toFixed(1)
+                            : "—"}
+                        </td>
                         <td style={{ ...glassTdStyle, textAlign: "right", color: "#64748b" }}>
-                          {row.teamType === "NORMAL" ? (row.pinDiff > 0 ? `-${row.pinDiff}` : "0") : "—"}
+                          {row.teamType === "NORMAL" ? row.pinDiff : "—"}
                         </td>
                       </tr>
                     ))}
@@ -2017,7 +2026,7 @@ export default function AdminScoreboardPage() {
       {activeTab === "overall-rank" && (
         <GlassCard>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>전체 종합순위</h2>
-          <RankingTable rows={overallRows} emptyMessage="종합점수 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} showOverallOnly />
+          <RankingTable rows={overallRows} emptyMessage="종합점수 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} showOverallOnly eventTitleMap={eventTitleMap} />
         </GlassCard>
       )}
       {selectedPlayer && (

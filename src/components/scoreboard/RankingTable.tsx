@@ -18,6 +18,7 @@ type RankingRow = {
   average: number;
   pinDiff: number;
   gameCount?: number;
+  eventTotals?: Record<string, number>;
 };
 
 type RankingTableProps = {
@@ -26,6 +27,7 @@ type RankingTableProps = {
   onSelectPlayer?: (playerName: string) => void;
   showOverallOnly?: boolean;
   footerSlot?: ReactNode;
+  eventTitleMap?: Record<string, string>;
 };
 
 export default function RankingTable({
@@ -34,15 +36,23 @@ export default function RankingTable({
   onSelectPlayer,
   showOverallOnly = false,
   footerSlot,
+  eventTitleMap,
 }: RankingTableProps) {
   const maxGameCount = useMemo(() => Math.max(0, ...rows.map((row) => row.gameScores.length)), [rows]);
+
+  // 종합순위에서 종목별 컬럼 표시를 위한 이벤트 ID 목록
+  const eventIds = useMemo(() => {
+    if (!showOverallOnly || !eventTitleMap) return [];
+    return Object.keys(eventTitleMap);
+  }, [showOverallOnly, eventTitleMap]);
 
   const headers = useMemo(() => {
     const base = ["순위", "시도", "소속", "번호", "성명"];
     const games = showOverallOnly ? [] : Array.from({ length: maxGameCount }, (_, index) => `${index + 1}G`);
+    const eventCols = eventIds.map((eid) => eventTitleMap![eid]);
     const tail = showOverallOnly ? ["합계", "평균", "핀차", "게임수"] : ["합계", "평균", "핀차"];
-    return [...base, ...games, ...tail];
-  }, [maxGameCount, showOverallOnly]);
+    return [...base, ...games, ...eventCols, ...tail];
+  }, [maxGameCount, showOverallOnly, eventIds, eventTitleMap]);
 
   const headerAligns = useMemo(
     () => headers.map((header) => (header === "소속" || header === "성명" ? "left" : "center")) as ("left" | "center")[],
@@ -75,6 +85,11 @@ export default function RankingTable({
                   {row.gameScores[index]?.score ?? ""}
                 </td>
               ))}
+            {eventIds.map((eid) => (
+              <td key={`${row.playerId}-evt-${eid}`} style={{ ...glassTdStyle, textAlign: "center", color: "#475569" }}>
+                {row.eventTotals?.[eid] ?? "—"}
+              </td>
+            ))}
             <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700 }}>{row.total}</td>
             <td style={{ ...glassTdStyle, textAlign: "center", color: "#6366f1", fontWeight: 600 }}>{row.average}</td>
             <td style={{ ...glassTdStyle, textAlign: "center", color: "#64748b" }}>{row.pinDiff}</td>
