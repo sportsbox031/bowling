@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { resolveEventRef } from "@/lib/firebase/eventPath";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
+import { sortAssignmentsByPosition } from "@/lib/assignment-position";
 import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
 
 export async function GET(req: NextRequest) {
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest) {
         playerId: data.playerId,
         gameNumber: data.gameNumber,
         laneNumber: data.laneNumber,
+        position: data.position ?? null,
         squadId: data.squadId ?? null,
         playerName: player?.name ?? "",
         playerNumber: player?.number ?? 0,
@@ -66,9 +68,11 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    const assignments = squadId
-      ? allAssignments.filter((a) => a.squadId === squadId)
-      : allAssignments;
+    const assignments = sortAssignmentsByPosition(
+      squadId
+        ? allAssignments.filter((a) => a.squadId === squadId)
+        : allAssignments,
+    );
 
     const squads = squadsSnap.docs.map((doc) => ({
       id: doc.id,
@@ -104,3 +108,6 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+
+

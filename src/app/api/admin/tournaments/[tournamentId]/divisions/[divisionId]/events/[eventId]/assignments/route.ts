@@ -4,12 +4,14 @@ import { adminDb } from "@/lib/firebase/admin";
 import { calculateRandomAssignments } from "@/lib/services/competitionService";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { getCached, setCache, invalidateCache } from "@/lib/api-cache";
+import { sortAssignmentsByPosition, withAssignmentPositions } from "@/lib/assignment-position";
 
 interface AssignmentItem {
   playerId: string;
   gameNumber: number;
   laneNumber: number;
   squadId?: string;
+  position?: number;
 }
 
 const MAX_PLAYERS_PER_LANE = 4;
@@ -30,6 +32,7 @@ const writeAssignments = async (eventRef: any, assignments: AssignmentItem[]) =>
       laneNumber: item.laneNumber,
       updatedAt: new Date().toISOString(),
     };
+    if (Number.isFinite(item.position)) data.position = Number(item.position);
     if (item.squadId) data.squadId = item.squadId;
     batch.set(
       eventRef.collection("assignments").doc(docId),
@@ -67,6 +70,7 @@ const normalizeManualItems = (items: unknown[]): AssignmentItem[] =>
         playerId: String(parsed?.playerId ?? "").trim(),
         gameNumber: Number(parsed?.gameNumber),
         laneNumber: Number(parsed?.laneNumber),
+        position: Number(parsed?.position),
       };
     })
     .filter((item) => Boolean(item.playerId));
@@ -197,7 +201,7 @@ export async function GET(
   }
 
   const snap = await event.ref.collection("assignments").orderBy("gameNumber").get();
-  const allItems = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any));
+  const allItems = sortAssignmentsByPosition(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any)));
   const items = squadId ? allItems.filter((item: any) => item.squadId === squadId) : allItems;
   const result = { items };
   setCache(cacheKey, result, 15000);
@@ -239,7 +243,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   if (mode === "manual") {
-    const items = normalizeManualItems(Array.isArray(body?.items) ? body.items : []);
+    const items = withAssignmentPositions(normalizeManualItems(Array.isArray(body?.items) ? body.items : []));
     const replaceAll = body?.replaceAll === true;
     if (!items.length && !replaceAll) {
       return NextResponse.json({ message: "NO_ITEMS" }, { status: 400 });
@@ -351,3 +355,6 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   invalidateCache(`bundle-full:${ctx.params.tournamentId}`);
   return NextResponse.json({ mode: "random", firstGame, gameBoard: result.gameBoard });
 }
+
+
+

@@ -109,6 +109,7 @@ export interface GameAssignment {
   playerId: string;
   gameNumber: number;
   laneNumber: number;
+  position?: number;
   createdAt: string;
 }
 
@@ -170,3 +171,5 @@ export interface OverallRankingRow {
   gameCount: number;
   eventTotals?: Record<string, number>;
 }
+
+

@@ -1,323 +1,186 @@
 
 > bowling-tournament-saas@0.1.0 dev
-> next dev --port 3000
+> next dev
 
   ▲ Next.js 14.2.3
   - Local:        http://localhost:3000
   - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1987ms
- ○ Compiling /admin/tournaments/[tournamentId] ...
- ✓ Compiled /admin/tournaments/[tournamentId] in 1304ms (576 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 1668ms
- GET /_next/static/webpack/2eb65f80d930ca1c.webpack.hot-update.json 404 in 1659ms
- GET /_next/static/webpack/2eb65f80d930ca1c.webpack.hot-update.json 404 in 99ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 361ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 58ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 191ms (347 modules)
- ✓ Compiled (355 modules)
- GET /api/admin/session 200 in 2002ms
- GET /api/admin/session 200 in 2367ms
- GET /api/admin/session 200 in 2364ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 2474ms
- GET /api/admin/tournaments 200 in 2487ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 2501ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events in 116ms (357 modules)
- GET /api/admin/session 200 in 370ms
- GET /api/admin/tournaments 200 in 385ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 609ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 634ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 649ms
- GET /api/admin/tournaments 200 in 362ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 356ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 381ms
- GET /api/admin/tournaments 200 in 341ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 1166ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 397ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 361ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 396ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 345ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 371ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 351ms
+ ✓ Ready in 1694ms
  ○ Compiling / ...
- ✓ Compiled / in 582ms (629 modules)
- GET / 200 in 722ms
- ✓ Compiled /api/public/tournaments in 135ms (365 modules)
- GET /api/public/tournaments? 200 in 216ms
- GET /api/public/tournaments? 200 in 231ms
- ✓ Compiled /tournaments/[tournamentId] in 328ms (652 modules)
+ ✓ Compiled / in 830ms (575 modules)
+ GET / 200 in 1098ms
+ ✓ Compiled /api/public/tournaments in 397ms (355 modules)
+ GET /api/public/tournaments? 200 in 1842ms
+ GET /api/public/tournaments? 200 in 1847ms
+ GET / 200 in 15ms
+ GET / 200 in 76ms
  ○ Compiling /admin/login ...
- ✓ Compiled /admin/login in 1850ms (818 modules)
- POST /api/admin/session 200 in 884ms
- ✓ Compiled /admin in 456ms (828 modules)
- ✓ Compiled /admin/tournaments in 305ms (834 modules)
- GET /api/admin/session 200 in 381ms
+ ✓ Compiled /admin/login in 1571ms (753 modules)
+ ✓ Compiled /api/admin/session in 193ms (504 modules)
+ POST /api/admin/session 200 in 1308ms
+ ✓ Compiled /admin in 343ms (802 modules)
+ GET /api/admin/session 200 in 919ms
+ GET /api/admin/session 200 in 945ms
+ ✓ Compiled /admin/tournaments in 364ms (811 modules)
+ ✓ Compiled /api/admin/tournaments in 176ms (528 modules)
+ GET /api/admin/session 200 in 316ms
+ GET /api/admin/session 200 in 328ms
+ GET /api/admin/tournaments 200 in 598ms
+ GET /api/admin/tournaments 200 in 329ms
+ ○ Compiling /admin/tournaments/[tournamentId] ...
+ ✓ Compiled /admin/tournaments/[tournamentId] in 878ms (834 modules)
+ GET /api/admin/session 200 in 329ms
  GET /api/admin/session 200 in 344ms
- GET /api/admin/tournaments 200 in 362ms
- GET /api/admin/tournaments 200 in 364ms
- GET /api/admin/session 200 in 357ms
- GET /api/admin/tournaments 200 in 392ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 614ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 641ms
- GET /api/admin/tournaments 200 in 366ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 396ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 390ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 401ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 596ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 460ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId] in 217ms (542 modules)
- DELETE /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/Sevnj6KphO6z4E6xI9fA 200 in 1405ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 400ms
- DELETE /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/lmm795iBpv9BZzOtlUG0 200 in 368ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 345ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 598ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 407ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions in 157ms (540 modules)
+ GET /api/admin/tournaments 200 in 347ms
+ GET /api/admin/tournaments 200 in 330ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 995ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 136ms (542 modules)
+ ✓ Compiled (546 modules)
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 409ms
+ GET /api/admin/tournaments 200 in 394ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 341ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 1182ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 1223ms
  ○ Compiling /admin/tournaments/[tournamentId]/scoreboard ...
- ✓ Compiled /admin/tournaments/[tournamentId]/scoreboard in 608ms (766 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=w5vy8WlpchyGupNVARQ9&divisionId=DsekTORpEiQhRbPhHNhy 200 in 1066ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 109ms (500 modules)
- ✓ Compiled (504 modules)
- GET /api/admin/session 200 in 906ms
- GET /api/admin/session 200 in 929ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle 200 in 1400ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle 200 in 1419ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/squads in 148ms (506 modules)
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/squads 200 in 1238ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/squads 200 in 386ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/participants in 225ms (500 modules)
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 1294ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 392ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 350ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 375ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 377ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 341ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 345ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 376ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 358ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 378ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 336ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 352ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 336ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 362ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 358ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 332ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 353ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 328ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 347ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 356ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 339ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 394ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 359ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 333ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 355ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 382ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 339ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 328ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 747ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 358ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 311ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 330ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 354ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 333ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 392ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 360ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 360ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 370ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 796ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 369ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 401ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 345ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 369ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 372ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 331ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 369ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 334ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 331ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 377ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 363ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 480ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 357ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 407ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 335ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 505ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 405ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 361ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 364ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 351ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 369ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 314ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 368ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 403ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 405ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 388ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 441ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 341ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 348ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 366ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 370ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/participants 200 in 333ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/teams in 221ms (503 modules)
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 1398ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 70ms (507 modules)
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 531ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 593ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 301ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 640ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 478ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 399ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 359ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 590ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 487ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 392ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 358ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 618ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 500ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 607ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 343ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 593ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 497ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 657ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 346ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 592ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 491ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/teams 201 in 475ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle?only=scores 200 in 345ms
- ✓ Compiled /api/admin/tournaments in 218ms (500 modules)
- ✓ Compiled (508 modules)
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 1047ms
- GET /api/admin/session 200 in 1078ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 1078ms
- GET /api/admin/tournaments 200 in 1088ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events in 110ms (510 modules)
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 594ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 633ms
- GET /api/admin/tournaments 200 in 644ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 678ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 828ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 343ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=w5vy8WlpchyGupNVARQ9&divisionId=DsekTORpEiQhRbPhHNhy 200 in 125ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 210ms (514 modules)
- GET /api/admin/session 200 in 656ms
- GET /api/admin/session 200 in 703ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle 200 in 825ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/w5vy8WlpchyGupNVARQ9/bundle 200 in 842ms
- GET /api/admin/session 200 in 515ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 594ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 617ms
- GET /api/admin/tournaments 200 in 635ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 348ms
- GET /api/admin/tournaments 200 in 381ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players 200 in 397ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 403ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 623ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 347ms
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 572ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/copy-from/[sourceEventId] in 136ms (517 modules)
- POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/copy-from/w5vy8WlpchyGupNVARQ9 200 in 1454ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 374ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 200 in 153ms
- GET /api/admin/session 200 in 356ms
- GET /api/admin/session 200 in 578ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/bundle 200 in 657ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/bundle 200 in 666ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/teams/[teamId] in 207ms (501 modules)
- PUT /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/teams/ULf8JuBa6djJoto7TBBk 200 in 1394ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/teams in 122ms (503 modules)
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/teams 200 in 507ms
- PUT /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/teams/0EXLxsxZcKkta5JAt6PV 200 in 455ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/teams 200 in 368ms
- ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 111ms (507 modules)
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/S7qPFtXioZQE0sogAgML/bundle?only=scores 200 in 638ms
- ✓ Compiled in 415ms (766 modules)
- ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 166ms (500 modules)
- ✓ Compiled (508 modules)
- GET /api/admin/tournaments 200 in 1065ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 1066ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 1071ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 1075ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 2900ms
- GET /api/admin/tournaments 500 in 7812ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 500 in 9418ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 500 in 10061ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 500 in 8168ms
- GET /api/admin/tournaments 500 in 9609ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 500 in 8301ms
- GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 500 in 9296ms
- ✓ Compiled in 572ms (769 modules)
- ✓ Compiled /_not-found in 313ms (772 modules)
- GET /_next/static/css/app/layout.css?v=1773154652055 404 in 584ms
- GET /_next/static/css/app/layout.css?v=1773154652111 404 in 514ms
- GET /_next/static/css/app/layout.css?v=1773154652133 404 in 517ms
+ ✓ Compiled /admin/tournaments/[tournamentId]/scoreboard in 636ms (860 modules)
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=rWitkSmqmAmn655K38bF&divisionId=DsekTORpEiQhRbPhHNhy 200 in 1099ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 230ms (561 modules)
+ GET /api/admin/session 200 in 318ms
+ GET /api/admin/session 200 in 732ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 1286ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 1348ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/assignments in 242ms (566 modules)
+ POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/assignments 200 in 2096ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle?only=assignments 200 in 404ms
+ ✓ Compiled /admin/tournaments/[tournamentId]/prints/lanes in 479ms (849 modules)
+ ✓ Compiled /api/public/tournaments/[tournamentId] in 266ms (545 modules)
+ ✓ Compiled (549 modules)
+ GET /api/admin/session 200 in 979ms
+ GET /api/admin/session 200 in 1021ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 956ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 1011ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 48ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 301ms
+ GET /api/admin/session 200 in 461ms
+ GET /api/admin/session 200 in 480ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 477ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 500ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions in 125ms (541 modules)
+ GET /api/admin/session 200 in 474ms
+ GET /api/admin/session 200 in 488ms
+ ✓ Compiled (543 modules)
+ GET /api/admin/tournaments 200 in 663ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 668ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 144ms (545 modules)
+ ✓ Compiled (549 modules)
+ GET /api/admin/tournaments 200 in 372ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 665ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 703ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 844ms
+ GET /api/admin/tournaments 200 in 481ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 329ms
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=hELYMe8N2DcbKKVhNzvH&divisionId=DsekTORpEiQhRbPhHNhy 200 in 137ms
+ GET /api/admin/session 200 in 318ms
+ GET /api/admin/session 200 in 323ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/hELYMe8N2DcbKKVhNzvH/bundle 200 in 461ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/hELYMe8N2DcbKKVhNzvH/bundle 200 in 472ms
+ ✓ Compiled /api/admin/score in 288ms (531 modules)
+ POST /api/admin/score 200 in 921ms
+ POST /api/admin/score 200 in 434ms
+ POST /api/admin/score 200 in 534ms
+ POST /api/admin/score 200 in 633ms
+ POST /api/admin/score 200 in 555ms
+ POST /api/admin/score 200 in 572ms
+ POST /api/admin/score 200 in 576ms
+ POST /api/admin/score 200 in 401ms
+ POST /api/admin/score 200 in 536ms
+ POST /api/admin/score 200 in 546ms
+ POST /api/admin/score 200 in 537ms
+ POST /api/admin/score 200 in 558ms
+ ✓ Compiled /api/admin/session in 228ms (529 modules)
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions in 107ms (533 modules)
+ ✓ Compiled (535 modules)
+ GET /api/admin/session 200 in 726ms
+ GET /api/admin/session 200 in 757ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 743ms
+ GET /api/admin/tournaments 200 in 768ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/players in 174ms (537 modules)
+ ✓ Compiled (541 modules)
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 707ms
+ GET /api/admin/tournaments 200 in 708ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 728ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 763ms
+ GET /api/admin/tournaments 200 in 344ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 357ms
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=rWitkSmqmAmn655K38bF&divisionId=DsekTORpEiQhRbPhHNhy 200 in 159ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 223ms (546 modules)
+ GET /api/admin/session 200 in 674ms
+ GET /api/admin/session 200 in 677ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 828ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 836ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/assignments in 204ms (551 modules)
+ POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/assignments 200 in 1611ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle?only=assignments 200 in 427ms
+ ○ Compiling /admin/tournaments/[tournamentId]/prints/scores ...
+ ✓ Compiled /admin/tournaments/[tournamentId]/prints/scores in 584ms (863 modules)
+ ✓ Compiled /api/public/tournaments/[tournamentId] in 230ms (558 modules)
+ GET /api/admin/session 200 in 505ms
+ GET /api/admin/session 200 in 536ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 548ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 16ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 881ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 291ms
+ GET /api/admin/session 200 in 467ms
+ GET /api/admin/session 200 in 500ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 543ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 739ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 59ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 21ms
+ GET /api/admin/session 200 in 468ms
+ GET /api/admin/session 200 in 473ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 442ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 313ms
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/prints/lanes?divisionId=DsekTORpEiQhRbPhHNhy&eventId=rWitkSmqmAmn655K38bF 200 in 162ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 106ms
+ GET /api/public/tournaments/YqD6TYCPuCKKLQ26OXKZ 200 in 103ms
+ GET /api/admin/session 200 in 476ms
+ GET /api/admin/session 200 in 495ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 696ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 704ms
+ GET /api/admin/session 200 in 295ms
+ GET /api/admin/session 200 in 321ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 334ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 363ms
+ ✓ Compiled in 239ms (353 modules)
+ ✓ Compiled in 861ms (661 modules)
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events in 191ms (391 modules)
+ ✓ Compiled (399 modules)
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/players?divisionId=DsekTORpEiQhRbPhHNhy 200 in 1162ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions 200 in 1168ms
+ GET /api/admin/tournaments 200 in 1180ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events 200 in 1174ms
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/assignments in 314ms (395 modules)
  ○ Compiling /_error ...
- ✓ Compiled /_error in 610ms (995 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 297ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 500 in 315ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 344ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 329ms
- ✓ Compiled in 1047ms (1010 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 319ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 500 in 343ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 327ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 303ms
- ✓ Compiled in 1179ms (1024 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 350ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 500 in 373ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 366ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 449ms
- ✓ Compiled in 326ms (484 modules)
- ✓ Compiled in 355ms (484 modules)
- ✓ Compiled in 355ms (1006 modules)
- ✓ Compiled /_error in 203ms (1008 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 598ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 500 in 598ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 356ms
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 312ms
- ✓ Compiled in 702ms (1007 modules)
- ✓ Compiled / in 370ms (528 modules)
- GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?eventId=S7qPFtXioZQE0sogAgML&divisionId=DsekTORpEiQhRbPhHNhy 500 in 322ms
- ✓ Compiled /_error in 317ms (1014 modules)
- GET / 500 in 5867ms
- GET / 200 in 134ms
- ✓ Compiled /_not-found in 265ms (1017 modules)
- GET /_next/static/css/app/layout.css?v=1773155776775 404 in 406ms
- GET /_next/static/chunks/main-app.js?v=1773155776775 404 in 432ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 420ms
- GET /_next/static/chunks/app/page.js 404 in 59ms
- GET /_next/static/chunks/app/layout.js 404 in 28ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 25ms
- GET /_next/static/css/app/layout.css?v=1773155776775 404 in 37ms
- ✓ Compiled /players in 313ms (1026 modules)
- GET /players 200 in 442ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 43ms
- GET /_next/static/css/app/layout.css?v=1773155801898 404 in 82ms
- GET /_next/static/chunks/main-app.js?v=1773155801898 404 in 116ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 116ms
- GET /_next/static/chunks/app/layout.js 404 in 106ms
- GET / 200 in 102ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 39ms
- GET /_next/static/css/app/layout.css?v=1773155805702 404 in 86ms
- GET /_next/static/chunks/main-app.js?v=1773155805702 404 in 110ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 110ms
- GET /_next/static/chunks/app/page.js 404 in 110ms
- GET /_next/static/chunks/app/layout.js 404 in 106ms
- ✓ Compiled in 524ms (1026 modules)
- ✓ Compiled in 510ms (1026 modules)
- ✓ Compiled in 448ms (1026 modules)
- ✓ Compiled in 407ms (1012 modules)
- ✓ Compiled in 549ms (1012 modules)
- ✓ Compiled in 1018ms (1014 modules)
- ✓ Compiled in 215ms (1014 modules)
- ✓ Compiled / in 386ms (530 modules)
- GET / 500 in 1005ms
- GET / 500 in 231ms
- ✓ Compiled /_not-found in 277ms (1022 modules)
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 455ms
- GET / 200 in 99ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 45ms
- GET /_next/static/css/app/layout.css?v=1773178636192 404 in 89ms
- GET /_next/static/chunks/app-pages-internals.js 404 in 112ms
- GET /_next/static/chunks/main-app.js?v=1773178636192 404 in 125ms
- GET /_next/static/chunks/app/page.js 404 in 114ms
- GET /_next/static/chunks/app/layout.js 404 in 94ms
- ✓ Compiled in 1891ms (1014 modules)
+ ✓ Compiled /_error in 1297ms (926 modules)
+ ✓ Compiled /api/admin/tournaments/[tournamentId]/divisions/[divisionId]/events/[eventId]/bundle in 152ms (439 modules)
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ 500 in 708ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle 200 in 889ms
+ POST /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/assignments 200 in 3058ms
+ GET /api/admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/divisions/DsekTORpEiQhRbPhHNhy/events/rWitkSmqmAmn655K38bF/bundle?only=assignments 500 in 306ms
+ GET /admin/tournaments/YqD6TYCPuCKKLQ26OXKZ/scoreboard?divisionId=DsekTORpEiQhRbPhHNhy&eventId=rWitkSmqmAmn655K38bF 500 in 275ms
+ ✓ Compiled / in 239ms (444 modules)
+ GET / 200 in 443ms
+ GET / 200 in 219ms
+ ✓ Compiled /_not-found in 473ms (938 modules)
+ GET /_next/static/css/app/layout.css?v=1773232218339 404 in 359ms
+ GET /_next/static/chunks/main-app.js?v=1773232218339 404 in 369ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 368ms
+ GET /_next/static/chunks/app/page.js 404 in 367ms
+ GET /_next/static/chunks/app/layout.js 404 in 339ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 61ms
+ GET /_next/static/css/app/layout.css?v=1773232218339 404 in 68ms
+ GET / 200 in 47ms
+[?25h

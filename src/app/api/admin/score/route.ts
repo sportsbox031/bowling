@@ -3,15 +3,8 @@ import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { invalidateCache } from "@/lib/api-cache";
-import { rebuildPlayerRankingsAggregate, readPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
-import { rebuildOverallAggregate } from "@/lib/aggregates/overall";
-import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
-import { rebuildPlayerProfileAggregate, readPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
-import { isAggregateFresh } from "@/lib/aggregates/freshness";
 
 const MAX_SCORE = 300;
-const PLAYER_RANKINGS_MAX_AGE_MS = 5 * 60 * 1000;
-const PLAYER_PROFILE_MAX_AGE_MS = 5 * 60 * 1000;
 
 export async function POST(req: NextRequest) {
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -89,52 +82,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "PLAYER_DIVISION_MISMATCH" }, { status: 400 });
     }
 
+    const updatedAt = new Date().toISOString();
     const scoreRef = eventInfo.ref
       .collection("scores")
       .doc(`${normalizedPlayerId}_${gameNumber}`);
 
-    await scoreRef.set({
-      playerId: normalizedPlayerId,
-      gameNumber: Number(gameNumber),
-      score: Math.max(0, Number(score)),
-      laneNumber: normalizedLaneNumber,
-      updatedAt: new Date().toISOString(),
+    await Promise.all([
+      scoreRef.set({
+        playerId: normalizedPlayerId,
+        gameNumber: Number(gameNumber),
+        score: Math.max(0, Number(score)),
+        laneNumber: normalizedLaneNumber,
+        updatedAt,
+      }),
+      eventInfo.ref.set({
+        rankRefreshPending: true,
+      }, { merge: true }),
+    ]);
+
+    invalidateCache(`bundle-full:${tournamentId}:${eventInfo.divisionId}:${eventId}`);
+
+    return NextResponse.json({
+      message: "SCORE_SAVED",
+      updatedAt,
+      rankRefreshPending: true,
     });
-
-    try {
-      const rebuildTasks: Promise<unknown>[] = [
-        rebuildOverallAggregate(adminDb, tournamentId, eventInfo.divisionId),
-        rebuildOverallAggregate(adminDb, tournamentId),
-        rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventId),
-      ];
-
-      const existingRankings = await readPlayerRankingsAggregate(adminDb);
-      if (!isAggregateFresh(existingRankings?.updatedAt, PLAYER_RANKINGS_MAX_AGE_MS)) {
-        rebuildTasks.push(rebuildPlayerRankingsAggregate(adminDb));
-      }
-
-      const playerShortId = typeof playerData.shortId === "string" && playerData.shortId ? playerData.shortId : undefined;
-      const playerName = typeof playerData.name === "string" ? playerData.name : undefined;
-      const existingProfile = await readPlayerProfileAggregate(adminDb, playerShortId, playerName);
-      if (!isAggregateFresh(existingProfile?.updatedAt, PLAYER_PROFILE_MAX_AGE_MS)) {
-        rebuildTasks.push(rebuildPlayerProfileAggregate(adminDb, playerShortId, playerName));
-      }
-
-      if (typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
-        rebuildTasks.push(rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventData.linkedEventId));
-      }
-      await Promise.all(rebuildTasks);
-    } catch (aggregateError) {
-      console.error("AGGREGATE_REBUILD_FAILED", aggregateError);
-    }
-
-    invalidateCache(`scoreboard:${tournamentId}`);
-    invalidateCache(`overall:${tournamentId}`);
-    invalidateCache(`bundle-scores:${tournamentId}`);
-    invalidateCache(`bundle-full:${tournamentId}`);
-    invalidateCache("players-rankings-all");
-
-    return NextResponse.json({ message: "SCORE_SAVED" });
   } catch (error) {
     return NextResponse.json(
       { message: "SCORE_SAVE_FAILED", error: String((error as Error).message) },
