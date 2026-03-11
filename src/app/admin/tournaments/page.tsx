@@ -158,22 +158,27 @@ export default function TournamentManagerPage() {
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
-      <div>
-        <h1
-          style={{
-            fontSize: 28,
-            fontWeight: 800,
-            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            marginBottom: 4,
-          }}
-        >
-          대회 관리
-        </h1>
-        <p style={{ color: "#94a3b8", fontSize: 14 }}>
-          대회를 등록하고 관리합니다{loading ? " · 대회 정보를 가져오고 있습니다" : ""}
-        </p>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+        <div>
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: 800,
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              marginBottom: 4,
+            }}
+          >
+            대회 관리
+          </h1>
+          <p style={{ color: "#94a3b8", fontSize: 14 }}>
+            대회를 등록하고 관리합니다{loading ? " · 대회 정보를 가져오고 있습니다" : ""}
+          </p>
+        </div>
+        <Link href="/admin/help">
+          <GlassButton variant="secondary">📘 운영 가이드</GlassButton>
+        </Link>
       </div>
 
       {message && (
@@ -278,3 +283,4 @@ export default function TournamentManagerPage() {
     </div>
   );
 }
+

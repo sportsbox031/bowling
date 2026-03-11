@@ -5,7 +5,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GlassBadge, GlassCard, GlassButton, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import PageTitle from "@/components/common/PageTitle";
-import PrintModeBar from "@/components/common/PrintModeBar";
 import SearchField from "@/components/common/SearchField";
 import StatusBanner from "@/components/common/StatusBanner";
 import PageLoading from "@/components/common/PageLoading";
@@ -98,7 +97,6 @@ const EventScoreBoardPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [printMode, setPrintMode] = useState(false);
 
   const load = useCallback(async () => {
     if (!tournamentId || !eventId) return;
@@ -159,7 +157,7 @@ const EventScoreBoardPage = () => {
   }
 
   return (
-    <main className={printMode ? "print-mode" : undefined}>
+    <main>
       <div className="screen-only">
         <div className="no-print" style={{ marginBottom: 8 }}>
           <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
@@ -188,7 +186,6 @@ const EventScoreBoardPage = () => {
           }
         />
 
-        <PrintModeBar enabled={printMode} onToggle={() => setPrintMode((prev) => !prev)} />
 
         <SearchField
           value={searchKeyword}
@@ -200,14 +197,6 @@ const EventScoreBoardPage = () => {
 
         {message && <StatusBanner tone="error" style={{ marginBottom: 16 }}>{message}</StatusBanner>}
 
-        {printMode && (
-          <GlassCard variant="subtle" style={{ marginBottom: 16 }}>
-            <strong style={{ color: "#475569" }}>인쇄 안내</strong>
-            <p style={{ marginTop: 6, color: "#64748b", fontSize: 13 }}>
-              인쇄 시에는 화면용 카드 대신 페이지별 인쇄 전용 레이아웃이 출력됩니다.
-            </p>
-          </GlassCard>
-        )}
 
         {/* 팀 이벤트: 개인/팀 전환 토글 */}
         {isTeamEvent && hasTeamRows && (

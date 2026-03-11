@@ -5,7 +5,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GlassBadge, GlassButton } from "@/components/ui";
 import PageTitle from "@/components/common/PageTitle";
-import PrintModeBar from "@/components/common/PrintModeBar";
 import SearchField from "@/components/common/SearchField";
 import StatusBanner from "@/components/common/StatusBanner";
 import RankingTable from "@/components/scoreboard/RankingTable";
@@ -72,7 +71,6 @@ export default function TournamentOverallPage() {
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [printMode, setPrintMode] = useState(false);
 
   const load = useCallback(async () => {
     if (!tournamentId) return;
@@ -106,7 +104,7 @@ export default function TournamentOverallPage() {
   }, [rows, searchKeyword]);
 
   return (
-    <main className={printMode ? "print-mode" : undefined}>
+    <main>
       <div className="no-print" style={{ marginBottom: 8 }}>
         <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
           ← {tournament?.title ?? "대회"} 로 돌아가기
@@ -133,7 +131,6 @@ export default function TournamentOverallPage() {
         }
       />
 
-      <PrintModeBar enabled={printMode} onToggle={() => setPrintMode((prev) => !prev)} />
 
       <SearchField
         value={searchKeyword}

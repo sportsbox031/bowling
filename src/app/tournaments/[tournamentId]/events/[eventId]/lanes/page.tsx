@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GlassBadge, GlassCard, GlassInput, GlassTable, glassTdStyle, glassTrHoverProps } from "@/components/ui";
-import PrintModeBar from "@/components/common/PrintModeBar";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { cachedFetch } from "@/lib/client-cache";
 import { KIND_LABELS } from "@/lib/constants";
@@ -56,7 +55,6 @@ const LaneAssignmentPage = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedGame, setSelectedGame] = useState(1);
-  const [printMode, setPrintMode] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
@@ -170,7 +168,7 @@ const LaneAssignmentPage = () => {
   const printPages = useMemo(() => chunkItems(searchResult.filtered, PRINT_LANES_PER_PAGE), [searchResult.filtered]);
 
   return (
-    <main className={printMode ? "print-mode" : undefined}>
+    <main>
       <div className="screen-only">
         <div style={{ marginBottom: 8, display: "flex", gap: 12 }}>
           <Link href={`/tournaments/${tournamentId}`} style={{ color: "#94a3b8", fontSize: 13 }}>
@@ -199,7 +197,6 @@ const LaneAssignmentPage = () => {
           {loading && <span style={{ color: "#94a3b8", fontSize: 13 }}>불러오는 중...</span>}
         </div>
 
-        <PrintModeBar enabled={printMode} onToggle={() => setPrintMode((prev: boolean) => !prev)} />
 
         {hasSquads && (
           <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>

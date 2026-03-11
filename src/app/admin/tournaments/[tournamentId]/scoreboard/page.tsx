@@ -21,6 +21,7 @@ import RankingTable from "@/components/scoreboard/RankingTable";
 import PlayerProfileModal from "@/components/PlayerProfileModal";
 import { KIND_LABELS } from "@/lib/constants";
 import { clearScoreDraft, readScoreDraft, writeScoreDraft } from "@/lib/score-draft";
+import { applySavedDraftEntries } from "@/lib/score-save-state";
 import { createLoadedScoreboardSections, markSectionLoaded, markSectionStale, needsSectionLoad } from "@/lib/admin-scoreboard-sections";
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventLeaderboardRow = {
@@ -2377,6 +2378,8 @@ export default function AdminScoreboardPage() {
     </div>
   );
 }
+
+
 
 
 

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui";
 import PageLoading from "@/components/common/PageLoading";
 import PlayerBulkImportPanel from "@/components/admin/PlayerBulkImportPanel";
-import AdminOperatorGuide from "@/components/admin/AdminOperatorGuide";
 import { GENDER_LABELS, KIND_LABELS } from "@/lib/constants";
 import { buildFivesEventPayload, shouldPromptFivesCopy } from "@/lib/fives-link";
 
@@ -456,15 +455,10 @@ export default function TournamentDetailPage() {
               <Link href={`/admin/tournaments/${tournamentId}/certificates`}>
                 <GlassButton size="sm" variant="secondary">🏅 상장 생성</GlassButton>
               </Link>
-              <Link href="/admin/help">
-                <GlassButton size="sm" variant="secondary">📘 운영 매뉴얼</GlassButton>
-              </Link>
             </span>
           </div>
         )}
       </div>
-
-      <AdminOperatorGuide />
 
       {message && (
         <GlassCard
@@ -855,5 +849,6 @@ export default function TournamentDetailPage() {
     </div>
   );
 }
+
 
 
