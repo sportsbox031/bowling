@@ -4,6 +4,9 @@ import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
+import { rebuildPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
+import { rebuildPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
+import { readEventParticipantProfileRefreshTargets } from "@/lib/player-profile-refresh";
 
 export async function POST(
   req: NextRequest,
@@ -31,10 +34,13 @@ export async function POST(
     }
 
     const eventData = eventSnap.data() ?? {};
+    const profileTargets = await readEventParticipantProfileRefreshTargets(adminDb, tournamentId, divisionId, eventId);
+
     const tasks: Promise<unknown>[] = [
       rebuildEventScoreboardAggregate(adminDb, tournamentId, divisionId, eventId),
       rebuildOverallAggregate(adminDb, tournamentId, divisionId),
       rebuildOverallAggregate(adminDb, tournamentId),
+      rebuildPlayerRankingsAggregate(adminDb),
     ];
 
     if (typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
@@ -42,6 +48,10 @@ export async function POST(
     }
 
     const [eventAggregate, divisionOverall] = await Promise.all(tasks).then((results) => [results[0], results[1]] as const);
+
+    for (const target of profileTargets) {
+      await rebuildPlayerProfileAggregate(adminDb, target.shortId, target.name);
+    }
 
     const rankRefreshedAt = new Date().toISOString();
     await eventRef.set({
@@ -53,11 +63,14 @@ export async function POST(
     invalidateCache(`bundle-full:${tournamentId}:${divisionId}:${eventId}`);
     invalidateCache(`scoreboard:${tournamentId}`);
     invalidateCache(`overall:${tournamentId}`);
+    invalidateCache("players-rankings-all");
+    invalidateCache("player-profile:");
 
     return NextResponse.json({
       message: "RANK_REFRESHED",
       rankRefreshPending: false,
       rankRefreshedAt,
+      playerProfileRefreshCount: profileTargets.length,
       eventRows: (eventAggregate as Awaited<ReturnType<typeof rebuildEventScoreboardAggregate>>).eventRows,
       overallRows: (divisionOverall as Awaited<ReturnType<typeof rebuildOverallAggregate>>).rows,
       eventTitleMap: (divisionOverall as Awaited<ReturnType<typeof rebuildOverallAggregate>>).eventTitleMap,

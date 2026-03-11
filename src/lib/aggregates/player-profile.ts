@@ -65,8 +65,35 @@ const buildProfileDocId = (shortId?: string, name?: string) => {
   throw new Error("PROFILE_KEY_REQUIRED");
 };
 
+export const PLAYER_PROFILE_COLLECTION_PATH = "playerProfiles";
+
 const getProfileRef = (db: Firestore, shortId?: string, name?: string) =>
-  db.doc(`aggregates/playerProfiles/${buildProfileDocId(shortId, name)}`);
+  db.collection(PLAYER_PROFILE_COLLECTION_PATH).doc(buildProfileDocId(shortId, name));
+
+
+const FIRESTORE_IN_QUERY_LIMIT = 10;
+
+const chunkStrings = (items: string[], size: number): string[][] => {
+  const chunks: string[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+};
+
+export async function readPlayersByDivisionIds(db: Firestore, tournamentId: string, divisionIds: string[]) {
+  const uniqueDivisionIds = [...new Set(divisionIds)].filter(Boolean);
+  if (uniqueDivisionIds.length === 0) return [];
+
+  const playersRef = db.collection("tournaments").doc(tournamentId).collection("players");
+  const snaps = await Promise.all(
+    chunkStrings(uniqueDivisionIds, FIRESTORE_IN_QUERY_LIMIT).map((divisionChunk) =>
+      playersRef.where("divisionId", "in", divisionChunk).get(),
+    ),
+  );
+
+  return snaps.flatMap((snap) => snap.docs);
+}
 
 export async function computePlayerProfileAggregate(db: Firestore, shortId?: string, name?: string): Promise<PlayerProfileAggregate> {
   if (!shortId && !name) {
@@ -100,9 +127,8 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
       const divisionIds = [...new Set(playerEntries.map((player) => player.divisionId))].filter(Boolean);
       if (divisionIds.length === 0) return null;
 
-      const [allPlayersSnap, ...divisionResults] = await Promise.all([
-        db.collection("tournaments").doc(tournamentId)
-          .collection("players").where("divisionId", "in", divisionIds).get(),
+      const [allPlayersDocs, ...divisionResults] = await Promise.all([
+        readPlayersByDivisionIds(db, tournamentId, divisionIds),
         ...divisionIds.map((divId) =>
           Promise.all([
             db.collection("tournaments").doc(tournamentId).collection("divisions").doc(divId).get(),
@@ -112,7 +138,7 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
       ]);
 
       const allPlayersByDivision = new Map<string, any[]>();
-      for (const playerDoc of allPlayersSnap.docs) {
+      for (const playerDoc of allPlayersDocs) {
         const playerData = playerDoc.data();
         const divisionKey = String(playerData.divisionId ?? "");
         const list = allPlayersByDivision.get(divisionKey) ?? [];
