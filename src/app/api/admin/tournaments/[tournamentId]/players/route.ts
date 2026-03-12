@@ -24,12 +24,18 @@ export async function GET(req: NextRequest, ctx: { params: { tournamentId: strin
   const group = q.get("group");
   const keyword = (q.get("q") ?? "").toLowerCase().trim();
 
-  const snap = await getPlayersRef(adminDb, ctx.params.tournamentId).orderBy("number").get();
+  let query: FirebaseFirestore.Query = getPlayersRef(adminDb, ctx.params.tournamentId);
+  if (divisionId) {
+    query = query.where("divisionId", "==", divisionId);
+  }
+  if (group) {
+    query = query.where("group", "==", group);
+  }
+
+  const snap = await query.orderBy("number").get();
   const items = snap.docs
     .map((doc) => ({ id: doc.id, ...doc.data() } as any))
     .filter((item: any) => {
-      if (divisionId && item.divisionId !== divisionId) return false;
-      if (group && item.group !== group) return false;
       if (keyword && !(`${item.name}`.toLowerCase().includes(keyword) || `${item.affiliation}`.toLowerCase().includes(keyword))) {
         return false;
       }

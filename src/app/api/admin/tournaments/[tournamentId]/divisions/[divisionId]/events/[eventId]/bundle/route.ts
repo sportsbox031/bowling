@@ -45,13 +45,12 @@ export async function GET(
     const cached = getCached<object>(cacheKey);
     if (cached) return NextResponse.json(cached);
 
-    const [eventMetaSnap, playersSnap, participantsSnap, squadsSnap, assignmentsSnap] = await Promise.all([
+    const [eventMetaSnap, playersSnap, participantsSnap, squadsSnap] = await Promise.all([
       eventRef.get(),
       db.collection("tournaments").doc(tournamentId)
         .collection("players").where("divisionId", "==", divisionId).get(),
       eventRef.collection("participants").get(),
       eventRef.collection("squads").orderBy("createdAt").get(),
-      eventRef.collection("assignments").orderBy("gameNumber").get(),
     ]);
 
     const eventMeta = eventMetaSnap.data() ?? {};
@@ -75,7 +74,6 @@ export async function GET(
         .sort((a: any, b: any) => (a.number ?? 0) - (b.number ?? 0)),
       participants: participantsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
       squads: squadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
-      assignments: sortAssignmentsByPosition(assignmentsSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, any>) })) as any[]),
     };
 
     setCache(cacheKey, result, 15000);

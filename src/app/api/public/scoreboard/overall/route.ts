@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     const stored = await readOverallAggregate(adminDb, tournamentId, divisionId);
-    if (stored && stored.rows.length > 0) {
+    if (stored && stored.rows.length > 0 && !stored.stale) {
       setCache(cacheKey, stored, 60000);
       return jsonCached(stored, 60);
     }

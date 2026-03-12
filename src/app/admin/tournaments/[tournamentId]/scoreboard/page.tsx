@@ -607,9 +607,8 @@ export default function AdminScoreboardPage() {
           .join(", ");
         if (window.confirm(`${removedNames} 선수를 혼성(make-up) 팀으로 구성할까요?`)) {
           shouldReloadTeams = true;
-          const latestTeamsRes = await fetch(teamsUrl);
-          const latestTeams: Team[] = latestTeamsRes.ok ? (await latestTeamsRes.json()).teams ?? teams : teams;
-          const existingMakeup = latestTeams.find(
+          const optimisticTeams = teams.map((team) => (team.id === teamId ? { ...team, ...updatedTeam } : team));
+          const existingMakeup = optimisticTeams.find(
             (t) => t.teamType === "MAKEUP" && t.memberIds.length < teamSize
           );
 
@@ -656,13 +655,14 @@ export default function AdminScoreboardPage() {
     } catch (err) { showMsg((err as Error).message || "팀 삭제 실패", "error"); }
   };
   // Section loaders with local-state reuse
-  const loadAssignments = async (signal?: AbortSignal) => {
+  const loadAssignments = useCallback(async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
     const res = await fetch(`${bundleUrl}?only=assignments`, { cache: "no-store", signal });
     if (!res.ok) throw new Error(await parseError(res));
     const data = await res.json() as { assignments: Assignment[] };
     setAssignments(data.assignments ?? []);
-  };
+    setLoadedSections((prev) => markSectionLoaded(prev, "assignments"));
+  }, [bundleUrl, divisionId, eventId, tournamentId]);
 
   const loadSetup = useCallback(async (signal?: AbortSignal) => {
     if (!tournamentId || !divisionId || !eventId) return;
@@ -670,12 +670,11 @@ export default function AdminScoreboardPage() {
     try {
       const res = await fetch(`${bundleUrl}?only=setup`, { cache: "no-store", signal });
       if (!res.ok) throw new Error(await parseError(res));
-      const data = await res.json() as { event: EventInfo | null; players: Player[]; participants: Participant[]; squads: Squad[]; assignments: Assignment[] };
+      const data = await res.json() as { event: EventInfo | null; players: Player[]; participants: Participant[]; squads: Squad[] };
       setEvent(data.event ?? null);
       setAllPlayers(data.players ?? []);
       setParticipantList(data.participants ?? []);
       setSquads(data.squads ?? []);
-      setAssignments(data.assignments ?? []);
       setLoadedSections((prev) => markSectionLoaded(prev, "setup"));
       const nextEvent = data.event;
       if (nextEvent) {
@@ -745,6 +744,7 @@ export default function AdminScoreboardPage() {
     setTeamRows([]);
     setFivesCombinedRows([]);
     setTeams([]);
+    setAssignments([]);
     void loadSetup(controller.signal);
     return () => { controller.abort(); };
   }, [loadSetup]);
@@ -757,6 +757,17 @@ export default function AdminScoreboardPage() {
     void loadScores(controller.signal).catch((err) => { if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "점수 조회 실패", "error"); });
     return () => { controller.abort(); };
   }, [activeTab, loadScores, loadedSections]);
+
+  useEffect(() => {
+    if (needsSectionLoad(loadedSections, "setup")) return;
+    if (activeTab !== "lane" && activeTab !== "score") return;
+    if (!needsSectionLoad(loadedSections, "assignments")) return;
+    const controller = new AbortController();
+    void loadAssignments(controller.signal).catch((err) => {
+      if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "배정 조회 실패", "error");
+    });
+    return () => { controller.abort(); };
+  }, [activeTab, loadAssignments, loadedSections]);
 
   useEffect(() => {
     if (activeTab !== "teams") return;

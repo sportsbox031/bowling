@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
 import { cloneFivesEventData, type AssignmentSeed, type ParticipantSeed, type SquadSeed, type TeamSeed } from "@/lib/fives-link";
+import { setTeamMemberships } from "@/lib/admin/team-membership";
 
 const getEventRef = (tournamentId: string, divisionId: string, eventId: string) => {
   if (!adminDb) return null;
@@ -96,6 +97,7 @@ export async function POST(
   }
   for (const team of cloned.teams) {
     batch.set(targetRef.collection("teams").doc(team.id), team.data);
+    setTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, team.id, team.data.memberIds, now);
   }
   for (const assignment of cloned.assignments) {
     batch.set(targetRef.collection("assignments").doc(assignment.id), assignment.data);

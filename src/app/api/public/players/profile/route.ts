@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     }
 
     const stored = await readPlayerProfileAggregate(adminDb, shortId, name);
-    if (stored) {
+    if (stored && !stored.stale) {
       setCache(cacheKey, stored, 300000);
       return jsonCached(stored, 300);
     }

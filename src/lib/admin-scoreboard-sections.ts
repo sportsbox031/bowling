@@ -1,9 +1,10 @@
-export type ScoreboardSection = "setup" | "scores" | "teams";
+export type ScoreboardSection = "setup" | "assignments" | "scores" | "teams";
 
 export type LoadedScoreboardSections = Record<ScoreboardSection, boolean>;
 
 export const createLoadedScoreboardSections = (): LoadedScoreboardSections => ({
   setup: false,
+  assignments: false,
   scores: false,
   teams: false,
 });

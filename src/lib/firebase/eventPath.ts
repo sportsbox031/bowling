@@ -1,6 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 
 import { adminDb } from "@/lib/firebase/admin";
+import { readPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
 export const resolveEventRef = async (
   db: Firestore,
@@ -23,6 +24,23 @@ export const resolveEventRef = async (
     }
 
     return null;
+  }
+
+  const aggregate = await readPublicTournamentAggregate(db, tournamentId);
+  const aggregateDivision = aggregate?.eventsByDivision.find((entry) =>
+    entry.events.some((event) => event.id === eventId),
+  )?.divisionId;
+
+  if (aggregateDivision) {
+    const ref = db
+      .collection("tournaments")
+      .doc(tournamentId)
+      .collection("divisions")
+      .doc(aggregateDivision)
+      .collection("events")
+      .doc(eventId);
+
+    return { divisionId: aggregateDivision, ref };
   }
 
   const divisionsSnap = await db.collection("tournaments").doc(tournamentId).collection("divisions").get();

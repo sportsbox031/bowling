@@ -13,6 +13,13 @@ export interface PlayerRankingAggregateRow {
   rank: number;
 }
 
+export interface PlayerRankingsAggregatePayload {
+  players: PlayerRankingAggregateRow[];
+  updatedAt: string;
+  stale?: boolean;
+  staleAt?: string;
+}
+
 type PlayerAggregateSeed = {
   shortId: string;
   name: string;
@@ -122,18 +129,27 @@ export async function computePlayerRankings(db: Firestore): Promise<PlayerRankin
   return buildPlayerRankingRows(agg);
 }
 
-export async function rebuildPlayerRankingsAggregate(db: Firestore): Promise<{ players: PlayerRankingAggregateRow[]; updatedAt: string }> {
+export async function rebuildPlayerRankingsAggregate(db: Firestore): Promise<PlayerRankingsAggregatePayload> {
   const players = await computePlayerRankings(db);
-  const payload = {
+  const payload: PlayerRankingsAggregatePayload = {
     players,
     updatedAt: new Date().toISOString(),
+    stale: false,
   };
 
   await db.doc(PLAYER_RANKINGS_AGGREGATE_PATH).set(payload);
   return payload;
 }
 
-export async function readPlayerRankingsAggregate(db: Firestore): Promise<{ players: PlayerRankingAggregateRow[]; updatedAt?: string } | null> {
+export async function markPlayerRankingsAggregateStale(db: Firestore): Promise<void> {
+  const staleAt = new Date().toISOString();
+  await db.doc(PLAYER_RANKINGS_AGGREGATE_PATH).set({
+    stale: true,
+    staleAt,
+  }, { merge: true });
+}
+
+export async function readPlayerRankingsAggregate(db: Firestore): Promise<PlayerRankingsAggregatePayload | null> {
   const snap = await db.doc(PLAYER_RANKINGS_AGGREGATE_PATH).get();
   if (!snap.exists) return null;
 
@@ -141,5 +157,7 @@ export async function readPlayerRankingsAggregate(db: Firestore): Promise<{ play
   return {
     players: Array.isArray(data.players) ? (data.players as PlayerRankingAggregateRow[]) : [],
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+    stale: data.stale === true,
+    staleAt: typeof data.staleAt === "string" ? data.staleAt : undefined,
   };
 }

@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { firestorePaths } from "@/lib/firebase/schema";
 import type { TeamType } from "@/lib/models";
+import { hydrateMissingTeamMemberships, setTeamMemberships } from "@/lib/admin/team-membership";
 
 type Ctx = { params: { tournamentId: string; divisionId: string; eventId: string } };
 
@@ -40,14 +41,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ message: "INVALID_PAYLOAD" }, { status: 400 });
   }
 
-  const existingSnap = await ref.get();
-  const existingMemberIds = new Set<string>();
-  for (const doc of existingSnap.docs) {
-    const data = doc.data();
-    const ids: string[] = Array.isArray(data.memberIds) ? data.memberIds : [];
-    ids.forEach((id) => existingMemberIds.add(id));
-  }
-  const duplicates = memberIds.filter((id) => existingMemberIds.has(id));
+  const memberships = await hydrateMissingTeamMemberships(adminDb, tournamentId, divisionId, eventId, memberIds);
+  const duplicates = memberIds.filter((id) => memberships.has(id));
   if (duplicates.length > 0) {
     return NextResponse.json({ message: "MEMBER_ALREADY_IN_TEAM", duplicates }, { status: 409 });
   }
@@ -72,7 +67,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     const groupLabel = uniqueGroups.size === 1 ? [...uniqueGroups][0] : "";
     teamName = `${baseName}${groupLabel}`;
   } else {
-    const makeupCount = existingSnap.docs.filter((d) => d.data().teamType === "MAKEUP").length;
+    const makeupCount = (
+      await ref.where("teamType", "==", "MAKEUP").get()
+    ).size;
     teamName = `혼성팀 ${makeupCount + 1}`;
   }
 
@@ -89,7 +86,10 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     createdAt: now,
     updatedAt: now,
   };
-  await docRef.set(teamData);
+  const batch = adminDb.batch();
+  batch.set(docRef, teamData);
+  setTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, docRef.id, memberIds, now);
+  await batch.commit();
 
   return NextResponse.json({ id: docRef.id, ...teamData }, { status: 201 });
 }

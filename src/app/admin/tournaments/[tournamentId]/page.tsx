@@ -130,9 +130,8 @@ export default function TournamentDetailPage() {
   };
 
   const loadTournament = useCallback(async () => {
-    const result = await api<{ items?: TournamentDetail[] }>("/api/admin/tournaments");
-    const found = result.items?.find((item) => item.id === tournamentId);
-    if (found) setTournament(found);
+    const result = await api<TournamentDetail>(`/api/admin/tournaments/${tournamentId}`);
+    setTournament(result);
   }, [tournamentId]);
 
   const loadDivisions = useCallback(async () => {

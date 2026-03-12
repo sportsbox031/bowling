@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
-import { rebuildOverallAggregate } from "@/lib/aggregates/overall";
+import { markOverallAggregateStale, rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
-import { rebuildPlayerRankingsAggregate } from "@/lib/aggregates/player-rankings";
-import { rebuildPlayerProfileAggregate } from "@/lib/aggregates/player-profile";
+import { markPlayerRankingsAggregateStale } from "@/lib/aggregates/player-rankings";
+import { markPlayerProfileAggregateStale } from "@/lib/aggregates/player-profile";
 import { readEventParticipantProfileRefreshTargets } from "@/lib/player-profile-refresh";
 
 export async function POST(
@@ -36,22 +36,22 @@ export async function POST(
     const eventData = eventSnap.data() ?? {};
     const profileTargets = await readEventParticipantProfileRefreshTargets(adminDb, tournamentId, divisionId, eventId);
 
-    const tasks: Promise<unknown>[] = [
+    const criticalTasks: Promise<unknown>[] = [
       rebuildEventScoreboardAggregate(adminDb, tournamentId, divisionId, eventId),
       rebuildOverallAggregate(adminDb, tournamentId, divisionId),
-      rebuildOverallAggregate(adminDb, tournamentId),
-      rebuildPlayerRankingsAggregate(adminDb),
     ];
 
     if (typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
-      tasks.push(rebuildEventScoreboardAggregate(adminDb, tournamentId, divisionId, eventData.linkedEventId));
+      criticalTasks.push(rebuildEventScoreboardAggregate(adminDb, tournamentId, divisionId, eventData.linkedEventId));
     }
 
-    const [eventAggregate, divisionOverall] = await Promise.all(tasks).then((results) => [results[0], results[1]] as const);
+    const [eventAggregate, divisionOverall] = await Promise.all(criticalTasks).then((results) => [results[0], results[1]] as const);
 
-    for (const target of profileTargets) {
-      await rebuildPlayerProfileAggregate(adminDb, target.shortId, target.name);
-    }
+    await Promise.all([
+      markOverallAggregateStale(adminDb, tournamentId),
+      markPlayerRankingsAggregateStale(adminDb),
+      ...profileTargets.map((target) => markPlayerProfileAggregateStale(adminDb, target.shortId, target.name)),
+    ]);
 
     const rankRefreshedAt = new Date().toISOString();
     await eventRef.set({
@@ -71,6 +71,7 @@ export async function POST(
       rankRefreshPending: false,
       rankRefreshedAt,
       playerProfileRefreshCount: profileTargets.length,
+      deferredGlobalAggregates: true,
       eventRows: (eventAggregate as Awaited<ReturnType<typeof rebuildEventScoreboardAggregate>>).eventRows,
       overallRows: (divisionOverall as Awaited<ReturnType<typeof rebuildOverallAggregate>>).rows,
       eventTitleMap: (divisionOverall as Awaited<ReturnType<typeof rebuildOverallAggregate>>).eventTitleMap,

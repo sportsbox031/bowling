@@ -55,6 +55,8 @@ export interface PlayerProfileAggregate {
   };
   tournaments: TournamentRecord[];
   updatedAt: string;
+  stale?: boolean;
+  staleAt?: string;
   shortId?: string;
   lookupName?: string;
 }
@@ -307,6 +309,7 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
     },
     tournaments,
     updatedAt: new Date().toISOString(),
+    stale: false,
     ...(shortId ? { shortId } : {}),
     ...(playerNameResolved ? { lookupName: playerNameResolved } : name ? { lookupName: name } : {}),
   };
@@ -316,6 +319,13 @@ export async function rebuildPlayerProfileAggregate(db: Firestore, shortId?: str
   const payload = await computePlayerProfileAggregate(db, shortId, name);
   await getProfileRef(db, shortId, name).set(payload);
   return payload;
+}
+
+export async function markPlayerProfileAggregateStale(db: Firestore, shortId?: string, name?: string): Promise<void> {
+  await getProfileRef(db, shortId, name).set({
+    stale: true,
+    staleAt: new Date().toISOString(),
+  }, { merge: true });
 }
 
 export async function readPlayerProfileAggregate(db: Firestore, shortId?: string, name?: string): Promise<PlayerProfileAggregate | null> {

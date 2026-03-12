@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
-import { buildEventLeaderboard } from "@/lib/scoring";
 import { getCached, setCache } from "@/lib/api-cache";
+import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
 
 /**
  * 종합집계표 API
@@ -39,86 +39,48 @@ export async function GET(
 
   const divisions = divisionsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
 
-  const divisionSummaries = [];
+  const divisionSummaries = await Promise.all(
+    divisions.map(async (division) => {
+      const eventsSnap = await adminDb
+        .collection("tournaments").doc(tournamentId)
+        .collection("divisions").doc(division.id)
+        .collection("events").get();
 
-  for (const division of divisions) {
-    // Load events for this division
-    const eventsSnap = await adminDb
-      .collection("tournaments").doc(tournamentId)
-      .collection("divisions").doc(division.id)
-      .collection("events").get();
+      const eventMedals = await Promise.all(
+        eventsSnap.docs.map(async (eventDoc) => {
+          const event = { id: eventDoc.id, ...eventDoc.data() } as any;
+          const aggregate = await readEventScoreboardAggregate(adminDb, tournamentId, division.id, event.id)
+            .then((value) => value ?? rebuildEventScoreboardAggregate(adminDb, tournamentId, division.id, event.id));
 
-    const events = eventsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+          const winners = aggregate.eventRows
+            .filter((row) => row.total > 0)
+            .slice(0, 4)
+            .map((row) => ({
+              rank: row.rank,
+              playerId: row.playerId,
+              name: row.name,
+              affiliation: row.affiliation,
+              region: row.region,
+              total: row.total,
+            }));
 
-    // Load players for this division
-    const playersSnap = await adminDb
-      .collection("tournaments").doc(tournamentId)
-      .collection("players").where("divisionId", "==", division.id).get();
-    const players = playersSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+          return {
+            eventId: event.id,
+            eventTitle: String(event.title ?? ""),
+            eventKind: String(event.kind ?? ""),
+            winners,
+          };
+        }),
+      );
 
-    // Build leaderboard for each event
-    const eventMedals: {
-      eventId: string;
-      eventTitle: string;
-      eventKind: string;
-      winners: { rank: number; playerId: string; name: string; affiliation: string; region: string; total: number }[];
-    }[] = [];
-
-    for (const event of events) {
-      const scoresSnap = await event.ref
-        ? await adminDb
-            .collection("tournaments").doc(tournamentId)
-            .collection("divisions").doc(division.id)
-            .collection("events").doc(event.id)
-            .collection("scores").get()
-        : await adminDb
-            .collection("tournaments").doc(tournamentId)
-            .collection("divisions").doc(division.id)
-            .collection("events").doc(event.id)
-            .collection("scores").get();
-
-      const scores = scoresSnap.docs.map((doc) => {
-        const d = doc.data();
-        return {
-          id: doc.id,
-          tournamentId,
-          eventId: event.id,
-          playerId: d.playerId as string,
-          gameNumber: d.gameNumber as number,
-          laneNumber: (d.laneNumber ?? 0) as number,
-          score: d.score as number,
-          createdAt: (d.updatedAt ?? "") as string,
-        };
-      });
-
-      const leaderboard = buildEventLeaderboard({ players, scores, gameCount: event.gameCount ?? 1 });
-      const top4 = leaderboard.rows
-        .filter((r) => r.total > 0)
-        .slice(0, 4)
-        .map((r) => ({
-          rank: r.rank,
-          playerId: r.playerId,
-          name: r.name,
-          affiliation: r.affiliation,
-          region: r.region,
-          total: r.total,
-        }));
-
-      eventMedals.push({
-        eventId: event.id,
-        eventTitle: event.title,
-        eventKind: event.kind,
-        winners: top4,
-      });
-    }
-
-    divisionSummaries.push({
-      divisionId: division.id,
-      divisionTitle: division.title,
-      gender: division.gender,
-      eventMedals,
-    });
-  }
+      return {
+        divisionId: division.id,
+        divisionTitle: division.title,
+        gender: division.gender,
+        eventMedals,
+      };
+    }),
+  );
 
   const result = {
     tournament: {

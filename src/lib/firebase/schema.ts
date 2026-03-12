@@ -8,6 +8,7 @@ export const COLLECTIONS = {
   Scores: "scores",
   Assignments: "assignments",
   Teams: "teams",
+  TeamMembers: "teamMembers",
   System: "system",
   GlobalPlayers: "globalPlayers",
 } as const;
@@ -47,6 +48,10 @@ export const firestorePaths = {
     `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/teams`,
   team: (tournamentId: string, divisionId: string, eventId: string, teamId: string) =>
     `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/teams/${teamId}`,
+  teamMembers: (tournamentId: string, divisionId: string, eventId: string) =>
+    `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/teamMembers`,
+  teamMember: (tournamentId: string, divisionId: string, eventId: string, playerId: string) =>
+    `tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/teamMembers/${playerId}`,
   globalPlayers: () => "globalPlayers",
   globalPlayer: (shortId: string) => `globalPlayers/${shortId}`,
   shortIdCounter: () => "system/shortIdCounter",

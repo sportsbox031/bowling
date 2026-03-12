@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
-import { readPlayerRankingsAggregate, rebuildPlayerRankingsAggregate, type PlayerRankingAggregateRow } from "@/lib/aggregates/player-rankings";
+import {
+  readPlayerRankingsAggregate,
+  rebuildPlayerRankingsAggregate,
+  type PlayerRankingsAggregatePayload,
+} from "@/lib/aggregates/player-rankings";
 import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +17,13 @@ export async function GET(_req: NextRequest) {
 
   try {
     const cacheKey = "players-rankings-all";
-    const cached = getCached<{ players: PlayerRankingAggregateRow[]; updatedAt?: string }>(cacheKey);
+    const cached = getCached<PlayerRankingsAggregatePayload>(cacheKey);
     if (cached) {
       return jsonCached(cached, 300);
     }
 
     const stored = await readPlayerRankingsAggregate(adminDb);
-    if (stored && stored.players.length > 0) {
+    if (stored && stored.players.length > 0 && !stored.stale) {
       setCache(cacheKey, stored, 300000);
       return jsonCached(stored, 300);
     }

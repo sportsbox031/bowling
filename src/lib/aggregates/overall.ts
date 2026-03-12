@@ -7,6 +7,8 @@ export type OverallAggregatePayload = {
   updatedAt: string;
   tournamentId: string;
   divisionId: string | null;
+  stale?: boolean;
+  staleAt?: string;
 };
 
 const mapScoreDoc = (doc: FirebaseFirestore.QueryDocumentSnapshot, tournamentId: string, eventId: string) => {
@@ -91,6 +93,7 @@ export async function computeOverallAggregate(db: Firestore, tournamentId: strin
     updatedAt: new Date().toISOString(),
     tournamentId,
     divisionId: divisionId ?? null,
+    stale: false,
   };
 }
 
@@ -98,6 +101,13 @@ export async function rebuildOverallAggregate(db: Firestore, tournamentId: strin
   const payload = await computeOverallAggregate(db, tournamentId, divisionId);
   await getAggregateRef(db, tournamentId, divisionId).set(payload);
   return payload;
+}
+
+export async function markOverallAggregateStale(db: Firestore, tournamentId: string, divisionId?: string): Promise<void> {
+  await getAggregateRef(db, tournamentId, divisionId).set({
+    stale: true,
+    staleAt: new Date().toISOString(),
+  }, { merge: true });
 }
 
 export async function readOverallAggregate(db: Firestore, tournamentId: string, divisionId?: string): Promise<OverallAggregatePayload | null> {
@@ -110,5 +120,7 @@ export async function readOverallAggregate(db: Firestore, tournamentId: string, 
     updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "",
     tournamentId: typeof data.tournamentId === "string" ? data.tournamentId : tournamentId,
     divisionId: typeof data.divisionId === "string" ? data.divisionId : null,
+    stale: data.stale === true,
+    staleAt: typeof data.staleAt === "string" ? data.staleAt : undefined,
   };
 }
