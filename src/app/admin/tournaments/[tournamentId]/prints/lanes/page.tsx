@@ -96,7 +96,7 @@ export default function LanePrintPage() {
         if (!divId && d.divisions.length > 0) setDivId(d.divisions[0].id);
       })
       .catch(() => {});
-  }, [tournamentId]);
+  }, [divId, tournamentId]);
 
   useEffect(() => {
     if (!data || !divId) return;
@@ -104,7 +104,7 @@ export default function LanePrintPage() {
     if (events.length > 0 && !events.find((e) => e.id === evtId)) {
       setEvtId(events[0].id);
     }
-  }, [data, divId]);
+  }, [data, divId, evtId]);
 
   useEffect(() => {
     if (!tournamentId || !divId || !evtId) return;

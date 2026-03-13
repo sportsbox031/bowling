@@ -203,6 +203,16 @@ const buildBoardForGame = (board: Board, gameNumber: number, event: EventInfo | 
 const MAX_SCORE = 300;
 const BASE_MAX_PER_LANE = 4;
 const FIVES_MAX_PER_LANE = 5;
+const TEAM_COLORS = [
+  { bg: "rgba(99,102,241,0.10)", border: "rgba(99,102,241,0.35)", text: "#4f46e5" },
+  { bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", text: "#059669" },
+  { bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", text: "#d97706" },
+  { bg: "rgba(239,68,68,0.10)", border: "rgba(239,68,68,0.35)", text: "#dc2626" },
+  { bg: "rgba(168,85,247,0.10)", border: "rgba(168,85,247,0.35)", text: "#7c3aed" },
+  { bg: "rgba(6,182,212,0.10)", border: "rgba(6,182,212,0.35)", text: "#0891b2" },
+  { bg: "rgba(236,72,153,0.10)", border: "rgba(236,72,153,0.35)", text: "#db2777" },
+  { bg: "rgba(101,163,13,0.10)", border: "rgba(101,163,13,0.35)", text: "#65a30d" },
+] as const;
 
 
 export default function AdminScoreboardPage() {
@@ -421,16 +431,6 @@ export default function AdminScoreboardPage() {
   }, [teams]);
 
   // 팀 ID → 색상 맵 (점수입력 등에서 팀 구분용)
-  const TEAM_COLORS = [
-    { bg: "rgba(99,102,241,0.10)", border: "rgba(99,102,241,0.35)", text: "#4f46e5" },
-    { bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.35)", text: "#059669" },
-    { bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.35)", text: "#d97706" },
-    { bg: "rgba(239,68,68,0.10)", border: "rgba(239,68,68,0.35)", text: "#dc2626" },
-    { bg: "rgba(168,85,247,0.10)", border: "rgba(168,85,247,0.35)", text: "#7c3aed" },
-    { bg: "rgba(6,182,212,0.10)", border: "rgba(6,182,212,0.35)", text: "#0891b2" },
-    { bg: "rgba(236,72,153,0.10)", border: "rgba(236,72,153,0.35)", text: "#db2777" },
-    { bg: "rgba(101,163,13,0.10)", border: "rgba(101,163,13,0.35)", text: "#65a30d" },
-  ];
   const playerTeamColorMap = useMemo(() => {
     const teamIdToIdx = new Map<string, number>();
     teams.forEach((t, i) => teamIdToIdx.set(t.id, i % TEAM_COLORS.length));
