@@ -22,10 +22,10 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   if (!session) return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
 
   const { tournamentId, divisionId, eventId, teamId } = ctx.params;
+  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
+  const db = adminDb;
   const teamRef = getTeamRef(tournamentId, divisionId, eventId, teamId);
   if (!teamRef) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
-
-  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
 
   const teamDoc = await teamRef.get();
   if (!teamDoc.exists) return NextResponse.json({ message: "TEAM_NOT_FOUND" }, { status: 404 });
@@ -38,7 +38,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
   if (Array.isArray(body?.memberIds) && body.memberIds.length >= 1) {
     const newMemberIds: string[] = body.memberIds;
-    const memberships = await hydrateMissingTeamMemberships(adminDb, tournamentId, divisionId, eventId, newMemberIds);
+    const memberships = await hydrateMissingTeamMemberships(db, tournamentId, divisionId, eventId, newMemberIds);
     const duplicateTeamIds = new Set<string>();
     const duplicates = newMemberIds.filter((id) => {
       const membership = memberships.get(id);
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     if (duplicates.length > 0) {
       const duplicateTeamDocs = await Promise.all(
         [...duplicateTeamIds].map((duplicateTeamId) =>
-          adminDb.doc(firestorePaths.team(tournamentId, divisionId, eventId, duplicateTeamId)).get(),
+          db.doc(firestorePaths.team(tournamentId, divisionId, eventId, duplicateTeamId)).get(),
         ),
       );
       const makeupTeamDocs = duplicateTeamDocs.filter((doc) => doc.exists && doc.data()?.teamType === "MAKEUP");
@@ -64,9 +64,9 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
         return NextResponse.json({ message: "MEMBER_ALREADY_IN_TEAM", duplicates: nonMakeupDuplicates }, { status: 409 });
       }
 
-      const batch = adminDb.batch();
+      const batch = db.batch();
       for (const doc of makeupTeamDocs) {
-        const data = doc.data();
+        const data = doc.data() ?? {};
         const mids: string[] = Array.isArray(data.memberIds) ? data.memberIds : [];
         const rids: string[] = Array.isArray(data.rosterIds) ? data.rosterIds : [];
         const removedIds = duplicates.filter((id) => mids.includes(id));
@@ -77,7 +77,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
         if (newMids.length === 0) {
           batch.delete(doc.ref);
-          deleteTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, removedIds);
+          deleteTeamMemberships(batch, db, tournamentId, divisionId, eventId, removedIds);
         } else {
           const makeupUpdates: Record<string, unknown> = {
             memberIds: newMids,
@@ -85,7 +85,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
           };
           if (rids.length > 0) makeupUpdates.rosterIds = newRids;
           batch.update(doc.ref, makeupUpdates);
-          deleteTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, removedIds);
+          deleteTeamMemberships(batch, db, tournamentId, divisionId, eventId, removedIds);
         }
       }
       await batch.commit();
@@ -93,7 +93,7 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
 
     const playerDocs = await Promise.all(
       newMemberIds.map((pid) =>
-        adminDb!.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
+        db.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
       ),
     );
     const affiliations = playerDocs.map((d) => (d.data()?.affiliation as string | undefined) ?? "");
@@ -118,15 +118,15 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
     updates.name = body.name.trim();
   }
 
-  const batch = adminDb.batch();
+  const batch = db.batch();
   batch.update(teamRef, updates);
 
   if (Array.isArray(body?.memberIds) && body.memberIds.length >= 1) {
     const newMemberIds: string[] = body.memberIds;
     const removedIds = currentMemberIds.filter((id) => !newMemberIds.includes(id));
     const addedOrRetainedIds = [...new Set(newMemberIds)];
-    deleteTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, removedIds);
-    setTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, teamId, addedOrRetainedIds, now);
+    deleteTeamMemberships(batch, db, tournamentId, divisionId, eventId, removedIds);
+    setTeamMemberships(batch, db, tournamentId, divisionId, eventId, teamId, addedOrRetainedIds, now);
   }
 
   await batch.commit();
@@ -138,18 +138,19 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
   if (!session) return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
 
   const { tournamentId, divisionId, eventId, teamId } = ctx.params;
+  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
+  const db = adminDb;
   const teamRef = getTeamRef(tournamentId, divisionId, eventId, teamId);
   if (!teamRef) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
-  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
 
   const teamDoc = await teamRef.get();
   if (!teamDoc.exists) return NextResponse.json({ message: "TEAM_NOT_FOUND" }, { status: 404 });
 
   const teamData = teamDoc.data() ?? {};
   const memberIds: string[] = Array.isArray(teamData.memberIds) ? teamData.memberIds : [];
-  const batch = adminDb.batch();
+  const batch = db.batch();
   batch.delete(teamRef);
-  deleteTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, memberIds);
+  deleteTeamMemberships(batch, db, tournamentId, divisionId, eventId, memberIds);
   await batch.commit();
   return NextResponse.json({ deleted: teamId });
 }

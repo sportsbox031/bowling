@@ -19,6 +19,7 @@ export async function GET(
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
+  const db = adminDb;
 
   const { tournamentId } = ctx.params;
   const cacheKey = `summary:${tournamentId}`;
@@ -26,14 +27,14 @@ export async function GET(
   if (cached) return NextResponse.json(cached);
 
   // Load tournament
-  const tournamentDoc = await adminDb.collection("tournaments").doc(tournamentId).get();
+  const tournamentDoc = await db.collection("tournaments").doc(tournamentId).get();
   if (!tournamentDoc.exists) {
     return NextResponse.json({ message: "TOURNAMENT_NOT_FOUND" }, { status: 404 });
   }
   const tournament = { id: tournamentDoc.id, ...tournamentDoc.data() } as any;
 
   // Load all divisions
-  const divisionsSnap = await adminDb
+  const divisionsSnap = await db
     .collection("tournaments").doc(tournamentId)
     .collection("divisions").get();
 
@@ -41,7 +42,7 @@ export async function GET(
 
   const divisionSummaries = await Promise.all(
     divisions.map(async (division) => {
-      const eventsSnap = await adminDb
+      const eventsSnap = await db
         .collection("tournaments").doc(tournamentId)
         .collection("divisions").doc(division.id)
         .collection("events").get();
@@ -49,8 +50,8 @@ export async function GET(
       const eventMedals = await Promise.all(
         eventsSnap.docs.map(async (eventDoc) => {
           const event = { id: eventDoc.id, ...eventDoc.data() } as any;
-          const aggregate = await readEventScoreboardAggregate(adminDb, tournamentId, division.id, event.id)
-            .then((value) => value ?? rebuildEventScoreboardAggregate(adminDb, tournamentId, division.id, event.id));
+          const aggregate = await readEventScoreboardAggregate(db, tournamentId, division.id, event.id)
+            .then((value) => value ?? rebuildEventScoreboardAggregate(db, tournamentId, division.id, event.id));
 
           const winners = aggregate.eventRows
             .filter((row) => row.total > 0)

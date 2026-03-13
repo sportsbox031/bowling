@@ -34,9 +34,10 @@ const getAggregateRef = (db: Firestore, tournamentId: string, divisionId?: strin
 };
 
 export async function computeOverallAggregate(db: Firestore, tournamentId: string, divisionId?: string): Promise<OverallAggregatePayload> {
+  const playersRef = db.collection("tournaments").doc(tournamentId).collection("players");
   const [divisionSnap, playersSnap] = await Promise.all([
     db.collection("tournaments").doc(tournamentId).collection("divisions").get(),
-    db.collection("tournaments").doc(tournamentId).collection("players").get(),
+    divisionId ? playersRef.where("divisionId", "==", divisionId).get() : playersRef.get(),
   ]);
 
   let divisionIds = divisionSnap.docs.map((doc) => doc.id);

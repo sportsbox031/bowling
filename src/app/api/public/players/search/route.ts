@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { jsonCached } from "@/lib/api-cache";
+import { getCached, jsonCached, setCache } from "@/lib/api-cache";
 import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
 
 /**
@@ -20,6 +20,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "INVALID_QUERY" }, { status: 400 });
     }
 
+    const cacheKey = `player-search:${name}`;
+    const cached = getCached<{ players: { shortId: string; name: string; region: string; affiliation: string }[] }>(cacheKey);
+    if (cached) {
+      return jsonCached(cached, 60);
+    }
+
     const snap = await adminDb
       .collection("globalPlayers")
       .where("name", "==", name)
@@ -35,7 +41,9 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return jsonCached({ players }, 60);
+    const result = { players };
+    setCache(cacheKey, result, 60000);
+    return jsonCached(result, 60);
   } catch (error) {
     if (isFirestoreQuotaExceededError(error)) {
       return NextResponse.json(

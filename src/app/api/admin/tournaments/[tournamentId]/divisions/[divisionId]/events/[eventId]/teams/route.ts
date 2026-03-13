@@ -28,6 +28,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
 
+  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
+  const db = adminDb;
   const { tournamentId, divisionId, eventId } = ctx.params;
   const ref = getTeamsRef(tournamentId, divisionId, eventId);
   if (!ref) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
@@ -41,16 +43,15 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ message: "INVALID_PAYLOAD" }, { status: 400 });
   }
 
-  const memberships = await hydrateMissingTeamMemberships(adminDb, tournamentId, divisionId, eventId, memberIds);
+  const memberships = await hydrateMissingTeamMemberships(db, tournamentId, divisionId, eventId, memberIds);
   const duplicates = memberIds.filter((id) => memberships.has(id));
   if (duplicates.length > 0) {
     return NextResponse.json({ message: "MEMBER_ALREADY_IN_TEAM", duplicates }, { status: 409 });
   }
 
-  if (!adminDb) return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   const playerDocs = await Promise.all(
     memberIds.map((pid) =>
-      adminDb!.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
+      db.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
     ),
   );
   const affiliations = playerDocs.map((d) => (d.data()?.affiliation as string | undefined) ?? "");
@@ -86,9 +87,9 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     createdAt: now,
     updatedAt: now,
   };
-  const batch = adminDb.batch();
+  const batch = db.batch();
   batch.set(docRef, teamData);
-  setTeamMemberships(batch, adminDb, tournamentId, divisionId, eventId, docRef.id, memberIds, now);
+  setTeamMemberships(batch, db, tournamentId, divisionId, eventId, docRef.id, memberIds, now);
   await batch.commit();
 
   return NextResponse.json({ id: docRef.id, ...teamData }, { status: 201 });

@@ -35,21 +35,19 @@ export async function GET(req: NextRequest) {
 
     const [assignSnap, playersSnap, squadsSnap] = await Promise.all([
       event.ref.collection("assignments").orderBy("gameNumber").get(),
-      adminDb.collection("tournaments").doc(tournamentId).collection("players").get(),
+      adminDb.collection("tournaments").doc(tournamentId).collection("players").where("divisionId", "==", event.divisionId).get(),
       event.ref.collection("squads").get(),
     ]);
 
     const playerMap = new Map<string, { name: string; number: number; affiliation: string; region: string }>();
     for (const doc of playersSnap.docs) {
       const data = doc.data();
-      if (data.divisionId === event.divisionId) {
-        playerMap.set(doc.id, {
-          name: data.name,
-          number: data.number,
-          affiliation: data.affiliation,
-          region: data.region,
-        });
-      }
+      playerMap.set(doc.id, {
+        name: data.name,
+        number: data.number,
+        affiliation: data.affiliation,
+        region: data.region,
+      });
     }
 
     const allAssignments = assignSnap.docs.map((doc) => {

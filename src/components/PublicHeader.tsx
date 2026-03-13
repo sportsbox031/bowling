@@ -18,7 +18,6 @@ export default function PublicHeader() {
       title="BOWLING"
       navItems={[
         { label: "대회 목록", href: "/" },
-        { label: "선수 랭킹", href: "/players" },
       ]}
       rightSlot={
         <Link href="/admin/login">

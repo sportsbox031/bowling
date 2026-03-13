@@ -156,7 +156,7 @@ export async function readPlayerRankingsAggregate(db: Firestore): Promise<Player
   const data = snap.data() ?? {};
   return {
     players: Array.isArray(data.players) ? (data.players as PlayerRankingAggregateRow[]) : [],
-    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "",
     stale: data.stale === true,
     staleAt: typeof data.staleAt === "string" ? data.staleAt : undefined,
   };

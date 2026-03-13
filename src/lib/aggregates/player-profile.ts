@@ -1,5 +1,5 @@
 import type { Firestore } from "firebase-admin/firestore";
-import { buildEventLeaderboard } from "@/lib/scoring";
+import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
 
 const KIND_LABELS: Record<string, string> = {
   SINGLE: "개인전",
@@ -61,6 +61,12 @@ export interface PlayerProfileAggregate {
   lookupName?: string;
 }
 
+type TournamentProfileResult = {
+  tournamentId: string;
+  tournamentData: Record<string, unknown>;
+  divisionRecords: { divisionTitle: string; events: EventRecord[]; tournamentTotal: number; tournamentGames: number }[];
+};
+
 const buildProfileDocId = (shortId?: string, name?: string) => {
   if (shortId) return `sid:${encodeURIComponent(shortId)}`;
   if (name) return `name:${encodeURIComponent(name)}`;
@@ -73,36 +79,14 @@ const getProfileRef = (db: Firestore, shortId?: string, name?: string) =>
   db.collection(PLAYER_PROFILE_COLLECTION_PATH).doc(buildProfileDocId(shortId, name));
 
 
-const FIRESTORE_IN_QUERY_LIMIT = 10;
-
-const chunkStrings = (items: string[], size: number): string[][] => {
-  const chunks: string[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-};
-
-export async function readPlayersByDivisionIds(db: Firestore, tournamentId: string, divisionIds: string[]) {
-  const uniqueDivisionIds = [...new Set(divisionIds)].filter(Boolean);
-  if (uniqueDivisionIds.length === 0) return [];
-
-  const playersRef = db.collection("tournaments").doc(tournamentId).collection("players");
-  const snaps = await Promise.all(
-    chunkStrings(uniqueDivisionIds, FIRESTORE_IN_QUERY_LIMIT).map((divisionChunk) =>
-      playersRef.where("divisionId", "in", divisionChunk).get(),
-    ),
-  );
-
-  return snaps.flatMap((snap) => snap.docs);
-}
-
 export async function computePlayerProfileAggregate(db: Firestore, shortId?: string, name?: string): Promise<PlayerProfileAggregate> {
   if (!shortId && !name) {
     throw new Error("INVALID_QUERY");
   }
 
-  const tournamentsSnap = await db.collection("tournaments").orderBy("startsAt", "desc").get();
+  const matchingPlayersSnap = shortId
+    ? await db.collectionGroup("players").where("shortId", "==", shortId).get()
+    : await db.collectionGroup("players").where("name", "==", name).get();
 
   const tournaments: TournamentRecord[] = [];
   let totalScore = 0;
@@ -111,65 +95,40 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
   let eventCount = 0;
   const kindAgg = new Map<string, { games: number; totalScore: number }>();
 
+  const playerEntriesByTournament = new Map<string, { id: string; divisionId: string }[]>();
+  for (const doc of matchingPlayersSnap.docs) {
+    const tournamentId = doc.ref.parent.parent?.id;
+    if (!tournamentId) continue;
+
+    const list = playerEntriesByTournament.get(tournamentId) ?? [];
+    list.push({
+      id: doc.id,
+      divisionId: String(doc.data().divisionId ?? ""),
+    });
+    playerEntriesByTournament.set(tournamentId, list);
+  }
+
+  const tournamentDocs = await Promise.all(
+    Array.from(playerEntriesByTournament.keys()).map(async (tournamentId) => ({
+      tournamentId,
+      doc: await db.collection("tournaments").doc(tournamentId).get(),
+    })),
+  );
+
   const tournamentResults = await Promise.all(
-    tournamentsSnap.docs.map(async (tDoc) => {
-      const tournamentId = tDoc.id;
-      const tData = tDoc.data();
-      const playersCol = db.collection("tournaments").doc(tournamentId).collection("players");
-      const playersSnap = shortId
-        ? await playersCol.where("shortId", "==", shortId).get()
-        : await playersCol.where("name", "==", name).get();
-
-      if (playersSnap.empty) return null;
-
-      const playerEntries = playersSnap.docs.map((doc) => ({
-        id: doc.id,
-        divisionId: String(doc.data().divisionId ?? ""),
-      }));
+    tournamentDocs.map(async ({ tournamentId, doc: tDoc }) => {
+      if (!tDoc.exists) return null;
+      const tData = (tDoc.data() ?? {}) as Record<string, unknown>;
+      const playerEntries = playerEntriesByTournament.get(tournamentId) ?? [];
       const divisionIds = [...new Set(playerEntries.map((player) => player.divisionId))].filter(Boolean);
       if (divisionIds.length === 0) return null;
 
-      const [allPlayersDocs, ...divisionResults] = await Promise.all([
-        readPlayersByDivisionIds(db, tournamentId, divisionIds),
-        ...divisionIds.map((divId) =>
+      const divisionResults = await Promise.all(
+        divisionIds.map((divId) =>
           Promise.all([
             db.collection("tournaments").doc(tournamentId).collection("divisions").doc(divId).get(),
             db.collection("tournaments").doc(tournamentId).collection("divisions").doc(divId).collection("events").get(),
           ]).then(([divDoc, eventsSnap]) => ({ divId, divDoc, eventsSnap })),
-        ),
-      ]);
-
-      const allPlayersByDivision = new Map<string, any[]>();
-      for (const playerDoc of allPlayersDocs) {
-        const playerData = playerDoc.data();
-        const divisionKey = String(playerData.divisionId ?? "");
-        const list = allPlayersByDivision.get(divisionKey) ?? [];
-        list.push({
-          id: playerDoc.id,
-          tournamentId,
-          divisionId: divisionKey,
-          group: playerData.group ?? "",
-          region: playerData.region ?? "",
-          affiliation: playerData.affiliation ?? "",
-          number: playerData.number ?? 0,
-          name: playerData.name ?? "",
-          hand: playerData.hand ?? "right",
-          createdAt: playerData.createdAt ?? "",
-        });
-        allPlayersByDivision.set(divisionKey, list);
-      }
-
-      const allEventDocs = divisionResults.flatMap((result) =>
-        result.eventsSnap.docs.map((eventDoc) => ({
-          eventDoc,
-          divId: result.divId,
-          divTitle: result.divDoc.exists ? String(result.divDoc.data()?.title ?? "") : "",
-        })),
-      );
-
-      const scoreResults = await Promise.all(
-        allEventDocs.map((event) =>
-          event.eventDoc.ref.collection("scores").get().then((scoresSnap) => ({ ...event, scoresSnap })),
         ),
       );
 
@@ -177,38 +136,17 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
 
       for (const divId of divisionIds) {
         const playerIdsInDivision = playerEntries.filter((player) => player.divisionId === divId).map((player) => player.id);
-        const divisionPlayers = allPlayersByDivision.get(divId) ?? [];
-        const divisionScoreResults = scoreResults.filter((result) => result.divId === divId);
-        const divisionTitle = divisionScoreResults[0]?.divTitle ?? "";
+        const divisionResult = divisionResults.find((result) => result.divId === divId);
+        const divisionTitle = divisionResult?.divDoc.exists ? String(divisionResult.divDoc.data()?.title ?? "") : "";
         const events: EventRecord[] = [];
         let tournamentTotal = 0;
         let tournamentGames = 0;
 
-        for (const { eventDoc, scoresSnap } of divisionScoreResults) {
+        for (const eventDoc of divisionResult?.eventsSnap.docs ?? []) {
           const eventData = eventDoc.data();
-          const allScores = scoresSnap.docs.map((scoreDoc) => {
-            const scoreData = scoreDoc.data();
-            return {
-              id: scoreDoc.id,
-              tournamentId,
-              eventId: eventDoc.id,
-              playerId: scoreData.playerId as string,
-              gameNumber: scoreData.gameNumber as number,
-              laneNumber: (scoreData.laneNumber ?? 0) as number,
-              score: scoreData.score as number,
-              createdAt: (scoreData.updatedAt ?? "") as string,
-            };
-          });
-
-          const playerScores = allScores.filter((score) => playerIdsInDivision.includes(score.playerId));
-          if (playerScores.length === 0) continue;
-
-          const leaderboard = buildEventLeaderboard({
-            players: divisionPlayers,
-            scores: allScores,
-            gameCount: Number(eventData.gameCount ?? 1),
-          });
-          const playerRow = leaderboard.rows.find((row) => playerIdsInDivision.includes(row.playerId));
+          const aggregate = await readEventScoreboardAggregate(db, tournamentId, divId, eventDoc.id)
+            .then((value) => value ?? rebuildEventScoreboardAggregate(db, tournamentId, divId, eventDoc.id));
+          const playerRow = aggregate.eventRows.find((row) => playerIdsInDivision.includes(row.playerId));
           if (!playerRow) continue;
 
           const kind = String(eventData.kind ?? "SINGLE");
@@ -222,7 +160,7 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
             total: playerRow.total,
             average: playerRow.average,
             rank: playerRow.rank,
-            playerCount: leaderboard.rows.length,
+            playerCount: aggregate.eventRows.length,
           });
 
           tournamentTotal += playerRow.total;
@@ -243,8 +181,13 @@ export async function computePlayerProfileAggregate(db: Firestore, shortId?: str
     }),
   );
 
-  for (const tournamentResult of tournamentResults) {
-    if (!tournamentResult) continue;
+  const sortedTournamentResults = tournamentResults
+    .filter((result): result is TournamentProfileResult => result !== null)
+    .sort((a, b) =>
+      String(b.tournamentData?.startsAt ?? "").localeCompare(String(a.tournamentData?.startsAt ?? ""), "ko"),
+    );
+
+  for (const tournamentResult of sortedTournamentResults) {
     for (const divisionRecord of tournamentResult.divisionRecords) {
       tournaments.push({
         tournamentId: tournamentResult.tournamentId,

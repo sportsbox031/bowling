@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const source = readFileSync(join(process.cwd(), "src/lib/aggregates/player-profile.ts"), "utf8");
-assert.equal(source.includes('const FIRESTORE_IN_QUERY_LIMIT = 10;'), true);
-assert.equal(source.includes('chunkStrings(uniqueDivisionIds, FIRESTORE_IN_QUERY_LIMIT)'), true);
-assert.equal(source.includes('playersRef.where("divisionId", "in", divisionChunk).get()'), true);
+assert.equal(source.includes('db.collectionGroup("players").where("shortId", "==", shortId).get()'), true);
+assert.equal(source.includes('db.collectionGroup("players").where("name", "==", name).get()'), true);
+assert.equal(source.includes("readEventScoreboardAggregate"), true);
+assert.equal(source.includes("rebuildEventScoreboardAggregate"), true);
+assert.equal(source.includes('eventDoc.ref.collection("scores").get()'), false);
 
-console.log("player profile division chunking test passed");
+console.log("player profile aggregate reuse test passed");
