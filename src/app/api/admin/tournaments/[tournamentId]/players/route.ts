@@ -19,30 +19,42 @@ export async function GET(req: NextRequest, ctx: { params: { tournamentId: strin
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const q = new URL(req.url).searchParams;
-  const divisionId = q.get("divisionId");
-  const group = q.get("group");
-  const keyword = (q.get("q") ?? "").toLowerCase().trim();
+  try {
+    const q = new URL(req.url).searchParams;
+    const divisionId = q.get("divisionId");
+    const group = q.get("group");
+    const keyword = (q.get("q") ?? "").toLowerCase().trim();
 
-  let query: FirebaseFirestore.Query = getPlayersRef(adminDb, ctx.params.tournamentId);
-  if (divisionId) {
-    query = query.where("divisionId", "==", divisionId);
-  }
-  if (group) {
-    query = query.where("group", "==", group);
-  }
+    // Keep filtering in-memory so admin pages don't depend on Firestore composite indexes
+    // for `divisionId/group + number`.
+    const snap = await getPlayersRef(adminDb, ctx.params.tournamentId).get();
+    const items = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() } as Record<string, unknown> & { id: string }))
+      .filter((item) => {
+        if (divisionId && item.divisionId !== divisionId) {
+          return false;
+        }
+        if (group && item.group !== group) {
+          return false;
+        }
+        if (
+          keyword &&
+          !(`${item.name ?? ""}`.toLowerCase().includes(keyword) || `${item.affiliation ?? ""}`.toLowerCase().includes(keyword))
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => Number(a.number ?? 0) - Number(b.number ?? 0));
 
-  const snap = await query.orderBy("number").get();
-  const items = snap.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() } as any))
-    .filter((item: any) => {
-      if (keyword && !(`${item.name}`.toLowerCase().includes(keyword) || `${item.affiliation}`.toLowerCase().includes(keyword))) {
-        return false;
-      }
-      return true;
+    return NextResponse.json({ items });
+  } catch (error) {
+    console.error("Failed to load tournament players", {
+      tournamentId: ctx.params.tournamentId,
+      error,
     });
-
-  return NextResponse.json({ items });
+    return NextResponse.json({ message: "PLAYER_LIST_FAILED" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest, ctx: { params: { tournamentId: string } }) {
