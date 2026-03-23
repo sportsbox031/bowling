@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
+import { isValidFirestoreId } from "@/lib/validation";
 
 const eventKinds = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
 type EventKind = (typeof eventKinds)[number];
@@ -48,15 +49,20 @@ export async function GET(
   _req: NextRequest,
   ctx: { params: { tournamentId: string; divisionId: string; eventId: string } },
 ) {
+  const { tournamentId, divisionId, eventId } = ctx.params;
   const session = await verifyAdminSessionToken(_req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
   }
 
+  if (!isValidFirestoreId(tournamentId) || !isValidFirestoreId(divisionId) || !isValidFirestoreId(eventId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
+  }
+
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
-  const doc = await getRef(adminDb, ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId).get();
+  const doc = await getRef(adminDb, tournamentId, divisionId, eventId).get();
   if (!doc.exists) {
     return NextResponse.json({ message: "NOT_FOUND" }, { status: 404 });
   }
@@ -64,16 +70,21 @@ export async function GET(
 }
 
 export async function PUT(req: NextRequest, ctx: { params: { tournamentId: string; divisionId: string; eventId: string } }) {
+  const { tournamentId, divisionId, eventId } = ctx.params;
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId) || !isValidFirestoreId(divisionId) || !isValidFirestoreId(eventId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const ref = getRef(adminDb, ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId);
+  const ref = getRef(adminDb, tournamentId, divisionId, eventId);
   const target = await ref.get();
   if (!target.exists) {
     return NextResponse.json({ message: "NOT_FOUND" }, { status: 404 });
@@ -107,22 +118,27 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   }
 
   await ref.set({ ...updateData, updatedAt: new Date().toISOString() }, { merge: true });
-  await refreshPublicTournamentCaches(ctx.params.tournamentId);
+  await refreshPublicTournamentCaches(tournamentId);
   const updated = await ref.get();
   return NextResponse.json({ id: updated.id, ...(updated.data() as object) });
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: string; divisionId: string; eventId: string } }) {
+  const { tournamentId, divisionId, eventId } = ctx.params;
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId) || !isValidFirestoreId(divisionId) || !isValidFirestoreId(eventId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  await getRef(adminDb, ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId).delete();
-  await refreshPublicTournamentCaches(ctx.params.tournamentId);
-  return NextResponse.json({ message: "DELETED", id: ctx.params.eventId });
+  await getRef(adminDb, tournamentId, divisionId, eventId).delete();
+  await refreshPublicTournamentCaches(tournamentId);
+  return NextResponse.json({ message: "DELETED", id: eventId });
 }

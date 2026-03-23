@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildPublicTournamentAggregate, deletePublicTournamentAggregate, rebuildPublicTournamentListAggregate } from "@/lib/aggregates/public-tournament";
+import { isValidFirestoreId } from "@/lib/validation";
 
 const getTournamentRef = (database: NonNullable<typeof adminDb>, id: string) =>
   database.collection("tournaments").doc(id);
@@ -35,15 +36,20 @@ const refreshPublicTournamentCaches = async (tournamentId: string, includeList =
 };
 
 export async function GET(_req: NextRequest, ctx: { params: { tournamentId: string } }) {
+  const { tournamentId } = ctx.params;
   const session = await verifyAdminSessionToken(_req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
   }
 
+  if (!isValidFirestoreId(tournamentId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
+  }
+
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
-  const id = ensureTournamentId(ctx.params.tournamentId);
+  const id = ensureTournamentId(tournamentId);
   if (!id) {
     return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
@@ -57,16 +63,21 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
 }
 
 export async function PUT(req: NextRequest, ctx: { params: { tournamentId: string } }) {
+  const { tournamentId } = ctx.params;
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const id = ensureTournamentId(ctx.params.tournamentId);
+  const id = ensureTournamentId(tournamentId);
   if (!id) {
     return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
@@ -109,16 +120,21 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
 }
 
 export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: string } }) {
+  const { tournamentId } = ctx.params;
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const id = ensureTournamentId(ctx.params.tournamentId);
+  const id = ensureTournamentId(tournamentId);
   if (!id) {
     return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }

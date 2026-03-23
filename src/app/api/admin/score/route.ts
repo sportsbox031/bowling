@@ -3,8 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { invalidateCache } from "@/lib/api-cache";
-
-const MAX_SCORE = 300;
+import { isValidGameNumber, isValidScore } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -32,12 +31,8 @@ export async function POST(req: NextRequest) {
       !tournamentId ||
       !eventId ||
       !playerId ||
-      !Number.isFinite(score) ||
-      !Number.isInteger(score) ||
       !Number.isFinite(gameNumber) ||
-      !Number.isInteger(gameNumber) ||
-      gameNumber < 1 ||
-      gameNumber > 6
+      !isValidGameNumber(Number(gameNumber))
     ) {
       return NextResponse.json({ message: "INVALID_PAYLOAD" }, { status: 400 });
     }
@@ -46,7 +41,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "INVALID_LANE" }, { status: 400 });
     }
 
-    if (score < 0 || score > MAX_SCORE) {
+    if (!isValidScore(Number(score))) {
       return NextResponse.json({ message: "INVALID_SCORE" }, { status: 400 });
     }
 
@@ -109,7 +104,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     return NextResponse.json(
-      { message: "SCORE_SAVE_FAILED", error: String((error as Error).message) },
+      { message: "SCORE_SAVE_FAILED" },
       { status: 500 },
     );
   }

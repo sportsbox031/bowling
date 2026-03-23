@@ -3,10 +3,15 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 import { readPublicTournamentAggregate, rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
+import { getClientIp, rateLimitResponse } from "@/lib/api-utils";
+import { publicRateLimiter } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: NextRequest, ctx: { params: { tournamentId: string } }) {
+export async function GET(req: NextRequest, ctx: { params: { tournamentId: string } }) {
+  const rateLimit = publicRateLimiter.check(getClientIp(req));
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.remaining, rateLimit.resetMs);
+
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
@@ -20,7 +25,9 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
     const cacheKey = `pub-tournament:${tournamentId}`;
     const cached = getCached<object>(cacheKey);
     if (cached) {
-      return jsonCached(cached, 60);
+      const response = jsonCached(cached, 60);
+      response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+      return response;
     }
 
     const stored = await readPublicTournamentAggregate(adminDb, tournamentId);
@@ -31,7 +38,9 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
         eventsByDivision: stored.eventsByDivision,
       };
       setCache(cacheKey, result, 60000);
-      return jsonCached(result, 60);
+      const response = jsonCached(result, 60);
+      response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+      return response;
     }
 
     const rebuilt = await rebuildPublicTournamentAggregate(adminDb, tournamentId);
@@ -41,7 +50,9 @@ export async function GET(_req: NextRequest, ctx: { params: { tournamentId: stri
       eventsByDivision: rebuilt.eventsByDivision,
     };
     setCache(cacheKey, result, 60000);
-    return jsonCached(result, 60);
+    const response = jsonCached(result, 60);
+    response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+    return response;
   } catch (error) {
     if ((error as Error).message === "TOURNAMENT_NOT_FOUND") {
       return NextResponse.json({ message: "TOURNAMENT_NOT_FOUND" }, { status: 404 });

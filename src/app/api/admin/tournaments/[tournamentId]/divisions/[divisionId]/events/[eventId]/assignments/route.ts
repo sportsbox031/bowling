@@ -4,7 +4,9 @@ import { adminDb } from "@/lib/firebase/admin";
 import { calculateRandomAssignments } from "@/lib/services/competitionService";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { getCached, setCache, invalidateCache } from "@/lib/api-cache";
+import { rebuildEventAssignmentsAggregate } from "@/lib/aggregates/event-assignments";
 import { sortAssignmentsByPosition, withAssignmentPositions } from "@/lib/assignment-position";
+import { isValidFirestoreId } from "@/lib/validation";
 
 interface AssignmentItem {
   playerId: string;
@@ -179,22 +181,27 @@ export async function GET(
   _req: NextRequest,
   ctx: { params: { tournamentId: string; divisionId: string; eventId: string } },
 ) {
+  const { tournamentId, divisionId, eventId } = ctx.params;
   const session = await verifyAdminSessionToken(_req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId) || !isValidFirestoreId(divisionId) || !isValidFirestoreId(eventId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const event = await getEventRefOrThrow(ctx.params.tournamentId, ctx.params.eventId, ctx.params.divisionId);
+  const event = await getEventRefOrThrow(tournamentId, eventId, divisionId);
   if (!event) {
     return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
   }
 
   const squadId = new URL(_req.url).searchParams.get("squadId") ?? undefined;
-  const cacheKey = `assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}:${squadId}`;
+  const cacheKey = `assignments:${tournamentId}:${divisionId}:${eventId}:${squadId}`;
   const cached = getCached<object>(cacheKey);
   if (cached) {
     return NextResponse.json(cached);
@@ -209,16 +216,21 @@ export async function GET(
 }
 
 export async function POST(req: NextRequest, ctx: { params: { tournamentId: string; divisionId: string; eventId: string } }) {
+  const { tournamentId, divisionId, eventId } = ctx.params;
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
   if (!session) {
     return NextResponse.json({ message: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  if (!isValidFirestoreId(tournamentId) || !isValidFirestoreId(divisionId) || !isValidFirestoreId(eventId)) {
+    return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
 
-  const event = await getEventRefOrThrow(ctx.params.tournamentId, ctx.params.eventId, ctx.params.divisionId);
+  const event = await getEventRefOrThrow(tournamentId, eventId, divisionId);
   if (!event) {
     return NextResponse.json({ message: "EVENT_NOT_FOUND" }, { status: 404 });
   }
@@ -237,7 +249,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   const laneEnd = Number(eventData.laneEnd ?? laneStart);
   const gameCount = Number(eventData.gameCount ?? 0);
   const tableShift = Number(eventData.tableShift ?? 0);
-  const eventPlayerIds = await getParticipantIds(ctx.params.tournamentId, ctx.params.divisionId, ctx.params.eventId, squadId);
+  const eventPlayerIds = await getParticipantIds(tournamentId, divisionId, eventId, squadId);
   if (!eventPlayerIds) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
@@ -275,10 +287,11 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
       await replaceAssignmentsByGame(event.ref, normalized);
     }
 
-    invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
-    invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
-    invalidateCache(`bundle-assign:${ctx.params.tournamentId}`);
-    invalidateCache(`bundle-full:${ctx.params.tournamentId}`);
+    invalidateCache(`assignments:${tournamentId}:${divisionId}:${eventId}`);
+    invalidateCache(`pub-assignments:${tournamentId}:${divisionId}:${eventId}`);
+    invalidateCache(`bundle-assign:${tournamentId}`);
+    invalidateCache(`bundle-full:${tournamentId}`);
+    rebuildEventAssignmentsAggregate(adminDb, tournamentId, divisionId, eventId).catch(console.error);
     return NextResponse.json({ message: "ASSIGNMENTS_SAVED", mode: "manual" });
   }
 
@@ -300,6 +313,11 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   const playerIds = Array.from(eventPlayerIds.values());
   if (playerIds.length === 0) {
     await clearAssignments(event.ref);
+    invalidateCache(`assignments:${tournamentId}:${divisionId}:${eventId}`);
+    invalidateCache(`pub-assignments:${tournamentId}:${divisionId}:${eventId}`);
+    invalidateCache(`bundle-assign:${tournamentId}`);
+    invalidateCache(`bundle-full:${tournamentId}`);
+    rebuildEventAssignmentsAggregate(adminDb, tournamentId, divisionId, eventId).catch(console.error);
     return NextResponse.json({ message: "NO_PLAYERS", mode: "random", firstGame: [], gameBoard: {} });
   }
 
@@ -319,8 +337,8 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     range: { start: laneStart, end: laneEnd },
     gameCount,
     tableShift,
-    tournamentId: ctx.params.tournamentId,
-    eventId: ctx.params.eventId,
+    tournamentId,
+    eventId,
   });
 
   const firstGame = result.firstGameAssignments.map((item) => ({
@@ -349,10 +367,11 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
   }
 
   await writeAssignments(event.ref, all);
-  invalidateCache(`assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
-  invalidateCache(`pub-assignments:${ctx.params.tournamentId}:${ctx.params.divisionId}:${ctx.params.eventId}`);
-  invalidateCache(`bundle-assign:${ctx.params.tournamentId}`);
-  invalidateCache(`bundle-full:${ctx.params.tournamentId}`);
+  invalidateCache(`assignments:${tournamentId}:${divisionId}:${eventId}`);
+  invalidateCache(`pub-assignments:${tournamentId}:${divisionId}:${eventId}`);
+  invalidateCache(`bundle-assign:${tournamentId}`);
+  invalidateCache(`bundle-full:${tournamentId}`);
+  rebuildEventAssignmentsAggregate(adminDb, tournamentId, divisionId, eventId).catch(console.error);
   return NextResponse.json({ mode: "random", firstGame, gameBoard: result.gameBoard });
 }
 

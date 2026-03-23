@@ -3,10 +3,15 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache, jsonCached } from "@/lib/api-cache";
 import { readPublicTournamentListAggregate, rebuildPublicTournamentListAggregate } from "@/lib/aggregates/public-tournament";
 import { getQuotaExceededMessage, isFirestoreQuotaExceededError } from "@/lib/firebase/quota";
+import { getClientIp, rateLimitResponse } from "@/lib/api-utils";
+import { publicRateLimiter } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  const rateLimit = publicRateLimiter.check(getClientIp(req));
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit.remaining, rateLimit.resetMs);
+
   if (!adminDb) {
     return NextResponse.json({ message: "FIRESTORE_NOT_READY" }, { status: 503 });
   }
@@ -21,7 +26,9 @@ export async function GET(req: NextRequest) {
     const cacheKey = `pub-tournaments:${keyword}:${year}:${region}`;
     const cached = getCached<object>(cacheKey);
     if (cached) {
-      return jsonCached(cached, 60);
+      const response = jsonCached(cached, 60);
+      response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+      return response;
     }
 
     const stored = await readPublicTournamentListAggregate(adminDb);
@@ -42,7 +49,9 @@ export async function GET(req: NextRequest) {
 
     const result = { items: filtered };
     setCache(cacheKey, result, 60000);
-    return jsonCached(result, 60);
+    const response = jsonCached(result, 60);
+    response.headers.set("X-RateLimit-Remaining", String(rateLimit.remaining));
+    return response;
   } catch (error) {
     if (isFirestoreQuotaExceededError(error)) {
       return NextResponse.json(
