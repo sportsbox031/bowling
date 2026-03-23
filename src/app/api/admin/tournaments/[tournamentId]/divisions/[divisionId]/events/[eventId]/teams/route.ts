@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { firestorePaths } from "@/lib/firebase/schema";
 import type { TeamType } from "@/lib/models";
 import { hydrateMissingTeamMemberships, setTeamMemberships } from "@/lib/admin/team-membership";
+import { deriveTeamIdentity } from "@/lib/team-identity";
 
 type Ctx = { params: { tournamentId: string; divisionId: string; eventId: string } };
 
@@ -54,19 +55,17 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       db.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
     ),
   );
-  const affiliations = playerDocs.map((d) => (d.data()?.affiliation as string | undefined) ?? "");
-  const groups = playerDocs.map((d) => (d.data()?.group as string | undefined) ?? "");
-  const uniqueAffiliations = new Set(affiliations.filter(Boolean));
-  const uniqueGroups = new Set(groups.filter(Boolean));
-
-  const teamType: TeamType = memberIds.length >= 2 && uniqueAffiliations.size === 1 ? "NORMAL" : "MAKEUP";
+  const { teamType, normalTeamName } = deriveTeamIdentity(
+    playerDocs.map((doc) => ({
+      affiliation: (doc.data()?.affiliation as string | undefined) ?? "",
+      group: (doc.data()?.group as string | undefined) ?? "",
+    })),
+  );
   let teamName: string;
   if (nameOverride) {
     teamName = nameOverride;
   } else if (teamType === "NORMAL") {
-    const baseName = [...uniqueAffiliations][0];
-    const groupLabel = uniqueGroups.size === 1 ? [...uniqueGroups][0] : "";
-    teamName = `${baseName}${groupLabel}`;
+    teamName = normalTeamName ?? "";
   } else {
     const makeupCount = (
       await ref.where("teamType", "==", "MAKEUP").get()

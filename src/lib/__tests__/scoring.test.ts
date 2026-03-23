@@ -614,6 +614,17 @@ describe("buildFivesLinkedLeaderboard", () => {
     expect(result.rows[0].teamName).toBe("A팀");
   });
 
+  it("후반 팀명이 바뀌어도 linkedTeamId로 전반 팀과 합산한다", () => {
+    const result = buildFivesLinkedLeaderboard({
+      firstHalfRows: [makeTeamRow("원소속A", 500, { teamId: "first-team-1" })],
+      secondHalfRows: [makeTeamRow("원소속", 400, { teamId: "second-team-1", linkedTeamId: "first-team-1" })],
+    });
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].teamName).toBe("원소속A");
+    expect(result.rows[0].teamTotal).toBe(900);
+  });
+
   it("합산 후 순위를 올바르게 매긴다", () => {
     const result = buildFivesLinkedLeaderboard({
       firstHalfRows: [

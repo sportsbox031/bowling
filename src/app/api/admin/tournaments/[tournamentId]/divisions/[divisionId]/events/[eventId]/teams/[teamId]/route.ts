@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { firestorePaths } from "@/lib/firebase/schema";
 import type { TeamType } from "@/lib/models";
 import { deleteTeamMemberships, hydrateMissingTeamMemberships, setTeamMemberships } from "@/lib/admin/team-membership";
+import { deriveTeamIdentity } from "@/lib/team-identity";
 
 type Ctx = { params: { tournamentId: string; divisionId: string; eventId: string; teamId: string } };
 
@@ -96,16 +97,19 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
         db.collection(firestorePaths.players(tournamentId)).doc(pid).get(),
       ),
     );
-    const affiliations = playerDocs.map((d) => (d.data()?.affiliation as string | undefined) ?? "");
-    const uniqueAffiliations = new Set(affiliations.filter(Boolean));
-    const teamType: TeamType = uniqueAffiliations.size === 1 ? "NORMAL" : "MAKEUP";
+    const { teamType, normalTeamName } = deriveTeamIdentity(
+      playerDocs.map((doc) => ({
+        affiliation: (doc.data()?.affiliation as string | undefined) ?? "",
+        group: (doc.data()?.group as string | undefined) ?? "",
+      })),
+    );
 
     updates.memberIds = newMemberIds;
     updates.teamType = teamType;
 
     if (typeof body?.name !== "string") {
       if (teamType === "NORMAL") {
-        updates.name = [...uniqueAffiliations][0];
+        updates.name = normalTeamName ?? currentData.name;
       }
     }
   }

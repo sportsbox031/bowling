@@ -132,6 +132,7 @@ export function cloneFivesEventData(params: {
       teamType: team.teamType,
       memberIds: [...team.memberIds],
       ...(team.rosterIds ? { rosterIds: [...team.rosterIds] } : {}),
+      linkedTeamId: team.id,
       createdAt: team.createdAt ?? params.now,
       updatedAt: params.now,
     },

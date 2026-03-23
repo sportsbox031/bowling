@@ -177,6 +177,7 @@ export const buildTeamLeaderboard = (input: TeamRankingInput): TeamRankingResult
       teamId: team.id,
       teamName: team.name,
       teamType: team.teamType,
+      linkedTeamId: team.linkedTeamId,
       members,
       teamTotal,
     };
@@ -227,10 +228,13 @@ export interface FivesLinkedResult {
  * 전반/후반 팀을 teamName으로 매칭합니다.
  */
 export const buildFivesLinkedLeaderboard = (input: FivesLinkedInput): FivesLinkedResult => {
-  const secondHalfByName = new Map<string, TeamRankingRow>();
+  const secondHalfByKey = new Map<string, TeamRankingRow>();
   for (const row of input.secondHalfRows) {
     if (row.teamType === "NORMAL") {
-      secondHalfByName.set(row.teamName, row);
+      if (row.linkedTeamId) {
+        secondHalfByKey.set(`linked:${row.linkedTeamId}`, row);
+      }
+      secondHalfByKey.set(`name:${row.teamName}`, row);
     }
   }
 
@@ -240,7 +244,8 @@ export const buildFivesLinkedLeaderboard = (input: FivesLinkedInput): FivesLinke
     if (firstRow.teamType !== "NORMAL") {
       continue;
     }
-    const secondRow = secondHalfByName.get(firstRow.teamName);
+    const secondRow = secondHalfByKey.get(`linked:${firstRow.teamId}`)
+      ?? secondHalfByKey.get(`name:${firstRow.teamName}`);
     const secondTotal = secondRow?.teamTotal ?? 0;
     combined.push({
       ...firstRow,

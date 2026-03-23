@@ -18,6 +18,7 @@ export interface Team {
   teamType: TeamType;     // 소속 동일 = NORMAL, 다르면 = MAKEUP
   memberIds: string[];    // 출전 선수 ID 목록 (순서 있음)
   rosterIds?: string[];   // 5인조 전용: 교체 가능 전체 로스터
+  linkedTeamId?: string;  // 5인조 후반전이 전반전 팀을 참조할 때 사용
   createdAt: string;
   updatedAt: string;
 }
@@ -132,6 +133,7 @@ export interface TeamRankingRow {
   teamId: string;
   teamName: string;
   teamType: TeamType;
+  linkedTeamId?: string;
   rank: number;
   tieRank: number;
   members: TeamMemberRow[];
