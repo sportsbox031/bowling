@@ -2,6 +2,7 @@ import {
   buildEventLeaderboard,
   buildOverallLeaderboard,
   buildTeamLeaderboard,
+  buildFivesTeamLeaderboard,
   buildFivesLinkedLeaderboard,
   MAX_GAME_COUNT,
   EventRankingInput,
@@ -10,6 +11,7 @@ import {
   FivesLinkedInput,
 } from "../scoring";
 import type { Player, ScoreRow, Team, EventRankingRow, TeamRankingRow } from "../models";
+import { deriveTeamIdentity } from "../team-identity";
 
 // ── Test Helpers ──────────────────────────────────────────────
 
@@ -561,6 +563,85 @@ describe("buildTeamLeaderboard", () => {
     expect(result.rows[0].rank).toBe(1);
     expect(result.rows[1].rank).toBe(1);
   });
+
+  it("linkedTeamId가 없으면 결과 행에 undefined 값을 남기지 않는다", () => {
+    const teams = [
+      makeTeam({ id: "t1", name: "A팀", memberIds: ["p1"] }),
+      makeTeam({ id: "t2", name: "B팀", memberIds: ["p2"], linkedTeamId: "first-team-2" }),
+    ];
+    const playerMap = new Map<string, Player>([
+      ["p1", makePlayer({ id: "p1" })],
+      ["p2", makePlayer({ id: "p2" })],
+    ]);
+    const individualRows = [
+      makeIndividualRow("p1", 200),
+      makeIndividualRow("p2", 180),
+    ];
+
+    const result = buildTeamLeaderboard({ teams, playerMap, individualRows });
+
+    expect(result.rows[0]).not.toHaveProperty("linkedTeamId");
+    expect(result.rows[1].linkedTeamId).toBe("first-team-2");
+  });
+
+  it("PARTIAL 팀은 개인기록만 남기고 팀 합산에서는 제외한다", () => {
+    const teams = [
+      makeTeam({ id: "t1", name: "정상팀", memberIds: ["p1", "p2", "p3"], teamType: "NORMAL" }),
+      makeTeam({ id: "t2", name: "개인기록팀", memberIds: ["p4", "p5"], teamType: "PARTIAL" }),
+    ];
+    const playerMap = new Map<string, Player>([
+      ["p1", makePlayer({ id: "p1" })],
+      ["p2", makePlayer({ id: "p2" })],
+      ["p3", makePlayer({ id: "p3" })],
+      ["p4", makePlayer({ id: "p4" })],
+      ["p5", makePlayer({ id: "p5" })],
+    ]);
+    const individualRows = [
+      makeIndividualRow("p1", 100),
+      makeIndividualRow("p2", 100),
+      makeIndividualRow("p3", 100),
+      makeIndividualRow("p4", 300),
+      makeIndividualRow("p5", 300),
+    ];
+
+    const result = buildTeamLeaderboard({ teams, playerMap, individualRows });
+
+    expect(result.rows[0].teamName).toBe("정상팀");
+    expect(result.rows[0].teamTotal).toBe(300);
+    expect(result.rows[0].rank).toBe(1);
+    expect(result.rows[1].teamName).toBe("개인기록팀");
+    expect(result.rows[1].teamTotal).toBe(0);
+    expect(result.rows[1].rank).toBe(0);
+  });
+});
+
+describe("deriveTeamIdentity", () => {
+  it("marks incomplete team-event teams as PARTIAL", () => {
+    expect(deriveTeamIdentity([
+      { affiliation: "광남고", group: "A" },
+    ], {
+      eventKind: "DOUBLES",
+      requiredSize: 2,
+    })).toEqual({ teamType: "PARTIAL" });
+
+    expect(deriveTeamIdentity([
+      { affiliation: "광남고", group: "A" },
+      { affiliation: "광남고", group: "A" },
+    ], {
+      eventKind: "TRIPLES",
+      requiredSize: 3,
+    })).toEqual({ teamType: "PARTIAL" });
+
+    expect(deriveTeamIdentity([
+      { affiliation: "광남고", group: "A" },
+      { affiliation: "광남고", group: "A" },
+      { affiliation: "광남고", group: "A" },
+      { affiliation: "광남고", group: "A" },
+    ], {
+      eventKind: "FIVES",
+      requiredSize: 5,
+    })).toEqual({ teamType: "PARTIAL" });
+  });
 });
 
 // ── buildFivesLinkedLeaderboard ───────────────────────────────
@@ -658,5 +739,114 @@ describe("buildFivesLinkedLeaderboard", () => {
     // A팀=900(1위), B팀=500(2위)
     expect(result.rows[0].pinDiff).toBe(0);
     expect(result.rows[1].pinDiff).toBe(400);
+  });
+});
+
+describe("buildFivesTeamLeaderboard", () => {
+  const makeIndividualRow = (
+    playerId: string,
+    scores: (number | null)[],
+  ): EventRankingRow => {
+    const gameScores = scores.map((score, index) => ({ gameNumber: index + 1, score }));
+    const validScores = scores.filter((score): score is number => score !== null);
+    const total = validScores.reduce((sum, score) => sum + score, 0);
+
+    return {
+      playerId,
+      rank: 0,
+      tieRank: 0,
+      attempts: validScores.length,
+      region: "서울",
+      affiliation: "클럽",
+      number: 1,
+      name: playerId,
+      gameScores,
+      total,
+      average: validScores.length > 0 ? total / validScores.length : 0,
+      pinDiff: 0,
+    };
+  };
+
+  it("전반과 후반 라인업에 따라 팀 합계를 계산한다", () => {
+    const teams = [
+      makeTeam({
+        id: "t1",
+        name: "A팀",
+        memberIds: ["p1", "p2", "p3", "p4", "p5"],
+        rosterIds: ["p1", "p2", "p3", "p4", "p5", "p6"],
+        firstHalfMemberIds: ["p1", "p2", "p3", "p4", "p5"],
+        secondHalfMemberIds: ["p1", "p2", "p3", "p4", "p6"],
+      }),
+    ];
+    const playerMap = new Map<string, Player>([
+      ["p1", makePlayer({ id: "p1", name: "1" })],
+      ["p2", makePlayer({ id: "p2", name: "2" })],
+      ["p3", makePlayer({ id: "p3", name: "3" })],
+      ["p4", makePlayer({ id: "p4", name: "4" })],
+      ["p5", makePlayer({ id: "p5", name: "5" })],
+      ["p6", makePlayer({ id: "p6", name: "6" })],
+    ]);
+    const individualRows = [
+      makeIndividualRow("p1", [100, 100, 100, 100]),
+      makeIndividualRow("p2", [100, 100, 100, 100]),
+      makeIndividualRow("p3", [100, 100, 100, 100]),
+      makeIndividualRow("p4", [100, 100, 100, 100]),
+      makeIndividualRow("p5", [100, 100, 0, 0]),
+      makeIndividualRow("p6", [0, 0, 100, 100]),
+    ];
+
+    const result = buildFivesTeamLeaderboard({
+      teams,
+      playerMap,
+      individualRows,
+      fivesConfig: { firstHalfGameCount: 2, secondHalfGameCount: 2 },
+    });
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].teamTotal).toBe(2000);
+    expect(result.rows[0].members.map((member) => member.playerId)).toEqual(["p1", "p2", "p3", "p4", "p5", "p6"]);
+    expect(result.rows[0].teamGameTotals).toEqual([500, 500, 500, 500]);
+    expect(result.rows[0].members.find((member) => member.playerId === "p5")?.playsSecondHalf).toBe(false);
+    expect(result.rows[0].members.find((member) => member.playerId === "p6")?.playsFirstHalf).toBe(false);
+  });
+
+  it("후반에 active가 아닌 선수의 후반 점수는 팀합계에서 제외한다", () => {
+    const teams = [
+      makeTeam({
+        id: "t1",
+        name: "A팀",
+        memberIds: ["p1", "p2", "p3", "p4", "p5"],
+        rosterIds: ["p1", "p2", "p3", "p4", "p5", "p6"],
+        firstHalfMemberIds: ["p1", "p2", "p3", "p4", "p5"],
+        secondHalfMemberIds: ["p1", "p2", "p3", "p4", "p6"],
+      }),
+    ];
+    const playerMap = new Map<string, Player>([
+      ["p1", makePlayer({ id: "p1" })],
+      ["p2", makePlayer({ id: "p2" })],
+      ["p3", makePlayer({ id: "p3" })],
+      ["p4", makePlayer({ id: "p4" })],
+      ["p5", makePlayer({ id: "p5" })],
+      ["p6", makePlayer({ id: "p6" })],
+    ]);
+    const individualRows = [
+      makeIndividualRow("p1", [0, 0, 0, 0]),
+      makeIndividualRow("p2", [0, 0, 0, 0]),
+      makeIndividualRow("p3", [0, 0, 0, 0]),
+      makeIndividualRow("p4", [0, 0, 0, 0]),
+      makeIndividualRow("p5", [0, 0, 200, 200]),
+      makeIndividualRow("p6", [0, 0, 150, 150]),
+    ];
+
+    const result = buildFivesTeamLeaderboard({
+      teams,
+      playerMap,
+      individualRows,
+      fivesConfig: { firstHalfGameCount: 2, secondHalfGameCount: 2 },
+    });
+
+    expect(result.rows[0].teamTotal).toBe(300);
+    expect(result.rows[0].members.map((member) => member.playerId)).toEqual(["p1", "p2", "p3", "p4", "p5", "p6"]);
+    expect(result.rows[0].teamGameTotals).toEqual([0, 0, 150, 150]);
   });
 });

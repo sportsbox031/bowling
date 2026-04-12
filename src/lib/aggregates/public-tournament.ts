@@ -119,10 +119,12 @@ export async function computePublicTournamentAggregate(db: Firestore, tournament
 
       return {
         divisionId: division.id,
-        events: eventsSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Record<string, unknown>),
-        })) as PublicTournamentEvent[],
+        events: eventsSnap.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...(doc.data() as Record<string, unknown>),
+          }))
+          .filter((event: any) => event.hidden !== true) as PublicTournamentEvent[],
       };
     }),
   );

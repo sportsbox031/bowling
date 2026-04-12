@@ -1,7 +1,8 @@
 import { requireAdminSession } from "@/lib/auth/guard";
-import { redirect } from "next/navigation";
+import AdminRequestDashboard from "@/components/admin/AdminRequestDashboard";
 
 export default async function AdminHomePage() {
   await requireAdminSession();
-  redirect("/admin/tournaments");
+
+  return <AdminRequestDashboard />;
 }

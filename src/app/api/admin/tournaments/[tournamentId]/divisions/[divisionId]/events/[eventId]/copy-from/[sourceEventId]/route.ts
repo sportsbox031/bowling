@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { cloneFivesEventData, type AssignmentSeed, type ParticipantSeed, type SquadSeed, type TeamSeed } from "@/lib/fives-link";
 import { setTeamMemberships } from "@/lib/admin/team-membership";
+import { isFivesEventConfig } from "@/lib/fives-config";
 
 const getEventRef = (tournamentId: string, divisionId: string, eventId: string) => {
   if (!adminDb) return null;
@@ -44,6 +45,9 @@ export async function POST(
   const targetData = targetDoc.data() ?? {};
   if (sourceData.kind !== "FIVES" || targetData.kind !== "FIVES") {
     return NextResponse.json({ message: "FIVES_ONLY" }, { status: 400 });
+  }
+  if (isFivesEventConfig(sourceData.fivesConfig) || isFivesEventConfig(targetData.fivesConfig)) {
+    return NextResponse.json({ message: "SINGLE_EVENT_FIVES_DOES_NOT_USE_COPY" }, { status: 409 });
   }
   if (targetData.halfType !== "SECOND") {
     return NextResponse.json({ message: "TARGET_MUST_BE_SECOND_HALF" }, { status: 400 });

@@ -139,7 +139,8 @@ export async function DELETE(req: NextRequest, ctx: { params: { tournamentId: st
     return NextResponse.json({ message: "INVALID_ID" }, { status: 400 });
   }
 
-  await getTournamentRef(adminDb, id).delete();
+  const tournamentRef = getTournamentRef(adminDb, id);
+  await adminDb.recursiveDelete(tournamentRef);
   try {
     await Promise.all([
       deletePublicTournamentAggregate(adminDb, id),

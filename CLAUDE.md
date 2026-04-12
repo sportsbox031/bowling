@@ -91,6 +91,7 @@ tournaments/{tournamentId}
 
 ## Conventions
 
+- Before changing unit-level logic, trace the full flow first: input -> domain helper -> persistence -> aggregate/cache -> UI restoration. Prefer well-known software design patterns over local conditional patches. See `docs/engineering-principles.md`.
 - API error responses use short uppercase message codes: `"UNAUTHORIZED"`, `"INVALID_PAYLOAD"`, `"EVENT_NOT_FOUND"`, etc.
 - Admin SDK may be `null` if env vars are missing — always check `if (!adminDb)` before Firestore calls in API routes.
 - TypeScript strict mode is enabled. `allowJs` is false. Target is ES2022.
@@ -104,6 +105,7 @@ tournaments/{tournamentId}
 
 ## Docs
 
+- `docs/engineering-principles.md` — Development principles for flow-aware, pattern-based changes
 - `docs/prd-bowling-firebase.md` — Product requirements
 - `docs/system-architecture.md` — Technical architecture
 - `docs/firestore-schema.md` — Firestore data model

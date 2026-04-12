@@ -4,6 +4,7 @@ import { GlassCard, GlassButton, GlassBadge } from "@/components/ui";
 import { adminDb } from "@/lib/firebase/admin";
 import { KIND_LABELS, formatDivisionLabel } from "@/lib/constants";
 import { readPublicTournamentAggregate, rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
+import TournamentManagementEntryButton from "@/components/user/TournamentManagementEntryButton";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,14 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
           <GlassBadge variant="info">{tournament.region}</GlassBadge>
           <span style={{ color: "#64748b", fontSize: 14 }}>{tournament.startsAt} ~ {tournament.endsAt}</span>
         </div>
+        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          <TournamentManagementEntryButton tournamentId={tournament.id} />
+          {divisions.length > 0 ? (
+            <Link href={`/tournaments/${tournament.id}/overall?divisionId=${divisions[0].id}`}>
+              <GlassButton size="lg" variant="secondary">종합성적 보기</GlassButton>
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <section style={{ display: "grid", gap: 16 }}>
@@ -112,14 +121,6 @@ export default async function PublicTournamentDetailPage({ params }: { params: {
           </GlassCard>
         ))}
       </section>
-
-      {divisions.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <Link href={`/tournaments/${tournament.id}/overall?divisionId=${divisions[0].id}`}>
-            <GlassButton size="lg">종합성적 보기</GlassButton>
-          </Link>
-        </div>
-      )}
     </main>
   );
 }

@@ -5,6 +5,7 @@ import { getCached, setCache } from "@/lib/api-cache";
 import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
 import { readOverallAggregate, rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { sortAssignmentsByPosition } from "@/lib/assignment-position";
+import { isFivesEventConfig } from "@/lib/fives-config";
 
 export async function GET(
   req: NextRequest,
@@ -64,6 +65,7 @@ export async function GET(
         laneStart: Number(eventMeta.laneStart ?? 0),
         laneEnd: Number(eventMeta.laneEnd ?? 0),
         tableShift: Number(eventMeta.tableShift ?? 0),
+        ...(isFivesEventConfig(eventMeta.fivesConfig) ? { fivesConfig: eventMeta.fivesConfig } : {}),
         linkedEventId: typeof eventMeta.linkedEventId === "string" ? eventMeta.linkedEventId : null,
         halfType: typeof eventMeta.halfType === "string" ? eventMeta.halfType : null,
         rankRefreshPending: Boolean(eventMeta.rankRefreshPending),

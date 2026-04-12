@@ -1,13 +1,89 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+      return signedIn() && request.auth.token.admin == true;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isApprovedCoach() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == "APPROVED";
+    }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || isSelf(uid);
+      allow create: if isSelf(uid);
+      allow update: if isAdmin() || (
+        isSelf(uid) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.primaryOrganizationId == resource.data.primaryOrganizationId
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /organizations/{organizationId} {
+      allow read: if isAdmin() || signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /organizationMemberships/{membershipId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    match /approvalLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /aggregates/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /system/{document=**} {
+      allow read, write: if isAdmin();
+    }
+
+    match /globalPlayers/{playerId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /tournaments/{tournamentId} {
       allow read: if true;
       allow write: if isAdmin();
+
+      match /playerRegistrationSubmissions/{submissionId} {
+        allow read: if isAdmin() || (signedIn() && resource.data.coachUid == request.auth.uid);
+        allow create: if isApprovedCoach() && request.resource.data.coachUid == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
+
+      match /teamEntrySubmissions/{submissionId} {
+        allow read: if isAdmin() || (signedIn() && resource.data.coachUid == request.auth.uid);
+        allow create: if isApprovedCoach() && request.resource.data.coachUid == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
+
+      match /players/{playerId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+
+      match /aggregates/{document=**} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
 
       match /divisions/{divisionId} {
         allow read: if true;
@@ -17,8 +93,18 @@ service cloud.firestore {
           allow read: if true;
           allow write: if isAdmin();
 
-          match /scores/{scoreId} {
-            allow read: if true;
+          match /participants/{participantId} {
+            allow read: if isAdmin();
+            allow write: if isAdmin();
+          }
+
+          match /teams/{teamId} {
+            allow read: if isAdmin();
+            allow write: if isAdmin();
+          }
+
+          match /teamMembers/{teamMemberId} {
+            allow read: if isAdmin();
             allow write: if isAdmin();
           }
 
@@ -26,13 +112,27 @@ service cloud.firestore {
             allow read: if true;
             allow write: if isAdmin();
           }
+
+          match /scores/{scoreId} {
+            allow read: if true;
+            allow write: if isAdmin();
+          }
+
+          match /squads/{squadId} {
+            allow read: if isAdmin();
+            allow write: if isAdmin();
+          }
+
+          match /aggregates/{document=**} {
+            allow read: if isAdmin();
+            allow write: if isAdmin();
+          }
         }
       }
+    }
 
-      match /players/{playerId} {
-        allow read: if true;
-        allow write: if isAdmin();
-      }
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

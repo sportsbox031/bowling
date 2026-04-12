@@ -25,7 +25,7 @@ export const adminQuickStart: ManualStep[] = [
   },
   {
     title: "출전선수와 레인 배정",
-    description: "출전선수등록 후 레인 배정 탭에서 스쿼드와 레인을 정리합니다.",
+    description: "개인전은 승인된 선수 전원이 자동 참가하고, 팀전은 승인된 팀편성 기준으로 스쿼드와 레인을 정리합니다.",
   },
   {
     title: "점수 입력과 순위 반영",
@@ -59,8 +59,8 @@ export const adminManualSections: ManualSection[] = [
     summary: "실제 경기 직전 레인과 출전 상태를 정리하는 절차입니다.",
     steps: [
       {
-        title: "출전선수등록",
-        description: "해당 세부종목에 실제 출전하는 선수만 선택해 등록합니다.",
+        title: "참가선수 확인",
+        description: "개인전은 자동 참가 선수와 스쿼드만 확인하고, 팀전은 승인된 팀편성 기준으로 출전 선수를 확인합니다.",
       },
       {
         title: "레인 배정",

@@ -23,6 +23,7 @@ export default function AdminHeader() {
       title="BOWLING ADMIN"
       navItems={[
         { label: "대회 관리", href: "/admin/tournaments" },
+        { label: "지도자 관리", href: "/admin/coaches" },
       ]}
       rightSlot={
         <>

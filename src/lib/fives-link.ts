@@ -1,20 +1,6 @@
 import { getLaneForGame } from "./lane";
 import type { TeamType } from "./models";
 
-export type HalfTypeValue = "" | "FIRST" | "SECOND";
-
-export type FivesEventFormInput = {
-  title: string;
-  kind: "SINGLE" | "DOUBLES" | "TRIPLES" | "FOURS" | "FIVES" | "OVERALL";
-  gameCount: number;
-  scheduleDate: string;
-  laneStart: number;
-  laneEnd: number;
-  tableShift: number;
-  linkedEventId: string;
-  halfType: HalfTypeValue;
-};
-
 export type ParticipantSeed = {
   id?: string;
   playerId?: string;
@@ -56,25 +42,6 @@ export type TargetMeta = {
   divisionId: string;
   eventId: string;
 };
-
-export function buildFivesEventPayload(form: FivesEventFormInput): FivesEventFormInput {
-  const linkedEventId = form.kind === "FIVES" && form.halfType === "SECOND"
-    ? form.linkedEventId.trim()
-    : "";
-
-  return {
-    ...form,
-    linkedEventId,
-    halfType: form.kind === "FIVES" ? form.halfType : "",
-  };
-}
-
-export function shouldPromptFivesCopy(
-  form: Pick<FivesEventFormInput, "kind" | "halfType" | "linkedEventId">,
-  isEditing: boolean,
-): boolean {
-  return !isEditing && form.kind === "FIVES" && form.halfType === "SECOND" && form.linkedEventId.trim().length > 0;
-}
 
 export function cloneFivesEventData(params: {
   sourceParticipants: ParticipantSeed[];

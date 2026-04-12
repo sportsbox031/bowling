@@ -1,38 +1,7 @@
 import assert from "node:assert/strict";
 import {
-  buildFivesEventPayload,
-  shouldPromptFivesCopy,
   cloneFivesEventData,
 } from "../src/lib/fives-link.ts";
-
-const secondHalfPayload = buildFivesEventPayload({
-  title: "5인조 후반",
-  kind: "FIVES",
-  gameCount: 3,
-  scheduleDate: "2026-03-10",
-  laneStart: 1,
-  laneEnd: 10,
-  tableShift: 0,
-  linkedEventId: "first-half-id",
-  halfType: "SECOND",
-});
-assert.equal(secondHalfPayload.linkedEventId, "first-half-id");
-assert.equal(secondHalfPayload.halfType, "SECOND");
-assert.equal(shouldPromptFivesCopy(secondHalfPayload, false), true);
-
-const firstHalfPayload = buildFivesEventPayload({
-  title: "5인조 전반",
-  kind: "FIVES",
-  gameCount: 3,
-  scheduleDate: "2026-03-10",
-  laneStart: 1,
-  laneEnd: 10,
-  tableShift: 0,
-  linkedEventId: "should-be-cleared",
-  halfType: "FIRST",
-});
-assert.equal(firstHalfPayload.linkedEventId, "");
-assert.equal(shouldPromptFivesCopy(firstHalfPayload, false), false);
 
 const cloned = cloneFivesEventData({
   sourceParticipants: [
@@ -101,6 +70,7 @@ assert.deepEqual(cloned.teams[0], {
     teamType: "NORMAL",
     memberIds: ["p1"],
     rosterIds: ["p1", "p2"],
+    linkedTeamId: "team-1",
     createdAt: "2026-03-10T09:05:00.000Z",
     updatedAt: "2026-03-10T12:00:00.000Z",
   },

@@ -3,6 +3,47 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache } from "@/lib/api-cache";
 import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
+import { compareEventDisplay } from "@/lib/event-display-order";
+
+const FIVES_COMBINED_TITLE = "5인조 전반+후반 합계";
+
+const buildIndividualWinners = (rows: Array<{
+  rank: number;
+  playerId: string;
+  name: string;
+  affiliation: string;
+  region: string;
+  total: number;
+}>) => rows
+  .filter((row) => row.rank > 0 && row.total > 0)
+  .slice(0, 4)
+  .map((row) => ({
+    rank: row.rank,
+    playerId: row.playerId,
+    name: row.name,
+    affiliation: row.affiliation,
+    region: row.region,
+    total: row.total,
+  }));
+
+const buildTeamWinners = (rows: Array<{
+  rank: number;
+  teamId: string;
+  teamName: string;
+  teamType: string;
+  teamTotal: number;
+  members: Array<{ affiliation: string; region: string }>;
+}>) => rows
+  .filter((row) => row.teamType === "NORMAL" && row.rank > 0 && row.teamTotal > 0)
+  .slice(0, 4)
+  .map((row) => ({
+    rank: row.rank,
+    playerId: row.teamId,
+    name: row.teamName,
+    affiliation: row.members[0]?.affiliation ?? row.teamName,
+    region: row.members[0]?.region ?? "",
+    total: row.teamTotal,
+  }));
 
 /**
  * 종합집계표 API
@@ -47,32 +88,36 @@ export async function GET(
         .collection("divisions").doc(division.id)
         .collection("events").get();
 
-      const eventMedals = await Promise.all(
+      const eventMedals = (await Promise.all(
         eventsSnap.docs.map(async (eventDoc) => {
           const event = { id: eventDoc.id, ...eventDoc.data() } as any;
+          if (event.hidden === true) {
+            return null;
+          }
           const aggregate = await readEventScoreboardAggregate(db, tournamentId, division.id, event.id)
             .then((value) => value ?? rebuildEventScoreboardAggregate(db, tournamentId, division.id, event.id));
 
-          const winners = aggregate.eventRows
-            .filter((row) => row.total > 0)
-            .slice(0, 4)
-            .map((row) => ({
-              rank: row.rank,
-              playerId: row.playerId,
-              name: row.name,
-              affiliation: row.affiliation,
-              region: row.region,
-              total: row.total,
-            }));
+          if (event.kind === "FIVES" && event.halfType === "SECOND") {
+            return null;
+          }
+
+          const winners = event.kind === "FIVES" && Array.isArray(aggregate.fivesCombinedRows) && aggregate.fivesCombinedRows.length > 0
+            ? buildTeamWinners(aggregate.fivesCombinedRows)
+            : event.kind === "DOUBLES" || event.kind === "TRIPLES" || event.kind === "FOURS"
+              ? buildTeamWinners(aggregate.teamRows ?? [])
+              : buildIndividualWinners(aggregate.eventRows);
 
           return {
-            eventId: event.id,
-            eventTitle: String(event.title ?? ""),
+            eventId: event.kind === "FIVES" && winners.length > 0 ? `combined:${event.id}` : event.id,
+            eventTitle: event.kind === "FIVES" && winners.length > 0 ? FIVES_COMBINED_TITLE : String(event.title ?? ""),
             eventKind: String(event.kind ?? ""),
+            halfType: typeof event.halfType === "string" ? event.halfType : null,
             winners,
           };
         }),
-      );
+      ))
+        .filter((event): event is NonNullable<typeof event> => Boolean(event))
+        .sort((a, b) => compareEventDisplay(a, b));
 
       return {
         divisionId: division.id,

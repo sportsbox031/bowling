@@ -66,6 +66,9 @@ export async function computeOverallAggregate(db: Firestore, tournamentId: strin
   const scoreResults = await Promise.all(
     eventGroups.map(async ({ doc: eventDoc, divisionId: targetDivisionId }) => {
       const eventData = eventDoc.data() ?? {};
+      if (eventData.hidden === true) {
+        return null;
+      }
       eventTitleMap[eventDoc.id] = String(eventData.title ?? eventDoc.id);
       const scoresSnap = await eventDoc.ref.collection("scores").get();
       const playersForEvent = allPlayers.filter((player: any) => player.divisionId === targetDivisionId);
@@ -79,7 +82,8 @@ export async function computeOverallAggregate(db: Firestore, tournamentId: strin
     }),
   );
 
-  for (const { eventId, rows } of scoreResults) {
+  for (const result of scoreResults.filter(Boolean) as Array<{ eventId: string; rows: EventRankingResult["rows"] }>) {
+    const { eventId, rows } = result;
     eventRowsByEventId[eventId] = rows;
   }
 

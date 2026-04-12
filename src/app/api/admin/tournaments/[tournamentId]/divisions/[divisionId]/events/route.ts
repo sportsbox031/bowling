@@ -3,6 +3,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin"
 import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
+import { isFivesEventConfig, normalizeFivesPhaseSplit } from "@/lib/fives-config";
 
 const eventKinds = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
 type EventKind = (typeof eventKinds)[number];
@@ -16,6 +17,7 @@ const parseEvent = (payload: any) => ({
   laneStart: Number(payload?.laneStart),
   laneEnd: Number(payload?.laneEnd),
   tableShift: Number(payload?.tableShift),
+  fivesConfig: isFivesEventConfig(payload?.fivesConfig) ? payload.fivesConfig : null,
   linkedEventId: typeof payload?.linkedEventId === "string" && payload.linkedEventId.trim() ? payload.linkedEventId.trim() : null,
   halfType: payload?.halfType === "FIRST" || payload?.halfType === "SECOND" ? payload.halfType : null,
 });
@@ -51,7 +53,9 @@ export async function GET(
     .get();
 
   return NextResponse.json({
-    items: snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    items: snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((event: any) => event.hidden !== true),
   });
 }
 
@@ -102,6 +106,9 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
 
   if (eventInput.linkedEventId) data.linkedEventId = eventInput.linkedEventId;
   if (eventInput.halfType) data.halfType = eventInput.halfType;
+  if (eventInput.kind === "FIVES") {
+    data.fivesConfig = eventInput.fivesConfig ?? normalizeFivesPhaseSplit({ gameCount: eventInput.gameCount });
+  }
 
   const ref = toCollection(adminDb, ctx.params.tournamentId, ctx.params.divisionId).doc();
   await ref.set(data);

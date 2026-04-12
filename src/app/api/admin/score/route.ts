@@ -3,6 +3,8 @@ import { adminDb } from "@/lib/firebase/admin";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { invalidateCache } from "@/lib/api-cache";
+import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
+import { markOverallAggregateStale, rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { isValidGameNumber, isValidScore } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
@@ -95,7 +97,31 @@ export async function POST(req: NextRequest) {
       }, { merge: true }),
     ]);
 
+    const linkedEventId = typeof eventData.linkedEventId === "string" && eventData.linkedEventId
+      ? eventData.linkedEventId
+      : null;
+
+    const aggregateTasks: Promise<unknown>[] = [
+      rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, eventId),
+      rebuildOverallAggregate(adminDb, tournamentId, eventInfo.divisionId),
+      markOverallAggregateStale(adminDb, tournamentId),
+    ];
+
+    if (linkedEventId) {
+      aggregateTasks.push(
+        rebuildEventScoreboardAggregate(adminDb, tournamentId, eventInfo.divisionId, linkedEventId),
+      );
+    }
+
+    await Promise.all(aggregateTasks);
+
+    invalidateCache(`bundle-scores:${tournamentId}:${eventInfo.divisionId}:${eventId}`);
     invalidateCache(`bundle-full:${tournamentId}:${eventInfo.divisionId}:${eventId}`);
+    if (linkedEventId) {
+      invalidateCache(`bundle-scores:${tournamentId}:${eventInfo.divisionId}:${linkedEventId}`);
+      invalidateCache(`bundle-full:${tournamentId}:${eventInfo.divisionId}:${linkedEventId}`);
+    }
+    invalidateCache(`overall:${tournamentId}`);
 
     return NextResponse.json({
       message: "SCORE_SAVED",

@@ -1,6 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
-import { buildEventLeaderboard, buildFivesLinkedLeaderboard, buildTeamLeaderboard } from "@/lib/scoring";
-import type { EventType, Player, Team } from "@/lib/models";
+import { buildEventLeaderboard, buildFivesLinkedLeaderboard, buildFivesTeamLeaderboard, buildTeamLeaderboard } from "@/lib/scoring";
+import type { EventType, FivesEventConfig, Player, Team } from "@/lib/models";
+import { isFivesEventConfig } from "@/lib/fives-config";
 
 const TEAM_EVENT_KINDS: EventType[] = ["DOUBLES", "TRIPLES", "FIVES"];
 
@@ -17,6 +18,7 @@ export type EventScoreboardAggregatePayload = {
     laneStart: number;
     laneEnd: number;
     tableShift: number;
+    fivesConfig?: FivesEventConfig | null;
     linkedEventId: string | null;
     halfType: string | null;
   };
@@ -81,6 +83,7 @@ export async function computeEventScoreboardAggregate(
       laneStart: Number(eventData.laneStart ?? 0),
       laneEnd: Number(eventData.laneEnd ?? 0),
       tableShift: Number(eventData.tableShift ?? 0),
+      ...(isFivesEventConfig(eventData.fivesConfig) ? { fivesConfig: eventData.fivesConfig } : {}),
       linkedEventId: typeof eventData.linkedEventId === "string" ? eventData.linkedEventId : null,
       halfType: typeof eventData.halfType === "string" ? eventData.halfType : null,
     },
@@ -92,14 +95,29 @@ export async function computeEventScoreboardAggregate(
 
   if (isTeamEvent && teams.length > 0) {
     const playerMap = new Map<string, Player>(players.map((player) => [player.id, player]));
-    const teamRows = buildTeamLeaderboard({
-      teams,
-      playerMap,
-      individualRows: eventLeaderboard.rows,
-    }).rows;
+    const teamRows = eventData.kind === "FIVES" && isFivesEventConfig(eventData.fivesConfig)
+      ? buildFivesTeamLeaderboard({
+          teams,
+          playerMap,
+          individualRows: eventLeaderboard.rows,
+          fivesConfig: eventData.fivesConfig,
+        }).rows
+      : buildTeamLeaderboard({
+          teams,
+          playerMap,
+          individualRows: eventLeaderboard.rows,
+        }).rows;
     result.teamRows = teamRows;
+    if (eventData.kind === "FIVES" && isFivesEventConfig(eventData.fivesConfig)) {
+      result.fivesCombinedRows = teamRows;
+    }
 
-    if (eventData.kind === "FIVES" && typeof eventData.linkedEventId === "string" && eventData.linkedEventId) {
+    if (
+      eventData.kind === "FIVES" &&
+      !isFivesEventConfig(eventData.fivesConfig) &&
+      typeof eventData.linkedEventId === "string" &&
+      eventData.linkedEventId
+    ) {
       const linkedRef = db.collection("tournaments").doc(tournamentId)
         .collection("divisions").doc(divisionId)
         .collection("events").doc(eventData.linkedEventId);

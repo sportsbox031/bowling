@@ -3,6 +3,7 @@
 import { ReactNode, useMemo } from "react";
 import { GlassTable, glassTdStyle, glassTrHoverProps } from "@/components/ui";
 import { getRankTextStyle } from "@/lib/constants";
+import { compareEventDisplay } from "@/lib/event-display-order";
 
 type ScoreColumn = { gameNumber: number; score: number | null };
 
@@ -44,7 +45,10 @@ export default function RankingTable({
   // 종합순위에서 종목별 컬럼 표시를 위한 이벤트 ID 목록
   const eventIds = useMemo(() => {
     if (!showOverallOnly || !eventTitleMap) return [];
-    return Object.keys(eventTitleMap);
+    return Object.keys(eventTitleMap).sort((a, b) => compareEventDisplay(
+      { title: eventTitleMap[a] },
+      { title: eventTitleMap[b] },
+    ));
   }, [showOverallOnly, eventTitleMap]);
 
   const headers = useMemo(() => {

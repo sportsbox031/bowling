@@ -1,5 +1,7 @@
 import type { Firestore } from "firebase-admin/firestore";
 import { sortAssignmentsByPosition } from "@/lib/assignment-position";
+import { isFivesEventConfig } from "@/lib/fives-config";
+import type { FivesEventConfig } from "@/lib/models";
 
 export type EventAssignmentsAggregatePayload = {
   assignments: Array<{
@@ -25,6 +27,7 @@ export type EventAssignmentsAggregatePayload = {
     laneStart: number;
     laneEnd: number;
     tableShift: number;
+    fivesConfig?: FivesEventConfig | null;
   };
   updatedAt: string;
 };
@@ -105,6 +108,7 @@ export async function computeEventAssignmentsAggregate(
       laneStart: Number(eventData.laneStart ?? 0),
       laneEnd: Number(eventData.laneEnd ?? 0),
       tableShift: Number(eventData.tableShift ?? 0),
+      ...(isFivesEventConfig(eventData.fivesConfig) ? { fivesConfig: eventData.fivesConfig } : {}),
     },
     updatedAt: new Date().toISOString(),
   };

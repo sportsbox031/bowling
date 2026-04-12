@@ -1,14 +1,27 @@
-import type { TeamType } from "@/lib/models";
+import type { EventType, TeamType } from "@/lib/models";
 
 type TeamIdentityPlayer = {
   affiliation?: string;
   group?: string;
 };
 
-export function deriveTeamIdentity(players: TeamIdentityPlayer[]): {
+export function deriveTeamIdentity(
+  players: TeamIdentityPlayer[],
+  options?: { eventKind?: EventType | null; requiredSize?: number | null },
+): {
   teamType: TeamType;
   normalTeamName?: string;
 } {
+  const requiredSize = Number(options?.requiredSize ?? 0);
+  if (
+    (options?.eventKind === "DOUBLES" || options?.eventKind === "TRIPLES" || options?.eventKind === "FIVES")
+    && requiredSize > 0
+    && players.length > 0
+    && players.length < requiredSize
+  ) {
+    return { teamType: "PARTIAL" };
+  }
+
   const affiliations = players.map((player) => player.affiliation?.trim() ?? "");
   const groups = players.map((player) => player.group?.trim() ?? "");
   const uniqueAffiliations = new Set(affiliations.filter(Boolean));

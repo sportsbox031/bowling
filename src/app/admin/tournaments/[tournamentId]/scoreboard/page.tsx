@@ -7,7 +7,9 @@ import { useParams, useSearchParams } from "next/navigation";
 import { getLaneForGame } from "@/lib/lane";
 import { reorderAssignmentsWithinLane } from "@/lib/lane-reorder";
 import { applyScoreToEventRows, markRankRefreshComplete, markRankRefreshPending } from "@/lib/scoreboard-rank-state";
-import { parseParticipantNumberInput } from "@/lib/participant-range";
+import { buildTeamSquadCards } from "@/lib/admin/team-squad";
+import { getTeamActiveMemberIdsForGame, getTeamBenchMemberIdsForGame, getTeamRosterIds } from "@/lib/team-lineup";
+import { buildFivesAssignmentSegments } from "@/lib/services/competitionService";
 import {
   GlassCard,
   GlassButton,
@@ -61,6 +63,10 @@ type EventInfo = {
   laneStart: number;
   laneEnd: number;
   tableShift: number;
+  fivesConfig?: {
+    firstHalfGameCount: number;
+    secondHalfGameCount: number;
+  };
   linkedEventId?: string;
   halfType?: "FIRST" | "SECOND";
   rankRefreshPending?: boolean;
@@ -91,9 +97,11 @@ type Participant = {
 type Team = {
   id: string;
   name: string;
-  teamType: "NORMAL" | "MAKEUP";
+  teamType: "NORMAL" | "MAKEUP" | "PARTIAL";
   memberIds: string[];
   rosterIds?: string[];
+  firstHalfMemberIds?: string[];
+  secondHalfMemberIds?: string[];
   createdAt: string;
   updatedAt: string;
 };
@@ -111,10 +119,11 @@ type TeamMemberRow = {
 type TeamRankingRow = {
   teamId: string;
   teamName: string;
-  teamType: "NORMAL" | "MAKEUP";
+  teamType: "NORMAL" | "MAKEUP" | "PARTIAL";
   rank: number;
   tieRank: number;
-  members: TeamMemberRow[];
+  members: (TeamMemberRow & { average?: number; playsFirstHalf?: boolean; playsSecondHalf?: boolean })[];
+  teamGameTotals?: Array<number | null>;
   teamTotal: number;
   pinDiff: number;
 };
@@ -134,7 +143,7 @@ type ScoreboardTab = "participants" | "lane" | "score" | "event-rank" | "overall
 const PARTICIPANT_VIEW_ALL = "ALL";
 
 const TAB_LABELS: Record<ScoreboardTab, string> = {
-  participants: "📋 출전선수등록",
+  participants: "📋 조편성",
   teams: "👥 팀 편성",
   lane: "🎳 레인 배정",
   score: "📝 점수 입력",
@@ -214,6 +223,12 @@ const TEAM_COLORS = [
   { bg: "rgba(101,163,13,0.10)", border: "rgba(101,163,13,0.35)", text: "#65a30d" },
 ] as const;
 
+const getTeamTypeLabel = (teamType: "NORMAL" | "MAKEUP" | "PARTIAL") => {
+  if (teamType === "NORMAL") return "정상팀";
+  if (teamType === "PARTIAL") return "개인기록";
+  return "혼성팀";
+};
+
 
 export default function AdminScoreboardPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
@@ -233,7 +248,6 @@ export default function AdminScoreboardPage() {
   const [newSquadName, setNewSquadName] = useState("");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [participantSearch, setParticipantSearch] = useState("");
-  const [participantNumberInput, setParticipantNumberInput] = useState("");
   const [eventRows, setEventRows] = useState<EventLeaderboardRow[]>([]);
   const [overallRows, setOverallRows] = useState<OverallLeaderboardRow[]>([]);
   const [eventTitleMap, setEventTitleMap] = useState<Record<string, string>>({});
@@ -241,8 +255,13 @@ export default function AdminScoreboardPage() {
   const [teamRows, setTeamRows] = useState<TeamRankingRow[]>([]);
   const [fivesCombinedRows, setFivesCombinedRows] = useState<TeamRankingRow[]>([]);
   const [selectedTeamMemberIds, setSelectedTeamMemberIds] = useState<Set<string>>(new Set());
-  // 5인조 로스터 편집: { teamId, rosterIds, memberIds }
-  const [editingRoster, setEditingRoster] = useState<{ teamId: string; rosterIds: string[]; memberIds: string[] } | null>(null);
+  // 5인조 로스터 편집: { teamId, rosterIds, firstHalfMemberIds, secondHalfMemberIds }
+  const [editingRoster, setEditingRoster] = useState<{
+    teamId: string;
+    rosterIds: string[];
+    firstHalfMemberIds: string[];
+    secondHalfMemberIds: string[];
+  } | null>(null);
   const [selectedGame, setSelectedGame] = useState(1);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("success");
@@ -280,23 +299,39 @@ export default function AdminScoreboardPage() {
   }, [hasSquads, squads, selectedSquadId, participantViewSquadId]);
 
   const participantIds = useMemo(
-    () => new Set(participantList.map((p) => p.id)),
-    [participantList],
+    () => new Set(
+      (event?.kind === "SINGLE" ? allPlayers.map((player) => ({ id: player.id })) : participantList).map((p) => p.id),
+    ),
+    [allPlayers, event?.kind, participantList],
+  );
+
+  const effectiveParticipantList = useMemo(
+    () => event?.kind === "SINGLE"
+      ? allPlayers.map((player) => {
+          const existing = participantList.find((participant) => (participant.playerId ?? participant.id) === player.id);
+          return {
+            id: player.id,
+            playerId: player.id,
+            ...(existing?.squadId ? { squadId: existing.squadId } : {}),
+          };
+        })
+      : participantList,
+    [allPlayers, event?.kind, participantList],
   );
 
   const participantMap = useMemo(
-    () => new Map(participantList.map((p) => [p.id, p])),
-    [participantList],
+    () => new Map(effectiveParticipantList.map((p) => [p.id, p])),
+    [effectiveParticipantList],
   );
   const participantViewIds = useMemo(() => {
     if (!hasSquads || participantViewSquadId === PARTICIPANT_VIEW_ALL) return null;
-    return new Set(participantList.filter((p) => p.squadId === participantViewSquadId).map((p) => p.id));
-  }, [hasSquads, participantList, participantViewSquadId]);
+    return new Set(effectiveParticipantList.filter((p) => p.squadId === participantViewSquadId).map((p) => p.id));
+  }, [effectiveParticipantList, hasSquads, participantViewSquadId]);
 
   const squadParticipantIds = useMemo(() => {
     if (!hasSquads || !selectedSquadId) return participantIds;
-    return new Set(participantList.filter((p) => p.squadId === selectedSquadId).map((p) => p.id));
-  }, [participantList, selectedSquadId, hasSquads, participantIds]);
+    return new Set(effectiveParticipantList.filter((p) => p.squadId === selectedSquadId).map((p) => p.id));
+  }, [effectiveParticipantList, selectedSquadId, hasSquads, participantIds]);
 
   const players = useMemo(
     () => allPlayers.filter((p) => squadParticipantIds.has(p.id)),
@@ -325,38 +360,105 @@ export default function AdminScoreboardPage() {
     () => TEAM_EVENT_KINDS.includes(event?.kind as TeamEventKind),
     [event],
   );
+  const isSingleEvent = event?.kind === "SINGLE";
+  const participantTabLabel = isSingleEvent ? "📋 조편성" : "👥 팀 조편성";
+  const teamSquadCards = useMemo(
+    () => buildTeamSquadCards(
+      teams,
+      allPlayers,
+      effectiveParticipantList,
+      participantViewSquadId === PARTICIPANT_VIEW_ALL ? null : participantViewSquadId,
+    ).filter((team) => {
+      const keyword = participantSearch.trim().toLowerCase();
+      if (!keyword) return true;
+      return (
+        team.name.toLowerCase().includes(keyword)
+        || team.members.some((member) =>
+          member.name.toLowerCase().includes(keyword)
+          || member.affiliation.toLowerCase().includes(keyword)
+          || String(member.number).includes(keyword))
+      );
+    }),
+    [allPlayers, effectiveParticipantList, participantSearch, participantViewSquadId, teams],
+  );
+  const assignedTeamCount = useMemo(
+    () => buildTeamSquadCards(teams, allPlayers, effectiveParticipantList).filter((team) => team.status === "assigned").length,
+    [allPlayers, effectiveParticipantList, teams],
+  );
 
   const teamSize = useMemo(
     () => isTeamEvent ? TEAM_SIZE_MAP[event!.kind as TeamEventKind] : 0,
     [isTeamEvent, event],
   );
 
+  const firstHalfGameCount = event?.fivesConfig?.firstHalfGameCount ?? Math.floor((event?.gameCount ?? 0) / 2);
+  const secondHalfGameCount = event?.fivesConfig?.secondHalfGameCount ?? Math.max(0, (event?.gameCount ?? 0) - firstHalfGameCount);
+  const isSingleEventFives = event?.kind === "FIVES" && Boolean(event?.fivesConfig);
+  const assignmentSegments = useMemo(
+    () => event
+      ? (isSingleEventFives && event.fivesConfig
+          ? buildFivesAssignmentSegments(event.gameCount, event.fivesConfig)
+          : [{ startGame: 1, endGame: event.gameCount }])
+      : [],
+    [event, isSingleEventFives],
+  );
+  const fivesDisplayRows = useMemo(
+    () => (event?.kind === "FIVES" && (event?.halfType === "SECOND" || isSingleEventFives) && fivesCombinedRows.length > 0
+      ? fivesCombinedRows
+      : teamRows),
+    [event, fivesCombinedRows, isSingleEventFives, teamRows],
+  );
+
   const maxPerLane = event?.kind === "FIVES" ? FIVES_MAX_PER_LANE : BASE_MAX_PER_LANE;
+
+  const getActiveTeamMemberIds = useCallback((team: Team, gameNumber = selectedGame) => (
+    getTeamActiveMemberIdsForGame(team, {
+      kind: event?.kind,
+      gameNumber,
+      gameCount: event?.gameCount,
+      fivesConfig: event?.fivesConfig,
+    })
+  ), [event, selectedGame]);
+
+  const getTeamRoster = useCallback((team: Team) => getTeamRosterIds(team), []);
 
   // 출전선수 중 아직 팀에 배정되지 않은 선수
   const assignedToTeamIds = useMemo(
-    () => new Set(teams.flatMap((t) => t.memberIds)),
-    [teams],
+    () => new Set(teams.flatMap((team) => event?.kind === "FIVES" ? getTeamRoster(team) : team.memberIds)),
+    [event?.kind, getTeamRoster, teams],
   );
-
-  // 5인조: 로스터에 속하지만 memberIds에 없는 대기 선수
-  const benchPlayerIds = useMemo(() => {
-    if (!isTeamEvent || event?.kind !== "FIVES") return new Set<string>();
-    const bench = new Set<string>();
-    for (const team of teams) {
-      const memberSet = new Set(team.memberIds);
-      for (const rid of (team.rosterIds ?? [])) {
-        if (!memberSet.has(rid)) bench.add(rid);
-      }
-    }
-    return bench;
-  }, [isTeamEvent, event, teams]);
 
   // 출전선수 ID Set (participantList 기반)
   const participantPlayerIds = useMemo(
-    () => new Set(participantList.map((p) => p.playerId ?? p.id)),
-    [participantList],
+    () => new Set(effectiveParticipantList.map((p) => p.playerId ?? p.id)),
+    [effectiveParticipantList],
   );
+  const laneSquadPlayerIds = useMemo(
+    () => new Set(players.map((player) => player.id)),
+    [players],
+  );
+  const currentSquadTeams = useMemo(
+    () => teams.filter((team) => getTeamRoster(team).some((playerId) => laneSquadPlayerIds.has(playerId))),
+    [getTeamRoster, laneSquadPlayerIds, teams],
+  );
+  // 5인조: 현재 스쿼드 로스터에 속하지만 이번 게임 라인업에는 없는 대기 선수
+  const benchPlayerIds = useMemo(() => {
+    if (!isTeamEvent || event?.kind !== "FIVES") return new Set<string>();
+    const bench = new Set<string>();
+    for (const team of currentSquadTeams) {
+      for (const playerId of getTeamBenchMemberIdsForGame(team, {
+        kind: event.kind,
+        gameNumber: selectedGame,
+        gameCount: event.gameCount,
+        fivesConfig: event.fivesConfig,
+      })) {
+        if (laneSquadPlayerIds.has(playerId)) {
+          bench.add(playerId);
+        }
+      }
+    }
+    return bench;
+  }, [currentSquadTeams, event, getTeamBenchMemberIdsForGame, isTeamEvent, laneSquadPlayerIds, selectedGame]);
 
   const unteamedParticipants = useMemo(
     () => allPlayers.filter(
@@ -368,8 +470,8 @@ export default function AdminScoreboardPage() {
   // 팀 탭 스쿼드 필터
   const teamsViewSquadPlayerIds = useMemo(() => {
     if (!hasSquads || teamsViewSquadId === PARTICIPANT_VIEW_ALL) return null;
-    return new Set(participantList.filter((p) => p.squadId === teamsViewSquadId).map((p) => p.playerId ?? p.id));
-  }, [hasSquads, teamsViewSquadId, participantList]);
+    return new Set(effectiveParticipantList.filter((p) => p.squadId === teamsViewSquadId).map((p) => p.playerId ?? p.id));
+  }, [effectiveParticipantList, hasSquads, teamsViewSquadId]);
 
   const squadFilteredUnteamedParticipants = useMemo(
     () => teamsViewSquadPlayerIds
@@ -380,9 +482,13 @@ export default function AdminScoreboardPage() {
 
   const squadFilteredTeams = useMemo(
     () => teamsViewSquadPlayerIds
-      ? teams.filter((team) => team.memberIds.some((mid) => teamsViewSquadPlayerIds.has(mid)))
+      ? teams.filter((team) => getTeamRoster(team).some((playerId) => teamsViewSquadPlayerIds.has(playerId)))
       : teams,
-    [teams, teamsViewSquadPlayerIds],
+    [getTeamRoster, teams, teamsViewSquadPlayerIds],
+  );
+  const teamEditorEligiblePlayerIds = useMemo(
+    () => teamsViewSquadPlayerIds ?? participantPlayerIds,
+    [participantPlayerIds, teamsViewSquadPlayerIds],
   );
 
   const lanes = useMemo(() => event ? range(event.laneStart, event.laneEnd) : [], [event]);
@@ -409,26 +515,28 @@ export default function AdminScoreboardPage() {
   const unassignedTeams = useMemo(() => {
     if (!isTeamEvent) return [];
     return teams.filter((team) => {
-      const activeMembers = team.memberIds.filter((pid) => participantPlayerIds.has(pid));
+      const activeMembers = getActiveTeamMemberIds(team).filter((pid) => laneSquadPlayerIds.has(pid));
       return activeMembers.length > 0 && activeMembers.every((pid) => !hasPlayerInBoard(currentBoard, pid));
     });
-  }, [isTeamEvent, teams, participantPlayerIds, currentBoard]);
+  }, [currentBoard, getActiveTeamMemberIds, isTeamEvent, laneSquadPlayerIds, teams]);
 
   // 팀에 속하지 않거나 팀이 부분배정된 미배정 선수 (대기선수 제외)
   const unassignedNonTeamPlayers = useMemo(() => {
     if (!isTeamEvent || teams.length === 0) return unassignedPlayers.filter((p) => !benchPlayerIds.has(p.id));
-    const fullyUnassignedTeamMemberIds = new Set(unassignedTeams.flatMap((t) => t.memberIds));
+    const fullyUnassignedTeamMemberIds = new Set(
+      unassignedTeams.flatMap((team) => getActiveTeamMemberIds(team).filter((playerId) => laneSquadPlayerIds.has(playerId))),
+    );
     return unassignedPlayers.filter((p) => !fullyUnassignedTeamMemberIds.has(p.id) && !benchPlayerIds.has(p.id));
-  }, [isTeamEvent, teams, unassignedPlayers, unassignedTeams, benchPlayerIds]);
+  }, [benchPlayerIds, getActiveTeamMemberIds, isTeamEvent, laneSquadPlayerIds, teams, unassignedPlayers, unassignedTeams]);
 
   // 플레이어 ID → 팀 이름 맵 (레인 보드 표시용)
   const playerTeamNameMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const team of teams) {
-      for (const pid of team.memberIds) m.set(pid, team.name);
+      for (const pid of getActiveTeamMemberIds(team)) m.set(pid, team.name);
     }
     return m;
-  }, [teams]);
+  }, [getActiveTeamMemberIds, teams]);
 
   // 팀 ID → 색상 맵 (점수입력 등에서 팀 구분용)
   const playerTeamColorMap = useMemo(() => {
@@ -437,10 +545,10 @@ export default function AdminScoreboardPage() {
     const m = new Map<string, { bg: string; border: string; text: string; teamName: string }>();
     for (const team of teams) {
       const color = TEAM_COLORS[teamIdToIdx.get(team.id)!];
-      for (const pid of team.memberIds) m.set(pid, { ...color, teamName: team.name });
+      for (const pid of getActiveTeamMemberIds(team)) m.set(pid, { ...color, teamName: team.name });
     }
     return m;
-  }, [teams]);
+  }, [getActiveTeamMemberIds, teams]);
 
   const bundleUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/bundle`;
   const rankRefreshUrl = `/api/admin/tournaments/${tournamentId}/divisions/${divisionId}/events/${eventId}/rank-refresh`;
@@ -451,62 +559,21 @@ export default function AdminScoreboardPage() {
 
   const handleAddParticipant = async (playerId: string, options?: { silent?: boolean }) => {
     try {
+      if (isSingleEvent && hasSquads && !selectedSquadId) {
+        throw new Error("먼저 배정할 스쿼드를 선택해 주세요.");
+      }
       const res = await fetch(participantsUrl, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerIds: [playerId], squadId: hasSquads ? selectedSquadId : undefined }),
       });
       if (!res.ok) throw new Error(await parseError(res));
-      setParticipantList((prev) => [...prev, { id: playerId, playerId, squadId: hasSquads ? selectedSquadId ?? undefined : undefined }]);
+      setParticipantList((prev) => {
+        const next = prev.filter((pt) => (pt.playerId ?? pt.id) !== playerId);
+        next.push({ id: playerId, playerId, squadId: hasSquads ? selectedSquadId ?? undefined : undefined });
+        return next;
+      });
       return true;
     } catch (err) { if (!options?.silent) showMsg((err as Error).message || "등록 실패", "error"); return false; }
-  };
-
-  const handleParticipantNumberSubmit = async () => {
-    const numbers = parseParticipantNumberInput(participantNumberInput);
-    if (!numbers) {
-      showMsg("선수번호 또는 범위를 7 또는 1-30 형식으로 입력해 주세요.", "error");
-      return;
-    }
-
-    const queuedIds = new Set<string>();
-    let added = 0;
-    let alreadyRegistered = 0;
-    let missing = 0;
-    let failed = 0;
-
-    for (const number of numbers) {
-      const player = allPlayers.find((item) => item.number === number);
-      if (!player) {
-        missing += 1;
-        continue;
-      }
-
-      if (participantIds.has(player.id) || queuedIds.has(player.id)) {
-        alreadyRegistered += 1;
-        continue;
-      }
-
-      const success = await handleAddParticipant(player.id, { silent: true });
-      if (success) {
-        queuedIds.add(player.id);
-        added += 1;
-      } else {
-        failed += 1;
-      }
-    }
-
-    const messageParts: string[] = [];
-    if (added > 0) messageParts.push(`${added}명 등록`);
-    if (alreadyRegistered > 0) messageParts.push(`${alreadyRegistered}명 이미 등록됨`);
-    if (missing > 0) messageParts.push(`${missing}명 번호 없음`);
-    if (failed > 0) messageParts.push(`${failed}명 등록 실패`);
-
-    if (added > 0) {
-      setParticipantNumberInput("");
-    }
-
-    const squadLabel = hasSquads ? `${squads.find((item) => item.id === selectedSquadId)?.name ?? "현재 스쿼드"} 등록 결과` : "출전선수 등록 결과";
-    showMsg(`${squadLabel}: ${messageParts.join(", ") || "처리된 선수가 없습니다."}`, added > 0 ? "success" : "error");
   };
 
   const handleRemoveParticipant = async (playerId: string) => {
@@ -516,9 +583,46 @@ export default function AdminScoreboardPage() {
         body: JSON.stringify({ playerId }),
       });
       if (!res.ok) throw new Error(await parseError(res));
-      setParticipantList((prev) => prev.filter((pt) => pt.id !== playerId));
+      setParticipantList((prev) => prev.filter((pt) => (pt.playerId ?? pt.id) !== playerId));
       return true;
     } catch (err) { showMsg((err as Error).message || "해제 실패", "error"); return false; }
+  };
+
+  const handleAssignTeamToSquad = async (team: Team, squadId: string | null) => {
+    const rosterIds = getTeamRoster(team);
+    if (rosterIds.length === 0) {
+      return;
+    }
+
+    try {
+      const res = await fetch(participantsUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerIds: rosterIds, squadId }),
+      });
+      if (!res.ok) throw new Error(await parseError(res));
+
+      setParticipantList((prev) => {
+        const prevByPlayerId = new Map(prev.map((participant) => [participant.playerId ?? participant.id, participant]));
+        return rosterIds.map((playerId) => {
+          const existing = prevByPlayerId.get(playerId);
+          return {
+            id: existing?.id ?? playerId,
+            playerId,
+            ...(squadId ? { squadId } : {}),
+          };
+        }).concat(prev.filter((participant) => !rosterIds.includes(participant.playerId ?? participant.id)));
+      });
+
+      if (squadId) {
+        const squadName = squads.find((squad) => squad.id === squadId)?.name ?? "선택 스쿼드";
+        showMsg(`팀 "${team.name}"을 ${squadName}에 배정했습니다.`);
+      } else {
+        showMsg(`팀 "${team.name}"의 스쿼드 배정을 해제했습니다.`);
+      }
+    } catch (err) {
+      showMsg((err as Error).message || "팀 조편성 저장 실패", "error");
+    }
   };
 
   const handleCreateSquad = async () => {
@@ -554,7 +658,12 @@ export default function AdminScoreboardPage() {
     try {
       const memberIds = [...selectedTeamMemberIds];
       const body = event?.kind === "FIVES"
-        ? { memberIds, rosterIds: memberIds }
+        ? {
+            memberIds,
+            rosterIds: memberIds,
+            firstHalfMemberIds: memberIds,
+            secondHalfMemberIds: memberIds,
+          }
         : { memberIds };
 
       const res = await fetch(teamsUrl, {
@@ -573,27 +682,32 @@ export default function AdminScoreboardPage() {
       setTeams((prev) => [...prev, created]);
       setSelectedTeamMemberIds(new Set());
       setLoadedSections((prev) => markSectionStale(prev, "scores"));
-      showMsg(`팀 "${created.name}" 생성됨 (${created.teamType === "NORMAL" ? "정상팀" : "혼성팀"})`);
+      showMsg(`팀 "${created.name}" 생성됨 (${getTeamTypeLabel(created.teamType)})`);
     } catch (err) { showMsg((err as Error).message || "팀 생성 실패", "error"); }
   };
 
   const handleSaveRoster = async () => {
     if (!editingRoster) return;
-    const { teamId, rosterIds, memberIds } = editingRoster;
-    if (memberIds.length !== teamSize) {
-      showMsg(`출전 선수는 정확히 ${teamSize}명이어야 합니다.`, "error");
+    const { teamId, rosterIds, firstHalfMemberIds, secondHalfMemberIds } = editingRoster;
+    if (firstHalfMemberIds.length !== teamSize || secondHalfMemberIds.length !== teamSize) {
+      showMsg(`전반/후반 출전 선수는 각각 정확히 ${teamSize}명이어야 합니다.`, "error");
       return;
     }
 
     const originalTeam = teams.find((t) => t.id === teamId);
-    const originalMemberIds = originalTeam?.memberIds ?? [];
-    const removedPlayerIds = originalMemberIds.filter((id) => !memberIds.includes(id));
+    const originalRosterIds = originalTeam?.rosterIds ?? originalTeam?.memberIds ?? [];
+    const removedPlayerIds = originalRosterIds.filter((id) => !rosterIds.includes(id));
 
     try {
       const res = await fetch(`${teamsUrl}/${teamId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rosterIds, memberIds }),
+        body: JSON.stringify({
+          rosterIds,
+          firstHalfMemberIds,
+          secondHalfMemberIds,
+          memberIds: firstHalfMemberIds,
+        }),
       });
       if (!res.ok) throw new Error(await parseError(res));
       const updatedTeam: Team = await res.json();
@@ -618,13 +732,23 @@ export default function AdminScoreboardPage() {
             await fetch(`${teamsUrl}/${existingMakeup.id}`, {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ memberIds: newMids, rosterIds: newRids }),
+              body: JSON.stringify({
+                memberIds: newMids,
+                rosterIds: newRids,
+                firstHalfMemberIds: existingMakeup.firstHalfMemberIds ?? newMids,
+                secondHalfMemberIds: existingMakeup.secondHalfMemberIds ?? newMids,
+              }),
             });
           } else {
             await fetch(teamsUrl, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ memberIds: removedPlayerIds }),
+              body: JSON.stringify({
+                memberIds: removedPlayerIds,
+                rosterIds: removedPlayerIds,
+                firstHalfMemberIds: removedPlayerIds,
+                secondHalfMemberIds: removedPlayerIds,
+              }),
             });
           }
         }
@@ -770,12 +894,13 @@ export default function AdminScoreboardPage() {
   }, [activeTab, loadAssignments, loadedSections]);
 
   useEffect(() => {
-    if (activeTab !== "teams") return;
+    const needsTeamsForTab = activeTab === "participants" || activeTab === "teams" || activeTab === "lane" || activeTab === "score";
+    if (!isTeamEvent || !needsTeamsForTab) return;
     if (!needsSectionLoad(loadedSections, "teams")) return;
     const controller = new AbortController();
     void loadTeams(controller.signal).catch((err) => { if ((err as Error).name !== "AbortError") showMsg((err as Error).message || "팀 조회 실패", "error"); });
     return () => { controller.abort(); };
-  }, [activeTab, loadTeams, loadedSections]);
+  }, [activeTab, isTeamEvent, loadTeams, loadedSections]);
 
   // Derive scoreDraft from existing eventRows and restore temporary drafts.
   const prevGameRef = useRef(selectedGame);
@@ -869,20 +994,20 @@ export default function AdminScoreboardPage() {
           { id: `${pid}_${selectedGame}_${toLane}`, playerId: pid, gameNumber: selectedGame, laneNumber: toLane } as Assignment,
         ];
       }
-      const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : groupLaneByTeam(nextVisible);
+      const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
       return mergeVisibleAssignments(cur, rebuilt);
     });
   };
 
   // 같은 레인 내 팀 멤버 순서 정렬: 같은 팀끼리 묶고, 팀 내 memberIds 순서 유지
-  const groupLaneByTeam = (assigns: Assignment[]): Assignment[] => {
+  const groupLaneByTeam = (assigns: Assignment[], gameNumber = selectedGame): Assignment[] => {
     if (!isTeamEvent || teams.length === 0) return assigns;
 
     // 레인별로 그룹화
     const byLane = new Map<number, Assignment[]>();
     const others: Assignment[] = [];
     for (const a of assigns) {
-      if (a.gameNumber === 1) {
+      if (a.gameNumber === gameNumber) {
         if (!byLane.has(a.laneNumber)) byLane.set(a.laneNumber, []);
         byLane.get(a.laneNumber)!.push(a);
       } else {
@@ -893,38 +1018,45 @@ export default function AdminScoreboardPage() {
     const sorted: Assignment[] = [];
     for (const [, laneAssigns] of byLane) {
       laneAssigns.sort((a, b) => {
-        const tA = teams.find((t) => t.memberIds.includes(a.playerId));
-        const tB = teams.find((t) => t.memberIds.includes(b.playerId));
+        const tA = teams.find((team) => getActiveTeamMemberIds(team, gameNumber).includes(a.playerId));
+        const tB = teams.find((team) => getActiveTeamMemberIds(team, gameNumber).includes(b.playerId));
         if (!tA && !tB) return 0;
         if (tA && !tB) return -1;
         if (!tA && tB) return 1;
         if (tA!.id !== tB!.id) return tA!.id < tB!.id ? -1 : 1;
         // 같은 팀: memberIds 내 순서 유지
-        return tA!.memberIds.indexOf(a.playerId) - tA!.memberIds.indexOf(b.playerId);
+        return getActiveTeamMemberIds(tA!, gameNumber).indexOf(a.playerId) - getActiveTeamMemberIds(tA!, gameNumber).indexOf(b.playerId);
       });
       sorted.push(...laneAssigns);
     }
     return [...sorted, ...others];
   };
 
-  // 1G 배정 기준으로 나머지 게임 배정을 table shift로 재생성
-  const rebuildAllGames = (cur: Assignment[]): Assignment[] => {
-    if (!event || event.gameCount <= 1) return groupLaneByTeam(cur);
-    const game1 = groupLaneByTeam(cur.filter((a) => a.gameNumber === 1));
-    const nonLane = cur.filter((a) => a.gameNumber < 1); // 혹시 있을 수 있는 기타
-    const generated: Assignment[] = [];
-    for (let g = 2; g <= event.gameCount; g++) {
-      for (const a of game1) {
+  const rebuildSegmentGames = (cur: Assignment[], anchorGame = selectedGame): Assignment[] => {
+    if (!event || event.gameCount <= 1) return groupLaneByTeam(cur, anchorGame);
+
+    const targetSegment = assignmentSegments.find((segment) => segment.startGame <= anchorGame && anchorGame <= segment.endGame);
+    if (!targetSegment || targetSegment.startGame !== anchorGame) {
+      return groupLaneByTeam(cur, anchorGame);
+    }
+
+    const anchorAssignments = groupLaneByTeam(cur.filter((a) => a.gameNumber === anchorGame), anchorGame);
+    const preserved = cur.filter((a) => a.gameNumber < targetSegment.startGame || a.gameNumber > targetSegment.endGame);
+    const generated: Assignment[] = [...anchorAssignments];
+
+    for (let g = targetSegment.startGame + 1; g <= targetSegment.endGame; g++) {
+      for (const a of anchorAssignments) {
         const newLane = getLaneForGame({
           initialLane: a.laneNumber,
-          gameNumber: g,
+          gameNumber: g - targetSegment.startGame + 1,
           shift: event.tableShift,
           range: { start: event.laneStart, end: event.laneEnd },
         });
         generated.push({ ...a, gameNumber: g, laneNumber: newLane, id: `${a.playerId}_${g}_${newLane}` });
       }
     }
-    return [...game1, ...nonLane, ...generated];
+
+    return [...preserved, ...generated].sort((a, b) => a.gameNumber - b.gameNumber || a.laneNumber - b.laneNumber);
   };
 
   const mergeVisibleAssignments = (currentAll: Assignment[], nextVisible: Assignment[]) => {
@@ -953,7 +1085,7 @@ export default function AdminScoreboardPage() {
       setAssignments((cur) => {
         const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
         const nextVisible = currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame));
-        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+        const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
         return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
@@ -976,7 +1108,7 @@ export default function AdminScoreboardPage() {
             draggedPlayerId: playerId,
             targetPlayerId: swapTargetId,
           });
-          const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : nextVisible;
+          const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
           return mergeVisibleAssignments(cur, rebuilt);
         });
         return;
@@ -991,7 +1123,7 @@ export default function AdminScoreboardPage() {
           { playerId, gameNumber: selectedGame, laneNumber: swapSource, id: `${playerId}_${selectedGame}_${swapSource}` } as Assignment,
           { playerId: swapTargetId, gameNumber: selectedGame, laneNumber: source, id: `${swapTargetId}_${selectedGame}_${source}` } as Assignment,
         ];
-        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : groupLaneByTeam(nextVisible);
+        const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
         return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
@@ -1005,7 +1137,7 @@ export default function AdminScoreboardPage() {
       setAssignments((cur) => {
         const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
         const nextVisible = [...currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { id: `${playerId}_${selectedGame}_${toLane}`, playerId, gameNumber: selectedGame, laneNumber: toLane } as Assignment];
-        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : groupLaneByTeam(nextVisible);
+        const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
         return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
@@ -1016,7 +1148,7 @@ export default function AdminScoreboardPage() {
       setAssignments((cur) => {
         const currentVisible = hasSquads && selectedSquadId ? cur.filter((a) => a.squadId === selectedSquadId) : cur;
         const nextVisible = [...currentVisible.filter((a) => !(a.playerId === playerId && a.gameNumber === selectedGame)), { playerId, gameNumber: selectedGame, laneNumber: toLane, id: `${playerId}_${selectedGame}_${toLane}` } as Assignment];
-        const rebuilt = selectedGame === 1 ? rebuildAllGames(nextVisible) : groupLaneByTeam(nextVisible);
+        const rebuilt = rebuildSegmentGames(nextVisible, selectedGame);
         return mergeVisibleAssignments(cur, rebuilt);
       });
       return;
@@ -1241,7 +1373,7 @@ export default function AdminScoreboardPage() {
         const currentSelectedId = opts?.selectedId ?? selectedSquadId ?? "";
         const isSelected = currentSelectedId === sq.id;
         const label = opts?.showCount
-          ? `${sq.name} (${participantList.filter((p) => p.squadId === sq.id).length}명)`
+          ? `${sq.name} (${effectiveParticipantList.filter((p) => p.squadId === sq.id).length}명)`
           : sq.name;
         return (
           <button
@@ -1324,9 +1456,9 @@ export default function AdminScoreboardPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", borderRadius: "12px 12px 0 0", overflowX: "auto" }}>
-        {(Object.keys(TAB_LABELS) as ScoreboardTab[]).filter((tab) => tab !== "teams" || isTeamEvent).map((tab) => (
+        {(Object.keys(TAB_LABELS) as ScoreboardTab[]).filter((tab) => tab !== "teams").map((tab) => (
           <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
-            {TAB_LABELS[tab]}
+            {tab === "participants" ? participantTabLabel : TAB_LABELS[tab]}
           </button>
         ))}
       </div>
@@ -1336,10 +1468,20 @@ export default function AdminScoreboardPage() {
         <GlassCard>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", margin: 0 }}>
-              출전선수 등록
+              {isSingleEvent ? "조편성" : "팀 조편성"}
             </h2>
-            <GlassBadge variant="info">등록됨: {participantIds.size}명 / 전체: {allPlayers.length}명</GlassBadge>
+            <GlassBadge variant="info">
+              {isSingleEvent
+                ? `자동 참가: ${participantIds.size}명`
+                : `승인 팀 ${teams.length}팀 · 스쿼드 배정 완료 ${assignedTeamCount}팀`}
+            </GlassBadge>
           </div>
+
+          {isSingleEvent ? (
+            <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "rgba(20,184,166,0.08)", border: "1px solid rgba(20,184,166,0.2)", color: "#0f766e", fontSize: 13, lineHeight: 1.7 }}>
+              개인전은 선수등록 승인된 전체 선수가 자동으로 출전합니다. 이 탭에서는 출전선수 등록 대신 스쿼드 편성만 관리합니다.
+            </div>
+          ) : null}
 
           {/* 스쿼드 관리 */}
           <div style={{ marginBottom: 18, padding: "14px 16px", background: "rgba(255,255,255,0.15)", borderRadius: 12, border: "1px solid rgba(99,102,241,0.1)" }}>
@@ -1365,7 +1507,7 @@ export default function AdminScoreboardPage() {
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {squads.map((sq) => {
                   const isSelected = selectedSquadId === sq.id;
-                  const count = participantList.filter((p) => p.squadId === sq.id).length;
+                  const count = effectiveParticipantList.filter((p) => p.squadId === sq.id).length;
                   return (
                     <div key={sq.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
                       <button
@@ -1374,7 +1516,9 @@ export default function AdminScoreboardPage() {
                           padding: "7px 14px", borderRadius: "8px 0 0 8px", fontSize: 13, fontWeight: isSelected ? 700 : 500,
                           color: isSelected ? "#fff" : "#475569",
                           background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-                          border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                          borderTop: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                          borderLeft: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
+                          borderBottom: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
                           borderRight: "none", cursor: "pointer", fontFamily: "inherit",
                         }}
                       >
@@ -1425,7 +1569,7 @@ export default function AdminScoreboardPage() {
                     전체 ({allPlayers.length}명)
                   </button>
                   {squads.map((sq) => {
-                    const count = participantList.filter((p) => p.squadId === sq.id).length;
+                    const count = effectiveParticipantList.filter((p) => p.squadId === sq.id).length;
                     const isSelected = participantViewSquadId === sq.id;
                     return (
                       <button
@@ -1447,40 +1591,17 @@ export default function AdminScoreboardPage() {
                 </div>
               </div>
             )}
-            {!hasSquads && (
-              <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0" }}>
-                스쿼드 없이 운영하면 모든 출전선수가 동일 레인 배정에 포함됩니다. 선수가 레인 수용량을 초과하면 스쿼드를 추가하세요.
-              </p>
-            )}
-          </div>
-
-          {/* 선수번호로 빠른 등록 */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="선수번호 또는 범위 (예: 7, 1-30)"
-              value={participantNumberInput}
-              onChange={(e) => setParticipantNumberInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  void handleParticipantNumberSubmit();
-                }
-              }}
-              style={{
-                width: 240, padding: "8px 12px", borderRadius: 8, fontSize: 14,
-                background: "rgba(255,255,255,0.7)", border: "1.5px solid rgba(99,102,241,0.25)",
-                outline: "none", fontFamily: "inherit", color: "#1e293b",
-              }}
-            />
-            <span style={{ fontSize: 12, color: "#94a3b8" }}>번호 입력 후 Enter{hasSquads && selectedSquadId ? ` → ${squads.find((s) => s.id === selectedSquadId)?.name}` : ""}</span>
+          {!hasSquads && (
+            <p style={{ fontSize: 12, color: "#94a3b8", margin: "8px 0 0" }}>
+              스쿼드 없이 운영하면 모든 출전선수가 동일 레인 배정에 포함됩니다. 선수가 레인 수용량을 초과하면 스쿼드를 추가하세요.
+            </p>
+          )}
           </div>
 
           {/* 검색 */}
           <input
             type="text"
-            placeholder="선수 이름 또는 소속으로 검색..."
+            placeholder={isSingleEvent ? "선수 이름 또는 소속으로 검색..." : "팀명, 선수 이름, 소속으로 검색..."}
             value={participantSearch}
             onChange={(e) => setParticipantSearch(e.target.value)}
             style={{
@@ -1491,19 +1612,19 @@ export default function AdminScoreboardPage() {
             }}
           />
 
-          {/* 선수 목록 */}
-          <div style={{ display: "grid", gap: 6, maxHeight: 500, overflowY: "auto" }}>
-            {participantTabPlayers
-              .map((p) => {
-                const isRegistered = participantIds.has(p.id);
+          {isSingleEvent ? (
+            <div style={{ display: "grid", gap: 6, maxHeight: 500, overflowY: "auto" }}>
+              {participantTabPlayers.map((p) => {
                 const participant = participantMap.get(p.id);
                 const playerSquad = participant?.squadId ? squads.find((s) => s.id === participant.squadId) : null;
+                const isHighlighted = Boolean(playerSquad);
+                const statusLabel = playerSquad ? `${playerSquad.name} 배정됨` : "스쿼드 미배정";
                 return (
                   <div
                     key={p.id}
                     onClick={() => {
-                      if (isRegistered) {
-                        if (!confirm(`${p.name}님을 등록해제하시겠습니까?`)) return;
+                      if (!hasSquads) return;
+                      if (playerSquad?.id === selectedSquadId) {
                         void handleRemoveParticipant(p.id);
                         return;
                       }
@@ -1512,16 +1633,16 @@ export default function AdminScoreboardPage() {
                     style={{
                       display: "flex", alignItems: "center", gap: 12,
                       padding: "10px 14px", borderRadius: 10, cursor: "pointer",
-                      background: isRegistered ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.25)",
-                      border: isRegistered ? "1.5px solid rgba(99,102,241,0.3)" : "1.5px solid rgba(203,213,225,0.3)",
+                      background: isHighlighted ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.25)",
+                      border: isHighlighted ? "1.5px solid rgba(99,102,241,0.3)" : "1.5px solid rgba(203,213,225,0.3)",
                       transition: "all 0.15s",
                     }}
                   >
                     <span style={{
                       width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
                       borderRadius: 8, fontSize: 13, fontWeight: 700,
-                      background: isRegistered ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(203,213,225,0.3)",
-                      color: isRegistered ? "#fff" : "#64748b",
+                      background: isHighlighted ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(203,213,225,0.3)",
+                      color: isHighlighted ? "#fff" : "#64748b",
                     }}>
                       {p.number}
                     </span>
@@ -1529,7 +1650,7 @@ export default function AdminScoreboardPage() {
                       <p style={{ margin: 0, fontWeight: 600, fontSize: 14, color: "#1e293b" }}>{p.name}</p>
                       <p style={{ margin: 0, fontSize: 12, color: "#64748b" }}>{p.region} · {p.affiliation}</p>
                     </div>
-                    {hasSquads && isRegistered && playerSquad && (
+                    {hasSquads && playerSquad && (
                       <span style={{
                         padding: "3px 8px", borderRadius: 6, fontSize: 11, fontWeight: 600,
                         background: "rgba(99,102,241,0.08)", color: "#6366f1",
@@ -1539,15 +1660,151 @@ export default function AdminScoreboardPage() {
                     )}
                     <span style={{
                       padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
-                      background: isRegistered ? "rgba(99,102,241,0.15)" : "rgba(203,213,225,0.2)",
-                      color: isRegistered ? "#6366f1" : "#94a3b8",
+                      background: isHighlighted ? "rgba(99,102,241,0.15)" : "rgba(203,213,225,0.2)",
+                      color: isHighlighted ? "#6366f1" : "#94a3b8",
                     }}>
-                      {isRegistered ? "등록됨 ✓" : "미등록"}
+                      {statusLabel}
                     </span>
                   </div>
                 );
               })}
-          </div>
+            </div>
+          ) : (
+            <div style={{ display: "grid", gap: 12 }}>
+              <div style={{
+                padding: "12px 14px",
+                borderRadius: 12,
+                background: "rgba(99,102,241,0.06)",
+                border: "1px solid rgba(99,102,241,0.14)",
+                color: "#475569",
+                fontSize: 13,
+                lineHeight: 1.7,
+              }}>
+                팀전은 사용자 제출 후 승인된 팀만 조편성합니다. 관리자는 팀 전체를 같은 스쿼드로 배치하고, 개별 선수는 이 화면에서 따로 등록하거나 빼지 않습니다.
+              </div>
+
+              {teamSquadCards.length === 0 ? (
+                <div style={{
+                  padding: "28px 16px",
+                  borderRadius: 12,
+                  textAlign: "center",
+                  color: "#94a3b8",
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1px dashed rgba(148,163,184,0.35)",
+                }}>
+                  승인된 팀이 아직 없거나, 현재 필터에 맞는 팀이 없습니다.
+                </div>
+              ) : (
+                teamSquadCards.map((team) => {
+                  const statusTone = team.status === "assigned"
+                    ? { bg: "rgba(34,197,94,0.10)", border: "rgba(34,197,94,0.22)", text: "#15803d", label: "스쿼드 배정 완료" }
+                    : team.status === "mixed"
+                      ? { bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.24)", text: "#b45309", label: "스쿼드 혼재" }
+                      : { bg: "rgba(148,163,184,0.10)", border: "rgba(148,163,184,0.24)", text: "#64748b", label: "스쿼드 미배정" };
+                  return (
+                    <div
+                      key={team.id}
+                      style={{
+                        padding: "16px",
+                        borderRadius: 14,
+                        background: "rgba(255,255,255,0.28)",
+                        border: `1px solid ${statusTone.border}`,
+                        boxShadow: "0 12px 32px rgba(15,23,42,0.06)",
+                        display: "grid",
+                        gap: 12,
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: "#1e293b" }}>{team.name}</span>
+                          <GlassBadge variant={team.teamType === "NORMAL" ? "success" : "warning"}>{getTeamTypeLabel(team.teamType)}</GlassBadge>
+                          <span style={{
+                            padding: "4px 10px",
+                            borderRadius: 999,
+                            background: statusTone.bg,
+                            color: statusTone.text,
+                            border: `1px solid ${statusTone.border}`,
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}>
+                            {statusTone.label}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: 12, color: "#64748b" }}>
+                          현재 스쿼드: {team.currentSquadId ? squads.find((squad) => squad.id === team.currentSquadId)?.name ?? team.currentSquadId : "미배정"}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {team.members.map((member) => (
+                          <span
+                            key={member.id}
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: 999,
+                              fontSize: 12,
+                              color: "#334155",
+                              background: "rgba(255,255,255,0.5)",
+                              border: "1px solid rgba(203,213,225,0.45)",
+                            }}
+                          >
+                            #{member.number} {member.name} · {member.affiliation}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        {squads.map((squad) => {
+                          const isAssigned = team.currentSquadId === squad.id;
+                          return (
+                            <button
+                              key={`${team.id}-${squad.id}`}
+                              type="button"
+                              onClick={() => void handleAssignTeamToSquad(teams.find((item) => item.id === team.id) ?? {
+                                id: team.id,
+                                name: team.name,
+                                teamType: team.teamType,
+                                memberIds: team.rosterIds,
+                                rosterIds: team.rosterIds,
+                                createdAt: "",
+                                updatedAt: "",
+                              }, isAssigned ? null : squad.id)}
+                              style={{
+                                padding: "7px 14px",
+                                borderRadius: 9,
+                                fontSize: 13,
+                                fontWeight: isAssigned ? 700 : 600,
+                                color: isAssigned ? "#fff" : "#475569",
+                                background: isAssigned ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.45)",
+                                border: isAssigned ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.45)",
+                                cursor: "pointer",
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              {isAssigned ? `${squad.name} 해제` : squad.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {team.status === "mixed" && (
+                        <div style={{
+                          padding: "10px 12px",
+                          borderRadius: 10,
+                          background: "rgba(245,158,11,0.10)",
+                          border: "1px solid rgba(245,158,11,0.18)",
+                          color: "#b45309",
+                          fontSize: 12,
+                        }}>
+                          같은 팀 선수들이 서로 다른 스쿼드에 나뉘어 있습니다. 한 스쿼드 버튼을 눌러 팀 전체를 다시 맞춰주세요.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </GlassCard>
       )}
 
@@ -1670,12 +1927,13 @@ export default function AdminScoreboardPage() {
                   ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {unassignedTeams.map((team) => {
-                        const memberPlayers = team.memberIds.map((mid) => playerById.get(mid)).filter(Boolean) as typeof players;
+                        const activeMemberIds = getActiveTeamMemberIds(team);
+                        const memberPlayers = activeMemberIds.map((mid) => playerById.get(mid)).filter(Boolean) as typeof players;
                         return (
                           <div
                             key={team.id}
                             draggable
-                            onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeTeamDrag(team.id, team.memberIds))}
+                            onDragStart={(e: DragEvent<HTMLDivElement>) => e.dataTransfer.setData("text/plain", encodeTeamDrag(team.id, activeMemberIds))}
                             style={{
                               padding: "8px 10px", borderRadius: 8, fontSize: 13,
                               background: "rgba(255,255,255,0.5)", border: "1px solid rgba(99,102,241,0.2)",
@@ -1685,10 +1943,10 @@ export default function AdminScoreboardPage() {
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                               <span style={{ fontWeight: 700, color: "#4f46e5" }}>{team.name}</span>
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                {team.teamType === "MAKEUP" && (
-                                  <span style={{ fontSize: 10, color: "#f97316", background: "rgba(249,115,22,0.1)", padding: "1px 5px", borderRadius: 4 }}>혼성</span>
+                                {team.teamType !== "NORMAL" && (
+                                  <span style={{ fontSize: 10, color: "#f97316", background: "rgba(249,115,22,0.1)", padding: "1px 5px", borderRadius: 4 }}>{getTeamTypeLabel(team.teamType)}</span>
                                 )}
-                                <GlassButton size="sm" variant="ghost" onClick={() => moveTeam(team.memberIds, lanes[0])}>
+                                <GlassButton size="sm" variant="ghost" onClick={() => moveTeam(activeMemberIds, lanes[0])}>
                                   배정
                                 </GlassButton>
                               </div>
@@ -1743,10 +2001,10 @@ export default function AdminScoreboardPage() {
                     🪑 대기 선수 — 로스터 등록, 이번 출전 아님 ({benchPlayerIds.size}명)
                   </p>
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {allPlayers.filter((p) => benchPlayerIds.has(p.id)).map((p) => {
-                      const teamName = playerTeamNameMap.get(p.id) ??
-                        teams.find((t) => (t.rosterIds ?? []).includes(p.id))?.name ?? "";
-                      return (
+                      {players.filter((p) => benchPlayerIds.has(p.id)).map((p) => {
+                        const teamName = playerTeamNameMap.get(p.id) ??
+                          currentSquadTeams.find((t) => (t.rosterIds ?? []).includes(p.id))?.name ?? "";
+                        return (
                         <div
                           key={p.id}
                           style={{
@@ -2013,8 +2271,8 @@ export default function AdminScoreboardPage() {
                 </button>
                 {squads.map((sq) => {
                   const isSelected = teamsViewSquadId === sq.id;
-                  const sqTeamCount = teams.filter((team) => team.memberIds.some((mid) => participantList.some((p) => (p.playerId ?? p.id) === mid && p.squadId === sq.id))).length;
-                  const sqUnteamedCount = unteamedParticipants.filter((p) => participantList.some((pt) => (pt.playerId ?? pt.id) === p.id && pt.squadId === sq.id)).length;
+                  const sqTeamCount = teams.filter((team) => getTeamRoster(team).some((playerId) => effectiveParticipantList.some((p) => (p.playerId ?? p.id) === playerId && p.squadId === sq.id))).length;
+                  const sqUnteamedCount = unteamedParticipants.filter((p) => effectiveParticipantList.some((pt) => (pt.playerId ?? pt.id) === p.id && pt.squadId === sq.id)).length;
                   return (
                     <button
                       key={`teams-squad-${sq.id}`}
@@ -2112,6 +2370,8 @@ export default function AdminScoreboardPage() {
             <div style={{ display: "grid", gap: 10 }}>
               {squadFilteredTeams.map((team) => {
                 const isNormal = team.teamType === "NORMAL";
+                const teamRosterIds = getTeamRoster(team);
+                const activeMemberIds = getActiveTeamMemberIds(team);
                 return (
                   <div key={team.id}>
                   <div
@@ -2129,11 +2389,11 @@ export default function AdminScoreboardPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
                       <GlassBadge variant={isNormal ? "success" : "warning"}>
-                        {isNormal ? "정상" : "혼성"}
+                        {getTeamTypeLabel(team.teamType)}
                       </GlassBadge>
                       <span style={{ fontWeight: 700, color: "#1e293b", fontSize: 14 }}>{team.name}</span>
                       <span style={{ color: "#64748b", fontSize: 13 }}>
-                        {team.memberIds.map((pid) => {
+                        {activeMemberIds.map((pid) => {
                           const p = playerById.get(pid);
                           return p ? `[${p.number}] ${p.name}(${p.affiliation}${p.group ? p.group : ""})` : pid;
                         }).join(" · ")}
@@ -2145,8 +2405,9 @@ export default function AdminScoreboardPage() {
                         <GlassButton
                           onClick={() => setEditingRoster({
                             teamId: team.id,
-                            rosterIds: team.rosterIds ?? [...team.memberIds],
-                            memberIds: [...team.memberIds],
+                            rosterIds: teamRosterIds,
+                            firstHalfMemberIds: team.firstHalfMemberIds ?? [...team.memberIds],
+                            secondHalfMemberIds: team.secondHalfMemberIds ?? team.firstHalfMemberIds ?? [...team.memberIds],
                           })}
                           variant="secondary"
                           size="sm"
@@ -2169,7 +2430,7 @@ export default function AdminScoreboardPage() {
                   {event?.kind === "FIVES" && editingRoster?.teamId === team.id && (
                     <div style={{ marginTop: 12, padding: "14px", background: "rgba(255,255,255,0.2)", borderRadius: 10, border: "1px solid rgba(99,102,241,0.2)" }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: "#475569", marginBottom: 10 }}>
-                        로스터 관리 — 전체 엔트리에 추가/제거, 출전 선수 {teamSize}명 선택
+                        로스터 관리 — 전체 엔트리에 추가/제거 후 전반/후반 출전 선수 {teamSize}명씩 선택
                       </div>
 
                       {/* 로스터에 추가 가능한 선수 (같은 소속, NORMAL팀 미소속 — MAKEUP팀 선수는 교체 가능) */}
@@ -2178,32 +2439,32 @@ export default function AdminScoreboardPage() {
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                           {(() => {
                             const teamAffs = new Set(
-                              team.memberIds.map((pid) => playerById.get(pid)?.affiliation).filter(Boolean)
+                              teamRosterIds.map((pid) => playerById.get(pid)?.affiliation).filter(Boolean)
                             );
                             // 다른 NORMAL팀에 속한 선수만 제외 (MAKEUP팀 선수는 소속팀 복귀 허용)
                             const otherNormalTeamPlayerIds = new Set<string>();
                             for (const t of teams) {
                               if (t.id === team.id) continue;
                               if (t.teamType === "MAKEUP") continue; // MAKEUP팀은 제외하지 않음
-                              t.memberIds.forEach((id) => otherNormalTeamPlayerIds.add(id));
-                              (t.rosterIds ?? []).forEach((id) => otherNormalTeamPlayerIds.add(id));
+                              getTeamRoster(t).forEach((id) => otherNormalTeamPlayerIds.add(id));
                             }
                             return allPlayers.filter((p) =>
-                              participantPlayerIds.has(p.id) &&
+                              teamEditorEligiblePlayerIds.has(p.id) &&
                               !editingRoster.rosterIds.includes(p.id) &&
                               !otherNormalTeamPlayerIds.has(p.id) &&
                               teamAffs.has(p.affiliation)
                             );
                           })()
                             .map((p) => {
-                              const inMakeup = teams.some((t) => t.id !== team.id && t.teamType === "MAKEUP" && t.memberIds.includes(p.id));
+                              const inMakeup = teams.some((t) => t.id !== team.id && t.teamType === "MAKEUP" && getTeamRoster(t).includes(p.id));
                               return (
                                 <button
                                   key={p.id}
                                   onClick={() => setEditingRoster((prev) => prev ? {
                                     ...prev,
                                     rosterIds: [...prev.rosterIds, p.id],
-                                    memberIds: [...prev.memberIds, p.id],
+                                    firstHalfMemberIds: prev.firstHalfMemberIds.length < teamSize ? [...prev.firstHalfMemberIds, p.id] : prev.firstHalfMemberIds,
+                                    secondHalfMemberIds: prev.secondHalfMemberIds.length < teamSize ? [...prev.secondHalfMemberIds, p.id] : prev.secondHalfMemberIds,
                                   } : prev)}
                                   style={{
                                     padding: "4px 10px", borderRadius: 6, fontSize: 12, fontFamily: "inherit", cursor: "pointer",
@@ -2220,33 +2481,32 @@ export default function AdminScoreboardPage() {
                         </div>
                       </div>
 
-                      {/* 로스터 선수 목록 (출전 선택) */}
+                      {/* 전반 라인업 선택 */}
                       <div style={{ marginBottom: 10 }}>
                         <span style={{ fontSize: 12, color: "#64748b", marginBottom: 6, display: "block" }}>
-                          로스터 ({editingRoster.rosterIds.length}명) — 출전 선수 {teamSize}명 선택:
-                          <span style={{ marginLeft: 6, color: editingRoster.memberIds.length === teamSize ? "#16a34a" : "#f59e0b" }}>
-                            {editingRoster.memberIds.length}/{teamSize}명 선택됨
+                          전반 라인업 ({firstHalfGameCount}게임) — {teamSize}명 선택:
+                          <span style={{ marginLeft: 6, color: editingRoster.firstHalfMemberIds.length === teamSize ? "#16a34a" : "#f59e0b" }}>
+                            {editingRoster.firstHalfMemberIds.length}/{teamSize}명 선택됨
                           </span>
                         </span>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
                           {editingRoster.rosterIds.map((pid) => {
                             const p = playerById.get(pid);
-                            const isSelected = editingRoster.memberIds.includes(pid);
+                            const isSelected = editingRoster.firstHalfMemberIds.includes(pid);
                             return (
                               <button
-                                key={pid}
+                                key={`${pid}-first`}
                                 onClick={() => setEditingRoster((prev) => {
                                   if (!prev) return prev;
                                   if (isSelected) {
-                                    // 체크 해제: memberIds에서 제거 + 로스터에서도 제거 (추가 가능 목록으로 복귀)
                                     return {
                                       ...prev,
-                                      memberIds: prev.memberIds.filter((id) => id !== pid),
-                                      rosterIds: prev.rosterIds.filter((id) => id !== pid),
+                                      firstHalfMemberIds: prev.firstHalfMemberIds.filter((id) => id !== pid),
                                     };
                                   } else {
-                                    // 체크: memberIds에 추가
-                                    return { ...prev, memberIds: [...prev.memberIds, pid] };
+                                    return prev.firstHalfMemberIds.length >= teamSize
+                                      ? prev
+                                      : { ...prev, firstHalfMemberIds: [...prev.firstHalfMemberIds, pid] };
                                   }
                                 })}
                                 style={{
@@ -2265,8 +2525,56 @@ export default function AdminScoreboardPage() {
                         </div>
                       </div>
 
+                      {/* 후반 라인업 선택 */}
+                      <div style={{ marginBottom: 10 }}>
+                        <span style={{ fontSize: 12, color: "#64748b", marginBottom: 6, display: "block" }}>
+                          후반 라인업 ({secondHalfGameCount}게임) — {teamSize}명 선택:
+                          <span style={{ marginLeft: 6, color: editingRoster.secondHalfMemberIds.length === teamSize ? "#16a34a" : "#f59e0b" }}>
+                            {editingRoster.secondHalfMemberIds.length}/{teamSize}명 선택됨
+                          </span>
+                        </span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                          {editingRoster.rosterIds.map((pid) => {
+                            const p = playerById.get(pid);
+                            const isSelected = editingRoster.secondHalfMemberIds.includes(pid);
+                            return (
+                              <button
+                                key={`${pid}-second`}
+                                onClick={() => setEditingRoster((prev) => {
+                                  if (!prev) return prev;
+                                  if (isSelected) {
+                                    return {
+                                      ...prev,
+                                      secondHalfMemberIds: prev.secondHalfMemberIds.filter((id) => id !== pid),
+                                    };
+                                  }
+                                  return prev.secondHalfMemberIds.length >= teamSize
+                                    ? prev
+                                    : { ...prev, secondHalfMemberIds: [...prev.secondHalfMemberIds, pid] };
+                                })}
+                                style={{
+                                  padding: "5px 10px", borderRadius: 7, fontSize: 12,
+                                  fontWeight: isSelected ? 700 : 500,
+                                  color: isSelected ? "#fff" : "#334155",
+                                  background: isSelected ? "linear-gradient(135deg, #14b8a6, #0ea5e9)" : "rgba(255,255,255,0.5)",
+                                  border: `1px solid ${isSelected ? "rgba(20,184,166,0.4)" : "rgba(203,213,225,0.5)"}`,
+                                  cursor: "pointer", fontFamily: "inherit",
+                                }}
+                              >
+                                {isSelected ? "✓ " : ""}{p ? `${p.number} ${p.name}` : pid}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
                       <div style={{ display: "flex", gap: 8 }}>
-                        <GlassButton onClick={handleSaveRoster} variant="primary" size="sm" disabled={editingRoster.memberIds.length !== teamSize}>
+                        <GlassButton
+                          onClick={handleSaveRoster}
+                          variant="primary"
+                          size="sm"
+                          disabled={editingRoster.firstHalfMemberIds.length !== teamSize || editingRoster.secondHalfMemberIds.length !== teamSize}
+                        >
                           저장
                         </GlassButton>
                         <GlassButton onClick={() => setEditingRoster(null)} variant="ghost" size="sm">취소</GlassButton>
@@ -2285,9 +2593,155 @@ export default function AdminScoreboardPage() {
       {activeTab === "event-rank" && (
         <GlassCard>
           <h2 style={{ fontSize: 17, fontWeight: 700, color: "#1e293b", marginBottom: 16 }}>세부종목 순위</h2>
-          {isTeamEvent && teamRows.length > 0 && (
+          {event?.kind === "FIVES" && isSingleEventFives && fivesDisplayRows.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#475569", marginBottom: 12 }}>팀 순위</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>
+                5인조 전반+후반 합계 팀 순위
+              </h3>
+              <div style={{ marginBottom: 10, fontSize: 12, color: "#6366f1", fontWeight: 600 }}>
+                전후반 전체 출전 선수 기록과 게임별 팀 누적합계를 한 표에서 표시합니다.
+              </div>
+              <div style={{ display: "grid", gap: 16 }}>
+                {fivesDisplayRows.map((row) => (
+                  <div
+                    key={row.teamId}
+                    style={{
+                      border: "1px solid rgba(99,102,241,0.18)",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      background: "rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "72px 1fr 90px 84px 84px",
+                        gap: 0,
+                        background: "rgba(99,102,241,0.10)",
+                        borderBottom: "1px solid rgba(99,102,241,0.14)",
+                      }}
+                    >
+                      <div style={{ ...glassTdStyle, fontWeight: 800, textAlign: "center", color: row.rank === 1 ? "#f59e0b" : "#1e293b" }}>
+                        {row.rank > 0 ? `${row.rank}위` : "—"}
+                      </div>
+                      <div style={{ ...glassTdStyle, fontWeight: 800, color: "#1e293b" }}>{row.teamName}</div>
+                      <div style={{ ...glassTdStyle, textAlign: "center" }}>
+                    <GlassBadge variant={row.teamType === "NORMAL" ? "success" : "warning"} style={{ fontSize: 11 }}>
+                      {getTeamTypeLabel(row.teamType)}
+                    </GlassBadge>
+                      </div>
+                      <div style={{ ...glassTdStyle, textAlign: "right", fontWeight: 800, color: "#4f46e5" }}>
+                    {row.teamType === "NORMAL" ? row.teamTotal.toLocaleString() : "—"}
+                      </div>
+                      <div style={{ ...glassTdStyle, textAlign: "right", color: "#64748b", fontWeight: 700 }}>
+                    {row.teamType === "NORMAL" ? row.pinDiff.toLocaleString() : "—"}
+                      </div>
+                    </div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ background: "rgba(148,163,184,0.08)" }}>
+                            <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "center", width: 64 }}>구분</th>
+                            <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "center", width: 72 }}>번호</th>
+                            <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left", minWidth: 140 }}>성명</th>
+                            {Array.from({ length: event.gameCount }, (_, index) => (
+                              <th key={`${row.teamId}-g${index + 1}`} style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>
+                                {index + 1}G
+                              </th>
+                            ))}
+                            <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 84 }}>합계</th>
+                            <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 84 }}>평균</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {row.members.map((member) => {
+                            const label = member.playsFirstHalf && member.playsSecondHalf
+                              ? "전후반"
+                              : member.playsFirstHalf
+                                ? "전반"
+                                : member.playsSecondHalf
+                                  ? "후반"
+                                  : "대기";
+                            const labelStyle = member.playsFirstHalf && member.playsSecondHalf
+                              ? { bg: "rgba(99,102,241,0.12)", text: "#4f46e5" }
+                              : member.playsFirstHalf
+                                ? { bg: "rgba(59,130,246,0.12)", text: "#2563eb" }
+                                : member.playsSecondHalf
+                                  ? { bg: "rgba(16,185,129,0.12)", text: "#059669" }
+                                  : { bg: "rgba(148,163,184,0.12)", text: "#64748b" };
+                            return (
+                              <tr key={`${row.teamId}-${member.playerId}`} {...glassTrHoverProps}>
+                                <td style={{ ...glassTdStyle, textAlign: "center" }}>
+                                  <span style={{ padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 700, background: labelStyle.bg, color: labelStyle.text }}>
+                                    {label}
+                                  </span>
+                                </td>
+                                <td style={{ ...glassTdStyle, textAlign: "center" }}>{member.number || "—"}</td>
+                                <td style={{ ...glassTdStyle, fontWeight: 600, color: "#334155" }}>{member.name}</td>
+                                {Array.from({ length: event.gameCount }, (_, index) => {
+                                  const score = member.gameScores[index]?.score;
+                                  const gameNumber = index + 1;
+                                  const isActiveScore = (gameNumber <= firstHalfGameCount && member.playsFirstHalf)
+                                    || (gameNumber > firstHalfGameCount && member.playsSecondHalf);
+                                  return (
+                                    <td
+                                      key={`${member.playerId}-g${gameNumber}`}
+                                      style={{
+                                        ...glassTdStyle,
+                                        textAlign: "right",
+                                        color: typeof score === "number" ? (isActiveScore ? "#dc2626" : "#94a3b8") : "#cbd5e1",
+                                        fontWeight: typeof score === "number" ? (isActiveScore ? 800 : 500) : 500,
+                                      }}
+                                    >
+                                      {typeof score === "number" ? score : "—"}
+                                    </td>
+                                  );
+                                })}
+                                <td style={{ ...glassTdStyle, textAlign: "right", fontWeight: 700 }}>{member.total ? member.total.toLocaleString() : "—"}</td>
+                                <td style={{ ...glassTdStyle, textAlign: "right", color: "#64748b" }}>
+                                  {member.total > 0 ? (member.average ?? 0).toFixed(1) : "—"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          <tr style={{ background: "rgba(99,102,241,0.08)" }}>
+                            <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 800 }} colSpan={3}>
+                              팀 합계
+                            </td>
+                            {Array.from({ length: event.gameCount }, (_, index) => (
+                              <td key={`${row.teamId}-team-total-${index}`} style={{ ...glassTdStyle, textAlign: "right", fontWeight: 800, color: "#4f46e5" }}>
+                                {typeof row.teamGameTotals?.[index] === "number" ? row.teamGameTotals[index]?.toLocaleString() : "—"}
+                              </td>
+                            ))}
+                            <td style={{ ...glassTdStyle, textAlign: "right", fontWeight: 800, color: "#4f46e5" }}>
+                              {row.teamType === "NORMAL" ? row.teamTotal.toLocaleString() : "—"}
+                            </td>
+                            <td style={{ ...glassTdStyle, textAlign: "right", fontWeight: 700, color: "#64748b" }}>
+                              {row.teamType === "NORMAL" && row.teamGameTotals?.length
+                                ? (row.teamTotal / (row.teamGameTotals.filter((score) => typeof score === "number").length * 5)).toFixed(1)
+                                : "—"}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {isTeamEvent && !(event?.kind === "FIVES" && isSingleEventFives) && (teamRows.length > 0 || (event?.kind === "FIVES" && fivesCombinedRows.length > 0)) && (
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: event?.kind === "FIVES" && (event?.halfType === "SECOND" || isSingleEventFives) ? "#6366f1" : "#475569", marginBottom: 12 }}>
+                {event?.kind === "FIVES" && (event?.halfType === "SECOND" || isSingleEventFives)
+                  ? "5인조 전반+후반 합계 팀 순위"
+                  : "팀 순위"}
+              </h3>
+              {event?.kind === "FIVES" && (event?.halfType === "SECOND" || isSingleEventFives) && fivesCombinedRows.length > 0 && (
+                <div style={{ marginBottom: 10, fontSize: 12, color: "#6366f1", fontWeight: 600 }}>
+                  5인조 전반+후반 합계 기준으로 순위를 표시합니다.
+                </div>
+              )}
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -2298,20 +2752,20 @@ export default function AdminScoreboardPage() {
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left" }}>멤버</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>팀합계</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>평균</th>
-                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>핀차</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>핀차이</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {teamRows.map((row) => (
+                    {fivesDisplayRows.map((row) => (
                       <tr key={row.teamId} {...glassTrHoverProps}>
                         <td style={{ ...glassTdStyle, textAlign: "center", fontWeight: 700, color: row.rank === 1 ? "#f59e0b" : "#1e293b" }}>
                           {row.rank > 0 ? row.rank : "—"}
                         </td>
                         <td style={{ ...glassTdStyle, fontWeight: 700 }}>{row.teamName}</td>
                         <td style={{ ...glassTdStyle, textAlign: "center" }}>
-                          <GlassBadge variant={row.teamType === "NORMAL" ? "success" : "warning"} style={{ fontSize: 11 }}>
-                            {row.teamType === "NORMAL" ? "정상" : "혼성"}
-                          </GlassBadge>
+                    <GlassBadge variant={row.teamType === "NORMAL" ? "success" : "warning"} style={{ fontSize: 11 }}>
+                      {getTeamTypeLabel(row.teamType)}
+                    </GlassBadge>
                         </td>
                         <td style={{ ...glassTdStyle, color: "#475569" }}>
                           {row.members.map((m) => `${m.name}(${m.total})`).join(" · ")}
@@ -2332,13 +2786,15 @@ export default function AdminScoreboardPage() {
                   </tbody>
                 </table>
               </div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#475569", margin: "24px 0 12px" }}>개인 순위</h3>
+              {!isSingleEventFives && (
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#475569", margin: "24px 0 12px" }}>개인 순위</h3>
+              )}
             </div>
           )}
           {/* 5인조 전반+후반 합산 팀 순위 */}
-          {event?.kind === "FIVES" && fivesCombinedRows.length > 0 && (
+          {event?.kind === "FIVES" && !isSingleEventFives && event?.halfType !== "SECOND" && fivesCombinedRows.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>🏆 5인조 전반+후반 합산 팀 순위</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#6366f1", marginBottom: 12 }}>5인조 전반+후반 합계 팀 순위</h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -2347,7 +2803,7 @@ export default function AdminScoreboardPage() {
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "left" }}>팀명</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 80 }}>합산</th>
                       <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>평균</th>
-                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 64 }}>핀차</th>
+                      <th style={{ ...glassTdStyle, fontWeight: 700, textAlign: "right", width: 72 }}>핀차이</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2369,7 +2825,9 @@ export default function AdminScoreboardPage() {
               </div>
             </div>
           )}
-          <RankingTable rows={eventRows} emptyMessage="순위 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} />
+          {!(event?.kind === "FIVES" && isSingleEventFives) && (
+            <RankingTable rows={eventRows} emptyMessage="순위 데이터가 없습니다." onSelectPlayer={(playerName) => setSelectedPlayer(playerName)} />
+          )}
         </GlassCard>
       )}
 

@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
 import { adminDb } from "@/lib/firebase/admin";
 import { calculateRandomAssignments } from "@/lib/services/competitionService";
+import { buildFivesAssignmentSegments } from "@/lib/services/competitionService";
 import { getEventRefOrThrow } from "@/lib/firebase/eventPath";
 import { getCached, setCache, invalidateCache } from "@/lib/api-cache";
 import { rebuildEventAssignmentsAggregate } from "@/lib/aggregates/event-assignments";
 import { sortAssignmentsByPosition, withAssignmentPositions } from "@/lib/assignment-position";
 import { isValidFirestoreId } from "@/lib/validation";
+import { isFivesEventConfig } from "@/lib/fives-config";
 
 interface AssignmentItem {
   playerId: string;
@@ -339,6 +341,9 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     tableShift,
     tournamentId,
     eventId,
+    segments: eventKind === "FIVES" && isFivesEventConfig(eventData.fivesConfig)
+      ? buildFivesAssignmentSegments(gameCount, eventData.fivesConfig)
+      : undefined,
   });
 
   const firstGame = result.firstGameAssignments.map((item) => ({
@@ -366,7 +371,7 @@ export async function POST(req: NextRequest, ctx: { params: { tournamentId: stri
     }
   }
 
-  await writeAssignments(event.ref, all);
+  await writeAssignments(event.ref, withAssignmentPositions(all));
   invalidateCache(`assignments:${tournamentId}:${divisionId}:${eventId}`);
   invalidateCache(`pub-assignments:${tournamentId}:${divisionId}:${eventId}`);
   invalidateCache(`bundle-assign:${tournamentId}`);

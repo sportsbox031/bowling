@@ -4,6 +4,8 @@ import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 import { isValidFirestoreId } from "@/lib/validation";
+import { isFivesEventConfig, normalizeFivesPhaseSplit } from "@/lib/fives-config";
+import type { FivesEventConfig } from "@/lib/models";
 
 const eventKinds = ["SINGLE", "DOUBLES", "TRIPLES", "FOURS", "FIVES", "OVERALL"] as const;
 type EventKind = (typeof eventKinds)[number];
@@ -17,6 +19,7 @@ const parseEvent = (payload: any) => ({
   laneStart: Number(payload?.laneStart),
   laneEnd: Number(payload?.laneEnd),
   tableShift: Number(payload?.tableShift),
+  fivesConfig: isFivesEventConfig(payload?.fivesConfig) ? payload.fivesConfig : null,
   linkedEventId: typeof payload?.linkedEventId === "string" && payload.linkedEventId.trim() ? payload.linkedEventId.trim() : null,
   halfType: payload?.halfType === "FIRST" || payload?.halfType === "SECOND" ? payload.halfType : null,
 });
@@ -91,7 +94,7 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   }
 
   const input = parseEvent(await req.json());
-  const updateData: Record<string, string | number | null> = {};
+  const updateData: Record<string, string | number | boolean | null | FivesEventConfig> = {};
   if (input.title) updateData.title = input.title;
   if (input.kind && eventKinds.includes(input.kind as EventKind)) updateData.kind = input.kind;
   if (Number.isFinite(input.gameCount) && input.gameCount >= 1 && input.gameCount <= 6) {
@@ -109,6 +112,15 @@ export async function PUT(req: NextRequest, ctx: { params: { tournamentId: strin
   if (Number.isFinite(input.tableShift)) updateData.tableShift = input.tableShift;
   if (Number.isFinite(input.tableShift) && Math.abs(input.tableShift) > MAX_TABLE_SHIFT) {
     return NextResponse.json({ message: "INVALID_TABLE_SHIFT" }, { status: 400 });
+  }
+  if (input.kind === "FIVES") {
+    const normalizedGameCount =
+      typeof updateData.gameCount === "number"
+        ? updateData.gameCount
+        : input.gameCount;
+    updateData.fivesConfig = input.fivesConfig ?? normalizeFivesPhaseSplit({ gameCount: normalizedGameCount });
+  } else if (input.kind) {
+    updateData.fivesConfig = null;
   }
   updateData.linkedEventId = input.linkedEventId;
   updateData.halfType = input.halfType;

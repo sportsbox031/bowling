@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/auth/admin";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 
 const getParticipantsRef = (tournamentId: string, divisionId: string, eventId: string) => {
@@ -82,18 +83,30 @@ export async function PUT(
   }
 
   const body = await req.json();
-  const playerId = typeof body?.playerId === "string" ? body.playerId.trim() : "";
-  const squadId = typeof body?.squadId === "string" ? body.squadId.trim() : undefined;
+  const playerIds = Array.isArray(body?.playerIds)
+    ? body.playerIds.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0)
+    : [];
+  const singlePlayerId = typeof body?.playerId === "string" ? body.playerId.trim() : "";
+  const targetPlayerIds = playerIds.length > 0 ? playerIds : (singlePlayerId ? [singlePlayerId] : []);
+  const hasSquadId = Object.prototype.hasOwnProperty.call(body ?? {}, "squadId");
+  const squadId = typeof body?.squadId === "string" ? body.squadId.trim() : null;
 
-  if (!playerId) {
+  if (targetPlayerIds.length === 0) {
     return NextResponse.json({ message: "NO_PLAYER_ID" }, { status: 400 });
   }
 
-  const updateData: Record<string, string> = { updatedAt: new Date().toISOString() };
-  if (squadId !== undefined) updateData.squadId = squadId;
+  const batch = adminDb!.batch();
+  const updatedAt = new Date().toISOString();
+  for (const playerId of targetPlayerIds) {
+    const updateData: Record<string, string | FieldValue> = { updatedAt };
+    if (hasSquadId) {
+      updateData.squadId = squadId ? squadId : FieldValue.delete();
+    }
+    batch.set(ref.doc(playerId), updateData, { merge: true });
+  }
 
-  await ref.doc(playerId).set(updateData, { merge: true });
-  return NextResponse.json({ message: "PARTICIPANT_UPDATED", playerId });
+  await batch.commit();
+  return NextResponse.json({ message: "PARTICIPANT_UPDATED", playerIds: targetPlayerIds });
 }
 
 export async function DELETE(

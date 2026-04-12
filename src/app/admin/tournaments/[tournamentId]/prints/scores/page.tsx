@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GlassButton, GlassSelect } from "@/components/ui";
 import { GENDER_LABELS } from "@/lib/constants";
+import { getTeamActiveMemberIdsForGame } from "@/lib/team-lineup";
 
 /* ── Types ── */
 type Player = { id: string; number: number; name: string; affiliation: string };
@@ -12,10 +13,19 @@ type EventInfo = {
   id: string; title: string; kind: string; gameCount: number;
   scheduleDate: string; laneStart: number; laneEnd: number;
   tableShift: number; halfType?: "FIRST" | "SECOND";
+  fivesConfig?: { firstHalfGameCount: number; secondHalfGameCount: number };
 };
 type Assignment = { id: string; playerId: string; gameNumber: number; laneNumber: number; squadId?: string };
 type Squad = { id: string; name: string };
-type Team = { id: string; name: string; teamType: string; memberIds: string[] };
+type Team = {
+  id: string;
+  name: string;
+  teamType: string;
+  memberIds: string[];
+  rosterIds?: string[];
+  firstHalfMemberIds?: string[];
+  secondHalfMemberIds?: string[];
+};
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventRankingRow = {
   playerId: string; number: number; name: string; affiliation: string;
@@ -131,7 +141,15 @@ export default function ScoreSignaturePrintPage() {
 
   const div = data?.divisions.find((d) => d.id === divId);
   const divLabel = div ? `${div.title} ${GENDER_LABELS[div.gender] ?? ""}` : "";
-  const halfLabel = event?.halfType === "FIRST" ? "전반" : event?.halfType === "SECOND" ? "후반" : "";
+  const halfLabel = useMemo(() => {
+    if (!event) return "";
+    if (event.halfType === "FIRST") return "전반";
+    if (event.halfType === "SECOND") return "후반";
+    if (event.kind === "FIVES" && event.fivesConfig) {
+      return gameNum <= event.fivesConfig.firstHalfGameCount ? "전반" : "후반";
+    }
+    return "";
+  }, [event, gameNum]);
   const isTeamEvent = event ? ["DOUBLES", "TRIPLES", "FIVES"].includes(event.kind) : false;
 
   // Build one sheet per lane
@@ -169,7 +187,12 @@ export default function ScoreSignaturePrintPage() {
         const teamGroups = new Map<string, string[]>();
         const noTeam: string[] = [];
         for (const a of laneAssigns) {
-          const team = teams.find((t) => t.memberIds.includes(a.playerId));
+          const team = teams.find((t) => getTeamActiveMemberIdsForGame(t, {
+            kind: event.kind,
+            gameNumber: gameNum,
+            gameCount: event.gameCount,
+            fivesConfig: event.fivesConfig,
+          }).includes(a.playerId));
           if (team) {
             if (!teamGroups.has(team.id)) teamGroups.set(team.id, []);
             teamGroups.get(team.id)!.push(a.playerId);
@@ -179,9 +202,16 @@ export default function ScoreSignaturePrintPage() {
         }
         for (const [teamId, pids] of teamGroups) {
           const team = teams.find((t) => t.id === teamId)!;
+          const activeMemberIds = getTeamActiveMemberIdsForGame(team, {
+            kind: event.kind,
+            gameNumber: gameNum,
+            gameCount: event.gameCount,
+            fivesConfig: event.fivesConfig,
+          });
+          const sortedPids = [...pids].sort((a, b) => activeMemberIds.indexOf(a) - activeMemberIds.indexOf(b));
           groups.push({
             groupName: team.name,
-            players: pids.map((pid) => {
+            players: sortedPids.map((pid) => {
               const p = playerMap.get(pid);
               return { playerId: pid, number: p?.number ?? 0, name: p?.name ?? "", gameScore: getGameScore(pid) };
             }),

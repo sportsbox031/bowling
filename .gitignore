@@ -1,5 +1,7 @@
 node_modules
 .next
+.next-build
+.next-dev
 .env.local
 .env*.local
 *.json

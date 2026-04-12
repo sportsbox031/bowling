@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "backfill:aggregates": "node --experimental-strip-types scripts/backfill-aggregates.ts",
+    "migrate:fives:dry-run": "npx tsx scripts/migrate-fives-to-single-event.ts",
     "test": "jest",
     "test:watch": "jest --watch"
   },

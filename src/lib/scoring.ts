@@ -1,5 +1,6 @@
 import {
   EventRankingRow,
+  FivesEventConfig,
   OverallRankingRow,
   Player,
   ScoreColumn,
@@ -46,6 +47,18 @@ const emptyScoreColumns = (count = MAX_GAME_COUNT): ScoreColumn[] =>
 
 const roundToOneDecimal = (value: number): number =>
   Math.round((value + Number.EPSILON) * 10) / 10;
+
+const mergeMemberIds = (...groups: Array<string[] | undefined>): string[] => {
+  const merged: string[] = [];
+  groups.forEach((group) => {
+    (group ?? []).forEach((playerId) => {
+      if (playerId && !merged.includes(playerId)) {
+        merged.push(playerId);
+      }
+    });
+  });
+  return merged;
+};
 
 const compareRows = (
   a: Omit<EventRankingRow, "rank" | "tieRank">,
@@ -148,6 +161,39 @@ export interface TeamRankingResult {
   rows: TeamRankingRow[];
 }
 
+const rankTeamRows = (
+  rows: Omit<TeamRankingRow, "rank" | "tieRank" | "pinDiff">[],
+): TeamRankingRow[] => {
+  const normalRows = rows.filter((r) => r.teamType === "NORMAL");
+  const unrankedRows = rows.filter((r) => r.teamType !== "NORMAL");
+
+  const sortedNormal = [...normalRows].sort((a, b) => b.teamTotal - a.teamTotal);
+  const leaderTotal = sortedNormal[0]?.teamTotal ?? 0;
+
+  const rankMap = new Map<number, number>();
+  sortedNormal.forEach((row, idx) => {
+    if (!rankMap.has(row.teamTotal)) {
+      rankMap.set(row.teamTotal, idx + 1);
+    }
+  });
+
+  const rankedNormal: TeamRankingRow[] = sortedNormal.map((row) => ({
+    ...row,
+    rank: rankMap.get(row.teamTotal) ?? 0,
+    tieRank: rankMap.get(row.teamTotal) ?? 0,
+    pinDiff: Math.max(0, leaderTotal - row.teamTotal),
+  }));
+
+  const trailingRows: TeamRankingRow[] = unrankedRows.map((row) => ({
+    ...row,
+    rank: 0,
+    tieRank: 0,
+    pinDiff: 0,
+  }));
+
+  return [...rankedNormal, ...trailingRows];
+};
+
 export const buildTeamLeaderboard = (input: TeamRankingInput): TeamRankingResult => {
   const individualByPlayer = new Map<string, EventRankingRow>();
   for (const row of input.individualRows) {
@@ -177,41 +223,91 @@ export const buildTeamLeaderboard = (input: TeamRankingInput): TeamRankingResult
       teamId: team.id,
       teamName: team.name,
       teamType: team.teamType,
-      linkedTeamId: team.linkedTeamId,
       members,
       teamTotal,
+      ...(team.linkedTeamId ? { linkedTeamId: team.linkedTeamId } : {}),
     };
   });
 
-  // NORMAL 팀만 순위 산정, MAKEUP은 뒤에 붙임
-  const normalRows = baseRows.filter((r) => r.teamType === "NORMAL");
-  const makeupRows = baseRows.filter((r) => r.teamType === "MAKEUP");
+  return { rows: rankTeamRows(baseRows) };
+};
 
-  const sortedNormal = [...normalRows].sort((a, b) => b.teamTotal - a.teamTotal);
-  const leaderTotal = sortedNormal[0]?.teamTotal ?? 0;
+export interface FivesTeamRankingInput extends TeamRankingInput {
+  fivesConfig: FivesEventConfig;
+}
 
-  const rankMap = new Map<number, number>();
-  sortedNormal.forEach((row, idx) => {
-    if (!rankMap.has(row.teamTotal)) {
-      rankMap.set(row.teamTotal, idx + 1);
-    }
+const sumScoresForGames = (row: EventRankingRow | undefined, gameNumbers: number[]): number =>
+  gameNumbers.reduce((sum, gameNumber) => {
+    const score = row?.gameScores?.[gameNumber - 1]?.score;
+    return sum + (typeof score === "number" ? score : 0);
+  }, 0);
+
+export const buildFivesTeamLeaderboard = (input: FivesTeamRankingInput): TeamRankingResult => {
+  const individualByPlayer = new Map<string, EventRankingRow>();
+  for (const row of input.individualRows) {
+    individualByPlayer.set(row.playerId, row);
+  }
+
+  const firstHalfGames = Array.from({ length: input.fivesConfig.firstHalfGameCount }, (_, index) => index + 1);
+  const secondHalfGames = Array.from(
+    { length: input.fivesConfig.secondHalfGameCount },
+    (_, index) => input.fivesConfig.firstHalfGameCount + index + 1,
+  );
+
+  const baseRows: Omit<TeamRankingRow, "rank" | "tieRank" | "pinDiff">[] = input.teams.map((team) => {
+    const firstHalfMemberIds = team.firstHalfMemberIds ?? team.memberIds;
+    const secondHalfMemberIds = team.secondHalfMemberIds ?? team.firstHalfMemberIds ?? team.memberIds;
+    const displayMemberIds = mergeMemberIds(
+      firstHalfMemberIds,
+      secondHalfMemberIds,
+      team.rosterIds,
+    );
+    const members: TeamMemberRow[] = displayMemberIds.map((pid) => {
+      const player = input.playerMap.get(pid);
+      const row = individualByPlayer.get(pid);
+      return {
+        playerId: pid,
+        name: player?.name ?? "",
+        affiliation: player?.affiliation ?? "",
+        region: player?.region ?? "",
+        number: player?.number ?? 0,
+        gameScores: row?.gameScores ?? [],
+        total: row?.total ?? 0,
+        average: row?.attempts ? roundToOneDecimal((row?.total ?? 0) / row.attempts) : 0,
+        playsFirstHalf: firstHalfMemberIds.includes(pid),
+        playsSecondHalf: secondHalfMemberIds.includes(pid),
+      };
+    });
+
+    const firstHalfTotal = firstHalfMemberIds.reduce(
+      (sum, playerId) => sum + sumScoresForGames(individualByPlayer.get(playerId), firstHalfGames),
+      0,
+    );
+    const secondHalfTotal = secondHalfMemberIds.reduce(
+      (sum, playerId) => sum + sumScoresForGames(individualByPlayer.get(playerId), secondHalfGames),
+      0,
+    );
+    const teamGameTotals = [...firstHalfGames, ...secondHalfGames].map((gameNumber) => {
+      const activeMemberIds = firstHalfGames.includes(gameNumber) ? firstHalfMemberIds : secondHalfMemberIds;
+      const gameTotal = activeMemberIds.reduce((sum, playerId) => {
+        const score = individualByPlayer.get(playerId)?.gameScores?.[gameNumber - 1]?.score;
+        return sum + (typeof score === "number" ? score : 0);
+      }, 0);
+      return activeMemberIds.length > 0 ? gameTotal : null;
+    });
+
+    return {
+      teamId: team.id,
+      teamName: team.name,
+      teamType: team.teamType,
+      members,
+      teamGameTotals,
+      teamTotal: team.teamType === "NORMAL" ? firstHalfTotal + secondHalfTotal : 0,
+      ...(team.linkedTeamId ? { linkedTeamId: team.linkedTeamId } : {}),
+    };
   });
 
-  const rankedNormal: TeamRankingRow[] = sortedNormal.map((row) => ({
-    ...row,
-    rank: rankMap.get(row.teamTotal) ?? 0,
-    tieRank: rankMap.get(row.teamTotal) ?? 0,
-    pinDiff: Math.max(0, leaderTotal - row.teamTotal),
-  }));
-
-  const unrankedMakeup: TeamRankingRow[] = makeupRows.map((row) => ({
-    ...row,
-    rank: 0,
-    tieRank: 0,
-    pinDiff: 0,
-  }));
-
-  return { rows: [...rankedNormal, ...unrankedMakeup] };
+  return { rows: rankTeamRows(baseRows) };
 };
 
 export interface FivesLinkedInput {
