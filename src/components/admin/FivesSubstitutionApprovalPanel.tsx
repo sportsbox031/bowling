@@ -10,6 +10,11 @@ type TournamentOption = {
   title: string;
 };
 
+type DivisionOption = {
+  id: string;
+  title: string;
+};
+
 type SubmissionItem = {
   id: string;
   divisionId: string;
@@ -40,6 +45,7 @@ export default function FivesSubstitutionApprovalPanel({
   hideTournamentSelect = false,
 }: Props) {
   const [tournaments, setTournaments] = useState<TournamentOption[]>([]);
+  const [divisions, setDivisions] = useState<DivisionOption[]>([]);
   const [selectedTournamentId, setSelectedTournamentId] = useState(lockedTournamentId);
   const [items, setItems] = useState<SubmissionItem[]>([]);
   const [message, setMessage] = useState("");
@@ -51,9 +57,15 @@ export default function FivesSubstitutionApprovalPanel({
     () => tournaments.find((tournament) => tournament.id === selectedTournamentId) ?? null,
     [tournaments, selectedTournamentId],
   );
+  const divisionTitleById = useMemo(
+    () => new Map(divisions.map((division) => [division.id, division.title])),
+    [divisions],
+  );
   const selectedDivisionTitle = useMemo(
-    () => items.find((item) => item.divisionId === lockedDivisionId)?.divisionTitle ?? lockedDivisionId,
-    [items, lockedDivisionId],
+    () => items.find((item) => item.divisionId === lockedDivisionId)?.divisionTitle
+      ?? divisionTitleById.get(lockedDivisionId)
+      ?? lockedDivisionId,
+    [divisionTitleById, items, lockedDivisionId],
   );
 
   useEffect(() => {
@@ -72,12 +84,19 @@ export default function FivesSubstitutionApprovalPanel({
 
   useEffect(() => {
     if (!selectedTournamentId) {
+      setDivisions([]);
       setItems([]);
       return;
     }
 
     const load = async () => {
       try {
+        const tournamentData = await cachedFetch<{ divisions?: DivisionOption[] }>(
+          `/api/public/tournaments/${selectedTournamentId}`,
+          120000,
+        );
+        setDivisions(tournamentData.divisions ?? []);
+
         const params = new URLSearchParams({ tournamentId: selectedTournamentId });
         if (lockedDivisionId) {
           params.set("divisionId", lockedDivisionId);
@@ -159,7 +178,7 @@ export default function FivesSubstitutionApprovalPanel({
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                 <div style={{ display: "grid", gap: 4 }}>
                   <strong style={{ color: "#1e293b" }}>
-                    {item.divisionTitle || item.divisionId} · {item.eventTitle || item.eventId}
+                    {item.divisionTitle || divisionTitleById.get(item.divisionId) || item.divisionId} · {item.eventTitle || item.eventId}
                   </strong>
                   <span style={{ fontSize: 13, color: "#64748b" }}>
                     팀 {item.teamName || item.teamId} · 지도자 {item.coachName || item.coachUid} · 단체 {item.organizationName || item.organizationId}

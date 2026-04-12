@@ -468,7 +468,11 @@ export default function TeamSubmissionManager({
       setSubmissions((current) => mergeUniqueSubmissions([data.item, ...current]));
       setDrafts([makeDraft(0)]);
       setMessageTone("success");
-      setMessage("팀편성 제출이 완료되었습니다. 5인조 후반 교체는 전반 종료 후 별도로 제출할 수 있습니다.");
+      setMessage(
+        selectedEvent.kind === "FIVES"
+          ? "팀편성 제출이 완료되었습니다. 5인조 후반 교체는 전반 종료 후 별도로 제출할 수 있습니다."
+          : "팀편성 제출이 완료되었습니다.",
+      );
     } catch (error) {
       setMessageTone("error");
       setMessage((error as Error).message || "팀편성 제출에 실패했습니다.");
@@ -486,7 +490,7 @@ export default function TeamSubmissionManager({
           <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 14, lineHeight: 1.7 }}>
             승인된 선수만 사용할 수 있으며, 선수등록 순서에 따라 1~6번은 A조, 7번 이후는 B조로 자동 구분됩니다.
             {" "}2인조, 3인조, 5인조는 인원이 부족해도 제출할 수 있지만 정원 미달 팀은 개인기록만 반영됩니다.
-            {" "}5인조 후반 교체는 전반 종료 후 별도로 제출합니다.
+            {selectedEvent?.kind === "FIVES" ? " 5인조 후반 교체는 전반 종료 후 별도로 제출합니다." : ""}
           </p>
         </div>
 
