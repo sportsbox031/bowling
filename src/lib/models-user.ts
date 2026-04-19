@@ -134,12 +134,45 @@ export interface FivesSubstitutionSubmission {
   rejectionReason?: string;
 }
 
+export interface UserNotification {
+  id: string;
+  uid: string;
+  type: "SUBMISSION_APPROVED" | "SUBMISSION_REJECTED";
+  targetType: "PLAYER_SUBMISSION" | "TEAM_SUBMISSION" | "FIVES_SUBSTITUTION";
+  targetId: string;
+  tournamentId: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface ApprovalAction {
   id: string;
-  targetType: "USER" | "ORGANIZATION" | "PLAYER_SUBMISSION" | "TEAM_SUBMISSION" | "FIVES_SUBSTITUTION";
+  targetType:
+    | "USER"
+    | "ORGANIZATION"
+    | "PLAYER_SUBMISSION"
+    | "TEAM_SUBMISSION"
+    | "FIVES_SUBSTITUTION"
+    | "SCORE"
+    | "TOURNAMENT"
+    | "DIVISION"
+    | "EVENT"
+    | "PLAYER";
   targetId: string;
-  action: "APPROVE" | "REJECT" | "DISABLE" | "RESET_PASSWORD";
+  action:
+    | "APPROVE"
+    | "REJECT"
+    | "DISABLE"
+    | "RESET_PASSWORD"
+    | "SCORE_SAVE"
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE";
   actorUid: string;
   createdAt: string;
+  /** 사람이 읽을 수 있는 메모 (예: 이벤트 제목, 선수 이름, 점수 값 등) */
   note?: string;
+  /** 관련 대회 ID (검색/필터용) */
+  tournamentId?: string;
 }

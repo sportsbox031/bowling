@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { getCached, setCache } from "@/lib/api-cache";
 import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
 import { compareEventDisplay } from "@/lib/event-display-order";
+import { toDoc, snapToDoc } from "@/lib/firebase/docUtils";
 
 const FIVES_COMBINED_TITLE = "5인조 전반+후반 합계";
 
@@ -72,14 +73,14 @@ export async function GET(
   if (!tournamentDoc.exists) {
     return NextResponse.json({ message: "TOURNAMENT_NOT_FOUND" }, { status: 404 });
   }
-  const tournament = { id: tournamentDoc.id, ...tournamentDoc.data() } as any;
+  const tournament = snapToDoc<{ title?: string; host?: string; startsAt?: string; endsAt?: string }>(tournamentDoc)!;
 
   // Load all divisions
   const divisionsSnap = await db
     .collection("tournaments").doc(tournamentId)
     .collection("divisions").get();
 
-  const divisions = divisionsSnap.docs.map((d) => ({ id: d.id, ...d.data() } as any));
+  const divisions = divisionsSnap.docs.map(toDoc<{ title?: string; gender?: string; code?: string }>);
 
   const divisionSummaries = await Promise.all(
     divisions.map(async (division) => {
@@ -90,7 +91,7 @@ export async function GET(
 
       const eventMedals = (await Promise.all(
         eventsSnap.docs.map(async (eventDoc) => {
-          const event = { id: eventDoc.id, ...eventDoc.data() } as any;
+          const event = toDoc<{ title?: string; kind?: string; halfType?: string; hidden?: boolean; linkedEventId?: string; fivesConfig?: { firstHalfGameCount: number } }>(eventDoc);
           if (event.hidden === true) {
             return null;
           }

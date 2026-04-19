@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { GlassCard, GlassButton } from "@/components/ui";
+import { exportTournamentSummary } from "@/lib/admin/excel-export";
 
 type Winner = {
   rank: number;
@@ -109,6 +110,7 @@ export default function SummaryPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDivisionId, setSelectedDivisionId] = useState("");
 
   useEffect(() => {
@@ -120,7 +122,10 @@ export default function SummaryPage() {
         setData(d);
         if (d.divisions.length > 0) setSelectedDivisionId(d.divisions[0].divisionId);
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error("[summary] 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      })
       .finally(() => setLoading(false));
   }, [tournamentId]);
 
@@ -139,6 +144,14 @@ export default function SummaryPage() {
       <div style={{ padding: 32, textAlign: "center" }}>
         <div className="skeleton" style={{ width: 200, height: 24, margin: "0 auto 16px" }} />
         <div className="skeleton" style={{ width: 400, height: 300, margin: "0 auto" }} />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>
+        {error}
       </div>
     );
   }
@@ -178,12 +191,19 @@ export default function SummaryPage() {
         {/* Navigation */}
         <div className="no-print" style={{ marginBottom: 24, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
           <Link href={`/admin/tournaments/${tournamentId}`}>
-            <GlassButton size="sm">← 대회관리</GlassButton>
+            <GlassButton size="sm" variant="ghost">← 대회관리</GlassButton>
           </Link>
           <Link href={`/admin/tournaments/${tournamentId}/certificates`}>
             <GlassButton size="sm" variant="secondary">🏅 상장 생성</GlassButton>
           </Link>
-          <GlassButton size="sm" variant="secondary" onClick={() => window.print()}>
+          <GlassButton
+            size="sm"
+            variant="secondary"
+            onClick={() => data && exportTournamentSummary(data)}
+          >
+            📥 엑셀 내보내기
+          </GlassButton>
+          <GlassButton size="sm" variant="primary" onClick={() => window.print()}>
             🖨️ 인쇄
           </GlassButton>
         </div>

@@ -27,6 +27,7 @@ export const COLLECTIONS = {
   FivesSubstitutionSubmissions: "fivesSubstitutionSubmissions",
   System: "system",
   GlobalPlayers: "globalPlayers",
+  Notifications: "notifications",
 } as const;
 
 export interface TournamentDocument extends Tournament {}
@@ -105,4 +106,6 @@ export const firestorePaths = {
   fivesSubstitutionSubmission: (tournamentId: string, submissionId: string) =>
     `tournaments/${tournamentId}/fivesSubstitutionSubmissions/${submissionId}`,
   shortIdCounter: () => "system/shortIdCounter",
+  notifications: (uid: string) => `notifications/${uid}/items`,
+  notification: (uid: string, notificationId: string) => `notifications/${uid}/items/${notificationId}`,
 } as const;

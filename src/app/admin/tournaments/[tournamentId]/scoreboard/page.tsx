@@ -25,6 +25,7 @@ import { KIND_LABELS } from "@/lib/constants";
 import { clearScoreDraft, readScoreDraft, writeScoreDraft } from "@/lib/score-draft";
 import { applySavedDraftEntries } from "@/lib/score-save-state";
 import { createLoadedScoreboardSections, markSectionLoaded, markSectionStale, needsSectionLoad } from "@/lib/admin-scoreboard-sections";
+import { exportEventScoreboard } from "@/lib/admin/excel-export";
 type ScoreColumn = { gameNumber: number; score: number | null };
 type EventLeaderboardRow = {
   playerId: string;
@@ -1342,18 +1343,6 @@ export default function AdminScoreboardPage() {
     }, 30);
     return () => window.clearTimeout(timer);
   }, [activeLaneRows, activeTab, selectedGame]);
-  const tabStyle = (tab: ScoreboardTab) => ({
-    padding: "10px 18px",
-    fontSize: 14,
-    fontWeight: activeTab === tab ? 700 : 500,
-    color: activeTab === tab ? "#6366f1" : "#64748b",
-    background: activeTab === tab ? "rgba(99, 102, 241, 0.1)" : "transparent",
-    border: "none",
-    borderBottom: activeTab === tab ? "2px solid #6366f1" : "2px solid transparent",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    whiteSpace: "nowrap" as const,
-  });
 
   if (!divisionId || !eventId) {
     return (
@@ -1376,19 +1365,14 @@ export default function AdminScoreboardPage() {
           ? `${sq.name} (${effectiveParticipantList.filter((p) => p.squadId === sq.id).length}명)`
           : sq.name;
         return (
-          <button
+          <GlassButton
             key={sq.id}
+            size="sm"
+            variant={isSelected ? "primary" : "secondary"}
             onClick={() => (opts?.onSelect ? opts.onSelect(sq.id) : setSelectedSquadId(sq.id))}
-            style={{
-              padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
-              color: isSelected ? "#fff" : "#475569",
-              background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-              border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-              cursor: "pointer", fontFamily: "inherit",
-            }}
           >
             {label}
-          </button>
+          </GlassButton>
         );
       })}
     </div>
@@ -1419,6 +1403,16 @@ export default function AdminScoreboardPage() {
                   <Link href={`/admin/tournaments/${tournamentId}/prints/scores?divisionId=${divisionId}&eventId=${eventId}`}>
                     <GlassButton size="sm" variant="ghost" style={{ fontSize: 12, padding: "3px 10px" }}>🖨️ 점수서명표</GlassButton>
                   </Link>
+                  {eventRows.length > 0 && (
+                    <GlassButton
+                      size="sm"
+                      variant="ghost"
+                      style={{ fontSize: 12, padding: "3px 10px" }}
+                      onClick={() => exportEventScoreboard(eventRows, event?.title ?? "성적표", "")}
+                    >
+                      📥 엑셀
+                    </GlassButton>
+                  )}
                 </>
               )}
             </div>
@@ -1428,14 +1422,9 @@ export default function AdminScoreboardPage() {
             <span style={{ fontSize: 13, color: "#475569", fontWeight: 600 }}>게임 선택</span>
             <div style={{ display: "flex", gap: 4 }}>
               {Array.from({ length: event?.gameCount ?? 1 }, (_, i) => i + 1).map((g) => (
-                <button key={g} onClick={() => setSelectedGame(g)} style={{
-                  padding: "5px 12px", borderRadius: 7, fontSize: 13, fontWeight: selectedGame === g ? 700 : 500,
-                  color: selectedGame === g ? "#fff" : "#475569",
-                  background: selectedGame === g ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.3)",
-                  border: "1px solid rgba(255,255,255,0.3)", cursor: "pointer", fontFamily: "inherit",
-                }}>
+                <GlassButton key={g} size="sm" variant={selectedGame === g ? "primary" : "secondary"} onClick={() => setSelectedGame(g)}>
                   {g}G
-                </button>
+                </GlassButton>
               ))}
             </div>
           </GlassCard>
@@ -1455,11 +1444,11 @@ export default function AdminScoreboardPage() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", borderRadius: "12px 12px 0 0", overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: 4, borderBottom: "1px solid rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.15)", borderRadius: "12px 12px 0 0", overflowX: "auto", padding: "6px 8px 0" }}>
         {(Object.keys(TAB_LABELS) as ScoreboardTab[]).filter((tab) => tab !== "teams").map((tab) => (
-          <button key={tab} style={tabStyle(tab)} onClick={() => setActiveTab(tab)}>
+          <GlassButton key={tab} size="sm" variant={activeTab === tab ? "primary" : "secondary"} onClick={() => setActiveTab(tab)}>
             {tab === "participants" ? participantTabLabel : TAB_LABELS[tab]}
-          </button>
+          </GlassButton>
         ))}
       </div>
 
@@ -1509,22 +1498,17 @@ export default function AdminScoreboardPage() {
                   const isSelected = selectedSquadId === sq.id;
                   const count = effectiveParticipantList.filter((p) => p.squadId === sq.id).length;
                   return (
-                    <div key={sq.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
-                      <button
+                    <div key={sq.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <GlassButton
+                        size="sm"
+                        variant={isSelected ? "primary" : "secondary"}
                         onClick={() => setSelectedSquadId(sq.id)}
-                        style={{
-                          padding: "7px 14px", borderRadius: "8px 0 0 8px", fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? "#fff" : "#475569",
-                          background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-                          borderTop: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                          borderLeft: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                          borderBottom: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                          borderRight: "none", cursor: "pointer", fontFamily: "inherit",
-                        }}
                       >
                         {sq.name} ({count}명)
-                      </button>
-                      <button
+                      </GlassButton>
+                      <GlassButton
+                        size="sm"
+                        variant="ghost"
                         onClick={() => {
                           if (!confirm(`"${sq.name}" 스쿼드를 삭제하시겠습니까?`)) return;
                           void (async () => {
@@ -1537,15 +1521,10 @@ export default function AdminScoreboardPage() {
                             } catch (err) { showMsg((err as Error).message || "삭제 실패", "error"); }
                           })();
                         }}
-                        style={{
-                          padding: "7px 8px", borderRadius: "0 8px 8px 0", fontSize: 11,
-                          color: "#94a3b8", background: "rgba(255,255,255,0.3)",
-                          border: "1px solid rgba(203,213,225,0.4)", cursor: "pointer", fontFamily: "inherit",
-                        }}
                         title="스쿼드 삭제"
                       >
                         ✕
-                      </button>
+                      </GlassButton>
                     </div>
                   );
                 })}
@@ -1555,37 +1534,25 @@ export default function AdminScoreboardPage() {
               <div style={{ marginTop: 12 }}>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                   <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>목록 보기:</span>
-                  <button
-                    type="button"
+                  <GlassButton
+                    size="sm"
+                    variant={participantViewSquadId === PARTICIPANT_VIEW_ALL ? "primary" : "secondary"}
                     onClick={() => setParticipantViewSquadId(PARTICIPANT_VIEW_ALL)}
-                    style={{
-                      padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: participantViewSquadId === PARTICIPANT_VIEW_ALL ? 700 : 500,
-                      color: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "#fff" : "#475569",
-                      background: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "linear-gradient(135deg, #0f766e, #14b8a6)" : "rgba(255,255,255,0.4)",
-                      border: participantViewSquadId === PARTICIPANT_VIEW_ALL ? "1px solid rgba(20,184,166,0.35)" : "1px solid rgba(203,213,225,0.4)",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
                   >
                     전체 ({allPlayers.length}명)
-                  </button>
+                  </GlassButton>
                   {squads.map((sq) => {
                     const count = effectiveParticipantList.filter((p) => p.squadId === sq.id).length;
                     const isSelected = participantViewSquadId === sq.id;
                     return (
-                      <button
+                      <GlassButton
                         key={`participant-view-${sq.id}`}
-                        type="button"
+                        size="sm"
+                        variant={isSelected ? "primary" : "secondary"}
                         onClick={() => setParticipantViewSquadId(sq.id)}
-                        style={{
-                          padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? "#fff" : "#475569",
-                          background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-                          border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                          cursor: "pointer", fontFamily: "inherit",
-                        }}
                       >
                         {sq.name} ({count}명)
-                      </button>
+                      </GlassButton>
                     );
                   })}
                 </div>
@@ -2061,7 +2028,7 @@ export default function AdminScoreboardPage() {
                 </span>
               )}
             </div>
-            <GlassButton size="sm" variant="ghost" onClick={() => void handleRefreshRanks()} disabled={loading || !event?.rankRefreshPending}>순위 반영</GlassButton>
+            <GlassButton size="sm" variant="secondary" onClick={() => void handleRefreshRanks()} disabled={loading || !event?.rankRefreshPending}>순위 반영</GlassButton>
           </div>
 
           {scoreActiveLanes.length === 0 ? (
@@ -2081,35 +2048,18 @@ export default function AdminScoreboardPage() {
                     return row && row.gameScores[selectedGame - 1]?.score !== null;
                   }).length;
                   return (
-                    <button
+                    <GlassButton
                       key={laneNum}
+                      size="sm"
+                      variant={isActive ? "primary" : "secondary"}
                       onClick={() => setSelectedScoreLane(laneNum)}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: 10,
-                        fontSize: 13,
-                        fontWeight: isActive ? 700 : 500,
-                        color: isActive ? "#fff" : "#475569",
-                        background: isActive
-                          ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                          : "rgba(255,255,255,0.35)",
-                        border: isActive
-                          ? "1px solid rgba(255,255,255,0.3)"
-                          : "1px solid rgba(203,213,225,0.4)",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        display: "flex",
-                        flexDirection: "column" as const,
-                        alignItems: "center",
-                        gap: 2,
-                        minWidth: 70,
-                      }}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 70 }}
                     >
                       <span>Lane {laneNum}</span>
                       <span style={{ fontSize: 10, opacity: 0.8 }}>
                         {savedCount}/{lanePlayerIds.length}명 입력
                       </span>
-                    </button>
+                    </GlassButton>
                   );
                 })}
               </div>
@@ -2256,38 +2206,26 @@ export default function AdminScoreboardPage() {
             <div style={{ marginBottom: 18 }}>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#475569", marginRight: 4 }}>스쿼드:</span>
-                <button
-                  type="button"
+                <GlassButton
+                  size="sm"
+                  variant={teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "primary" : "secondary"}
                   onClick={() => setTeamsViewSquadId(PARTICIPANT_VIEW_ALL)}
-                  style={{
-                    padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? 700 : 500,
-                    color: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "#fff" : "#475569",
-                    background: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "linear-gradient(135deg, #0f766e, #14b8a6)" : "rgba(255,255,255,0.4)",
-                    border: teamsViewSquadId === PARTICIPANT_VIEW_ALL ? "1px solid rgba(20,184,166,0.35)" : "1px solid rgba(203,213,225,0.4)",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}
                 >
                   전체
-                </button>
+                </GlassButton>
                 {squads.map((sq) => {
                   const isSelected = teamsViewSquadId === sq.id;
                   const sqTeamCount = teams.filter((team) => getTeamRoster(team).some((playerId) => effectiveParticipantList.some((p) => (p.playerId ?? p.id) === playerId && p.squadId === sq.id))).length;
                   const sqUnteamedCount = unteamedParticipants.filter((p) => effectiveParticipantList.some((pt) => (pt.playerId ?? pt.id) === p.id && pt.squadId === sq.id)).length;
                   return (
-                    <button
+                    <GlassButton
                       key={`teams-squad-${sq.id}`}
-                      type="button"
+                      size="sm"
+                      variant={isSelected ? "primary" : "secondary"}
                       onClick={() => setTeamsViewSquadId(sq.id)}
-                      style={{
-                        padding: "6px 14px", borderRadius: 8, fontSize: 13, fontWeight: isSelected ? 700 : 500,
-                        color: isSelected ? "#fff" : "#475569",
-                        background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.4)",
-                        border: isSelected ? "1px solid rgba(99,102,241,0.4)" : "1px solid rgba(203,213,225,0.4)",
-                        cursor: "pointer", fontFamily: "inherit",
-                      }}
                     >
                       {sq.name} ({sqTeamCount}팀 · 미배정 {sqUnteamedCount}명)
-                    </button>
+                    </GlassButton>
                   );
                 })}
               </div>
@@ -2312,29 +2250,15 @@ export default function AdminScoreboardPage() {
                 {squadFilteredUnteamedParticipants.map((player) => {
                   const isSelected = selectedTeamMemberIds.has(player.id);
                   return (
-                    <button
+                    <GlassButton
                       key={player.id}
+                      size="sm"
+                      variant={isSelected ? "primary" : "ghost"}
                       onClick={() => toggleTeamMemberSelection(player.id)}
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: 8,
-                        fontSize: 13,
-                        fontWeight: isSelected ? 700 : 500,
-                        color: isSelected ? "#fff" : "#334155",
-                        background: isSelected
-                          ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
-                          : "rgba(255,255,255,0.5)",
-                        border: isSelected
-                          ? "1px solid rgba(99,102,241,0.5)"
-                          : "1px solid rgba(203,213,225,0.5)",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                        transition: "all 0.15s",
-                      }}
                     >
                       #{player.number} {player.name}
                       <span style={{ fontSize: 11, opacity: 0.75, marginLeft: 4 }}>({player.affiliation})</span>
-                    </button>
+                    </GlassButton>
                   );
                 })}
               </div>
@@ -2417,9 +2341,8 @@ export default function AdminScoreboardPage() {
                       )}
                       <GlassButton
                         onClick={() => handleDeleteTeam(team.id)}
-                        variant="ghost"
+                        variant="danger"
                         size="sm"
-                        style={{ color: "#ef4444" }}
                       >
                         삭제
                       </GlassButton>
@@ -2458,23 +2381,20 @@ export default function AdminScoreboardPage() {
                             .map((p) => {
                               const inMakeup = teams.some((t) => t.id !== team.id && t.teamType === "MAKEUP" && getTeamRoster(t).includes(p.id));
                               return (
-                                <button
+                                <GlassButton
                                   key={p.id}
+                                  size="sm"
+                                  variant="secondary"
                                   onClick={() => setEditingRoster((prev) => prev ? {
                                     ...prev,
                                     rosterIds: [...prev.rosterIds, p.id],
                                     firstHalfMemberIds: prev.firstHalfMemberIds.length < teamSize ? [...prev.firstHalfMemberIds, p.id] : prev.firstHalfMemberIds,
                                     secondHalfMemberIds: prev.secondHalfMemberIds.length < teamSize ? [...prev.secondHalfMemberIds, p.id] : prev.secondHalfMemberIds,
                                   } : prev)}
-                                  style={{
-                                    padding: "4px 10px", borderRadius: 6, fontSize: 12, fontFamily: "inherit", cursor: "pointer",
-                                    color: inMakeup ? "#d97706" : "#475569",
-                                    background: inMakeup ? "rgba(251,191,36,0.15)" : "rgba(255,255,255,0.5)",
-                                    border: `1px solid ${inMakeup ? "rgba(217,119,6,0.3)" : "rgba(203,213,225,0.5)"}`,
-                                  }}
+                                  style={inMakeup ? { color: "#d97706" } : undefined}
                                 >
                                   {p.number} {p.name}{inMakeup ? " (혼성)" : ""}
-                                </button>
+                                </GlassButton>
                               );
                             })
                           }
@@ -2494,32 +2414,23 @@ export default function AdminScoreboardPage() {
                             const p = playerById.get(pid);
                             const isSelected = editingRoster.firstHalfMemberIds.includes(pid);
                             return (
-                              <button
+                              <GlassButton
                                 key={`${pid}-first`}
+                                size="sm"
+                                variant={isSelected ? "primary" : "secondary"}
                                 onClick={() => setEditingRoster((prev) => {
                                   if (!prev) return prev;
                                   if (isSelected) {
-                                    return {
-                                      ...prev,
-                                      firstHalfMemberIds: prev.firstHalfMemberIds.filter((id) => id !== pid),
-                                    };
+                                    return { ...prev, firstHalfMemberIds: prev.firstHalfMemberIds.filter((id) => id !== pid) };
                                   } else {
                                     return prev.firstHalfMemberIds.length >= teamSize
                                       ? prev
                                       : { ...prev, firstHalfMemberIds: [...prev.firstHalfMemberIds, pid] };
                                   }
                                 })}
-                                style={{
-                                  padding: "5px 10px", borderRadius: 7, fontSize: 12,
-                                  fontWeight: isSelected ? 700 : 500,
-                                  color: isSelected ? "#fff" : "#334155",
-                                  background: isSelected ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.5)",
-                                  border: `1px solid ${isSelected ? "rgba(99,102,241,0.4)" : "rgba(203,213,225,0.5)"}`,
-                                  cursor: "pointer", fontFamily: "inherit",
-                                }}
                               >
                                 {isSelected ? "✓ " : ""}{p ? `${p.number} ${p.name}` : pid}
-                              </button>
+                              </GlassButton>
                             );
                           })}
                         </div>
@@ -2538,31 +2449,22 @@ export default function AdminScoreboardPage() {
                             const p = playerById.get(pid);
                             const isSelected = editingRoster.secondHalfMemberIds.includes(pid);
                             return (
-                              <button
+                              <GlassButton
                                 key={`${pid}-second`}
+                                size="sm"
+                                variant={isSelected ? "primary" : "secondary"}
                                 onClick={() => setEditingRoster((prev) => {
                                   if (!prev) return prev;
                                   if (isSelected) {
-                                    return {
-                                      ...prev,
-                                      secondHalfMemberIds: prev.secondHalfMemberIds.filter((id) => id !== pid),
-                                    };
+                                    return { ...prev, secondHalfMemberIds: prev.secondHalfMemberIds.filter((id) => id !== pid) };
                                   }
                                   return prev.secondHalfMemberIds.length >= teamSize
                                     ? prev
                                     : { ...prev, secondHalfMemberIds: [...prev.secondHalfMemberIds, pid] };
                                 })}
-                                style={{
-                                  padding: "5px 10px", borderRadius: 7, fontSize: 12,
-                                  fontWeight: isSelected ? 700 : 500,
-                                  color: isSelected ? "#fff" : "#334155",
-                                  background: isSelected ? "linear-gradient(135deg, #14b8a6, #0ea5e9)" : "rgba(255,255,255,0.5)",
-                                  border: `1px solid ${isSelected ? "rgba(20,184,166,0.4)" : "rgba(203,213,225,0.5)"}`,
-                                  cursor: "pointer", fontFamily: "inherit",
-                                }}
                               >
                                 {isSelected ? "✓ " : ""}{p ? `${p.number} ${p.name}` : pid}
-                              </button>
+                              </GlassButton>
                             );
                           })}
                         </div>

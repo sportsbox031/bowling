@@ -81,8 +81,9 @@ export async function POST(
         : {}),
     });
   } catch (error) {
+    console.error("[rank-refresh] RANK_REFRESH_FAILED", error);
     return NextResponse.json(
-      { message: "RANK_REFRESH_FAILED", error: String((error as Error).message) },
+      { message: "RANK_REFRESH_FAILED" },
       { status: 500 },
     );
   }

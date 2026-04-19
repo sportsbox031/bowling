@@ -71,6 +71,7 @@ export default function TournamentManagerPage() {
   const [loading, setLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [cloningId, setCloningId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -138,6 +139,36 @@ export default function TournamentManagerPage() {
       startsAt: item.startsAt,
       endsAt: item.endsAt,
     });
+  };
+
+  const cloneTournament = async (item: Tournament) => {
+    const newTitle = prompt(`복제할 대회명을 입력하세요:`, `${item.title} (복사본)`);
+    if (!newTitle?.trim()) return;
+    const newStartsAt = prompt("시작일 (예: 2026-07-01):", item.startsAt);
+    if (!newStartsAt?.trim()) return;
+    const newEndsAt = prompt("종료일 (예: 2026-07-03):", item.endsAt);
+    if (!newEndsAt?.trim()) return;
+
+    setCloningId(item.id);
+    setMessage("");
+    try {
+      const res = await api<{ newTournamentId: string; title: string; divisionCount: number; eventCount: number }>(
+        `/api/admin/tournaments/${item.id}/clone`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: newTitle.trim(), startsAt: newStartsAt.trim(), endsAt: newEndsAt.trim() }),
+        }
+      );
+      setMessage(`✅ "${res.title}" 복제 완료 (종별 ${res.divisionCount}개, 세부종목 ${res.eventCount}개)`);
+      setMessageType("success");
+      await load();
+    } catch {
+      setMessage("대회 복제 실패");
+      setMessageType("error");
+    } finally {
+      setCloningId(null);
+    }
   };
 
   const remove = async (id: string) => {
@@ -266,9 +297,17 @@ export default function TournamentManagerPage() {
                 </td>
                 <td style={glassTdStyle}>{statusBadge(item.status)}</td>
                 <td style={glassTdStyle}>
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <GlassButton variant="secondary" size="sm" onClick={() => startEdit(item)}>
                       수정
+                    </GlassButton>
+                    <GlassButton
+                      variant="secondary"
+                      size="sm"
+                      disabled={cloningId === item.id}
+                      onClick={() => void cloneTournament(item)}
+                    >
+                      {cloningId === item.id ? "복제 중..." : "복제"}
                     </GlassButton>
                     <GlassButton variant="danger" size="sm" onClick={() => remove(item.id)}>
                       삭제

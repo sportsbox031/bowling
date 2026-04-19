@@ -4,6 +4,10 @@ import { adminDb } from "@/lib/firebase/admin";
 import { firestorePaths } from "@/lib/firebase/schema";
 import { applyApprovedTeamEntrySubmission } from "@/lib/projections/team-entry-projection";
 import { invalidateCache } from "@/lib/api-cache";
+import { snapToDoc } from "@/lib/firebase/docUtils";
+import type { TeamEntrySubmission } from "@/lib/models-user";
+import { writeAuditLog } from "@/lib/admin/audit";
+import { createNotification } from "@/lib/admin/notify";
 
 type Ctx = { params: { submissionId: string } };
 
@@ -30,7 +34,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     return NextResponse.json({ message: "SUBMISSION_NOT_FOUND" }, { status: 404 });
   }
 
-  const submission = { id: submissionSnap.id, ...submissionSnap.data() } as any;
+  const submission = snapToDoc<TeamEntrySubmission>(submissionSnap)!;
   if (submission.status !== "SUBMITTED") {
     return NextResponse.json({ message: "SUBMISSION_NOT_PENDING" }, { status: 409 });
   }
@@ -44,6 +48,22 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       rejectedBy: session.uid,
       rejectionReason: typeof body?.rejectionReason === "string" ? body.rejectionReason.trim() : "",
     }, { merge: true });
+    void writeAuditLog(adminDb, {
+      targetType: "TEAM_SUBMISSION",
+      targetId: ctx.params.submissionId,
+      action: "REJECT",
+      actorUid: session.uid,
+      tournamentId,
+      note: body?.rejectionReason ?? "",
+    });
+    void createNotification(adminDb, {
+      uid: submission.coachUid,
+      type: "SUBMISSION_REJECTED",
+      targetType: "TEAM_SUBMISSION",
+      targetId: ctx.params.submissionId,
+      tournamentId,
+      message: `팀편성 제출이 반려되었습니다.${body?.rejectionReason ? ` 사유: ${body.rejectionReason}` : ""}`,
+    });
     return NextResponse.json({ ok: true, status: "REJECTED" });
   }
 
@@ -54,6 +74,22 @@ export async function POST(req: NextRequest, ctx: Ctx) {
 
   invalidateCache(`bundle-setup:${tournamentId}:${submission.divisionId}:${submission.eventId}`);
   invalidateCache(`bundle-full:${tournamentId}:${submission.divisionId}:${submission.eventId}`);
+
+  void writeAuditLog(adminDb, {
+    targetType: "TEAM_SUBMISSION",
+    targetId: ctx.params.submissionId,
+    action: "APPROVE",
+    actorUid: session.uid,
+    tournamentId,
+  });
+  void createNotification(adminDb, {
+    uid: submission.coachUid,
+    type: "SUBMISSION_APPROVED",
+    targetType: "TEAM_SUBMISSION",
+    targetId: ctx.params.submissionId,
+    tournamentId,
+    message: "팀편성 제출이 승인되었습니다.",
+  });
 
   return NextResponse.json({
     ok: true,

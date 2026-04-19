@@ -20,8 +20,8 @@ export default async function UserTournamentPlayerSubmissionsPage({ params }: Pr
       style={{ alignItems: "flex-start", paddingTop: "4rem" }}
       footer={(
         <div style={{ display: "flex", justifyContent: "center" }}>
-          <Link href={`/tournaments/${params.tournamentId}?manage=1`}>
-            <GlassButton variant="ghost">대회 관리로 돌아가기</GlassButton>
+          <Link href={`/user/tournaments/${params.tournamentId}`}>
+            <GlassButton variant="ghost">← 대회 제출 현황으로</GlassButton>
           </Link>
         </div>
       )}

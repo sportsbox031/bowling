@@ -9,6 +9,8 @@ import { rebuildEventAssignmentsAggregate } from "@/lib/aggregates/event-assignm
 import { sortAssignmentsByPosition, withAssignmentPositions } from "@/lib/assignment-position";
 import { isValidFirestoreId } from "@/lib/validation";
 import { isFivesEventConfig } from "@/lib/fives-config";
+import type { DocumentReference, QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { toDoc } from "@/lib/firebase/docUtils";
 
 interface AssignmentItem {
   playerId: string;
@@ -22,7 +24,7 @@ const MAX_PLAYERS_PER_LANE = 4;
 const MAX_GAME_NUMBER = 20;
 const MAX_TABLE_SHIFT = 20;
 
-const writeAssignments = async (eventRef: any, assignments: AssignmentItem[]) => {
+const writeAssignments = async (eventRef: DocumentReference, assignments: AssignmentItem[]) => {
   if (!eventRef || typeof eventRef.collection !== "function") {
     return;
   }
@@ -48,10 +50,10 @@ const writeAssignments = async (eventRef: any, assignments: AssignmentItem[]) =>
   await batch.commit();
 };
 
-const clearAssignments = async (eventRef: any, gameNumbers?: number[]) => {
+const clearAssignments = async (eventRef: DocumentReference, gameNumbers?: number[]) => {
   const snap = await eventRef.collection("assignments").get();
   const targets = gameNumbers
-    ? snap.docs.filter((doc: any) => gameNumbers.includes(Number(doc.data().gameNumber)))
+    ? snap.docs.filter((doc: QueryDocumentSnapshot) => gameNumbers.includes(Number(doc.data().gameNumber)))
     : snap.docs;
 
   if (targets.length === 0) {
@@ -79,7 +81,7 @@ const normalizeManualItems = (items: unknown[]): AssignmentItem[] =>
     })
     .filter((item) => Boolean(item.playerId));
 
-const replaceAssignmentsByGame = async (eventRef: any, assignments: AssignmentItem[]) => {
+const replaceAssignmentsByGame = async (eventRef: DocumentReference, assignments: AssignmentItem[]) => {
   const gameNumbers = Array.from(new Set(assignments.map((item) => item.gameNumber)));
   await clearAssignments(eventRef, gameNumbers);
   await writeAssignments(eventRef, assignments);
@@ -170,9 +172,9 @@ const getParticipantIds = async (tournamentId: string, divisionId: string, event
   );
 };
 
-const clearAssignmentsBySquad = async (eventRef: any, squadId: string) => {
+const clearAssignmentsBySquad = async (eventRef: DocumentReference, squadId: string) => {
   const snap = await eventRef.collection("assignments").get();
-  const targets = snap.docs.filter((doc: any) => doc.data().squadId === squadId);
+  const targets = snap.docs.filter((doc: QueryDocumentSnapshot) => doc.data().squadId === squadId);
   if (targets.length === 0) return;
   const batch = eventRef.parent.firestore.batch();
   for (const doc of targets) batch.delete(doc.ref);
@@ -210,8 +212,8 @@ export async function GET(
   }
 
   const snap = await event.ref.collection("assignments").orderBy("gameNumber").get();
-  const allItems = sortAssignmentsByPosition(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as any)));
-  const items = squadId ? allItems.filter((item: any) => item.squadId === squadId) : allItems;
+  const allItems = sortAssignmentsByPosition(snap.docs.map(toDoc<AssignmentItem>));
+  const items = squadId ? allItems.filter((item) => item.squadId === squadId) : allItems;
   const result = { items };
   setCache(cacheKey, result, 15000);
   return NextResponse.json(result);

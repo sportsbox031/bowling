@@ -98,6 +98,7 @@ export default function ScoreSignaturePrintPage() {
   const [squadId, setSquadId] = useState("__all__");
   const [gameNum, setGameNum] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load tournament metadata
   useEffect(() => {
@@ -108,7 +109,10 @@ export default function ScoreSignaturePrintPage() {
         setData(d);
         if (!divId && d.divisions.length > 0) setDivId(d.divisions[0].id);
       })
-      .catch(() => {});
+      .catch((e) => {
+        console.error("[scores-print] 토너먼트 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      });
   }, [divId, tournamentId]);
 
   useEffect(() => {
@@ -132,7 +136,10 @@ export default function ScoreSignaturePrintPage() {
         // Default game to gameCount (last game)
         if (d.event?.gameCount) setGameNum(d.event.gameCount);
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error("[scores-print] 번들 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      })
       .finally(() => setLoading(false));
   }, [tournamentId, divId, evtId]);
 
@@ -290,6 +297,10 @@ export default function ScoreSignaturePrintPage() {
     return result;
   }, [sheets]);
 
+  if (error) {
+    return <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>{error}</div>;
+  }
+
   return (
     <>
       <style>{printStyles}</style>
@@ -298,12 +309,12 @@ export default function ScoreSignaturePrintPage() {
         <div className="no-print" style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <Link href={`/admin/tournaments/${tournamentId}`}>
-              <GlassButton size="sm">← 대회관리</GlassButton>
+              <GlassButton size="sm" variant="ghost">← 대회관리</GlassButton>
             </Link>
             <Link href={`/admin/tournaments/${tournamentId}/scoreboard?divisionId=${divId}&eventId=${evtId}`}>
               <GlassButton size="sm" variant="secondary">📋 점수판</GlassButton>
             </Link>
-            <GlassButton size="sm" variant="secondary" onClick={() => window.print()}>
+            <GlassButton size="sm" variant="primary" onClick={() => window.print()}>
               🖨️ 인쇄
             </GlassButton>
             <span style={{ fontSize: 13, color: "#64748b" }}>

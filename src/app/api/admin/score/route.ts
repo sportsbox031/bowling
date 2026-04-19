@@ -6,6 +6,7 @@ import { invalidateCache } from "@/lib/api-cache";
 import { rebuildEventScoreboardAggregate } from "@/lib/aggregates/event-scoreboard";
 import { markOverallAggregateStale, rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { isValidGameNumber, isValidScore } from "@/lib/validation";
+import { writeAuditLog } from "@/lib/admin/audit";
 
 export async function POST(req: NextRequest) {
   const session = await verifyAdminSessionToken(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
@@ -123,12 +124,22 @@ export async function POST(req: NextRequest) {
     }
     invalidateCache(`overall:${tournamentId}`);
 
+    void writeAuditLog(adminDb, {
+      targetType: "SCORE",
+      targetId: `${normalizedPlayerId}_${gameNumber}`,
+      action: "SCORE_SAVE",
+      actorUid: session.uid,
+      tournamentId,
+      note: `${playerData.name} G${gameNumber} = ${score}점 (레인 ${normalizedLaneNumber})`,
+    });
+
     return NextResponse.json({
       message: "SCORE_SAVED",
       updatedAt,
       rankRefreshPending: true,
     });
   } catch (error) {
+    console.error("[score] SCORE_SAVE_FAILED", error);
     return NextResponse.json(
       { message: "SCORE_SAVE_FAILED" },
       { status: 500 },

@@ -91,6 +91,7 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [expandedSubmissionId, setExpandedSubmissionId] = useState("");
+  const [editingSubmissionId, setEditingSubmissionId] = useState("");
   const submitLockRef = useRef(false);
 
   useEffect(() => {
@@ -194,6 +195,7 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
   const loadRejectedSubmission = (submission: SubmissionItem) => {
     setSelectedDivisionId(submission.divisionId);
     setSelectedOrganizationId(submission.organizationId);
+    setEditingSubmissionId("");
     setPlayers(
       submission.players.map((player, index) => ({
         id: `draft-retry-${submission.id}-${index}-${Date.now()}`,
@@ -203,6 +205,21 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
     setCurrentPlayer(blankDraft());
     setMessageTone("info");
     setMessage("반려된 선수등록 내용을 편집 화면으로 불러왔습니다. 수정 후 다시 제출하세요.");
+  };
+
+  const loadSubmittedForEdit = (submission: SubmissionItem) => {
+    setSelectedDivisionId(submission.divisionId);
+    setSelectedOrganizationId(submission.organizationId);
+    setEditingSubmissionId(submission.id);
+    setPlayers(
+      submission.players.map((player, index) => ({
+        id: `draft-edit-${submission.id}-${index}-${Date.now()}`,
+        name: player.name,
+      })),
+    );
+    setCurrentPlayer(blankDraft());
+    setMessageTone("info");
+    setMessage("검토 중인 제출 내용을 불러왔습니다. 수정 후 저장하세요.");
   };
 
   const submit = async () => {
@@ -234,25 +251,52 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
     submitLockRef.current = true;
     setMessage("");
     try {
-      const response = await fetch(`/api/user/tournaments/${selectedTournamentId}/player-submissions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          divisionId: selectedDivisionId,
-          organizationId: selectedOrganizationId,
-          players: normalizedPlayers,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error("선수등록 제출에 실패했습니다.");
+      if (editingSubmissionId) {
+        // 기존 SUBMITTED 제출 수정 (PUT)
+        const response = await fetch(
+          `/api/user/tournaments/${selectedTournamentId}/player-submissions/${editingSubmissionId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ players: normalizedPlayers }),
+          }
+        );
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({})) as { message?: string };
+          throw new Error(err.message === "SUBMISSION_NOT_EDITABLE" ? "이미 승인/반려된 제출은 수정할 수 없습니다." : "수정에 실패했습니다.");
+        }
+        setSubmissions((current) =>
+          current.map((item) =>
+            item.id === editingSubmissionId ? { ...item, players: normalizedPlayers } : item
+          )
+        );
+        setEditingSubmissionId("");
+        setPlayers([]);
+        setCurrentPlayer(blankDraft());
+        setMessageTone("success");
+        setMessage("선수등록 제출이 수정되었습니다.");
+      } else {
+        // 새 제출 (POST)
+        const response = await fetch(`/api/user/tournaments/${selectedTournamentId}/player-submissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            divisionId: selectedDivisionId,
+            organizationId: selectedOrganizationId,
+            players: normalizedPlayers,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error("선수등록 제출에 실패했습니다.");
+        }
+        const data = await response.json() as { item: SubmissionItem };
+        setSubmissions((current) => mergeUniqueSubmissions([data.item, ...current]));
+        setExpandedSubmissionId(data.item.id);
+        setPlayers([]);
+        setCurrentPlayer(blankDraft());
+        setMessageTone("success");
+        setMessage("선수등록 제출이 완료되었습니다. 관리자 승인 후 개인전 출전선수로 자동 반영됩니다.");
       }
-      const data = await response.json() as { item: SubmissionItem };
-      setSubmissions((current) => mergeUniqueSubmissions([data.item, ...current]));
-      setExpandedSubmissionId(data.item.id);
-      setPlayers([]);
-      setCurrentPlayer(blankDraft());
-      setMessageTone("success");
-      setMessage("선수등록 제출이 완료되었습니다. 관리자 승인 후 개인전 출전선수로 자동 반영됩니다.");
     } catch (error) {
       setMessageTone("error");
       setMessage((error as Error).message || "선수등록 제출에 실패했습니다.");
@@ -365,7 +409,24 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <GlassButton variant="secondary" onClick={addPlayer}>선수 추가</GlassButton>
-          <GlassButton onClick={submit} isLoading={submitting || loading}>제출하기</GlassButton>
+          <div style={{ display: "flex", gap: 8 }}>
+            {editingSubmissionId && (
+              <GlassButton
+                variant="ghost"
+                onClick={() => {
+                  setEditingSubmissionId("");
+                  setPlayers([]);
+                  setCurrentPlayer(blankDraft());
+                  setMessage("");
+                }}
+              >
+                취소
+              </GlassButton>
+            )}
+            <GlassButton onClick={submit} isLoading={submitting || loading}>
+              {editingSubmissionId ? "수정 저장" : "제출하기"}
+            </GlassButton>
+          </div>
         </div>
       </GlassCard>
 
@@ -456,18 +517,32 @@ export default function PlayerRegistrationManager({ tournamentId: lockedTourname
                     ) : null}
                   </div>
                 ) : null}
-                {submission.status === "REJECTED" ? (
-                  <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
-                    <GlassButton
-                      size="sm"
-                      variant="secondary"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        loadRejectedSubmission(submission);
-                      }}
-                    >
-                      다시 편집
-                    </GlassButton>
+                {(submission.status === "REJECTED" || submission.status === "SUBMITTED") ? (
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 6 }}>
+                    {submission.status === "SUBMITTED" && (
+                      <GlassButton
+                        size="sm"
+                        variant="secondary"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          loadSubmittedForEdit(submission);
+                        }}
+                      >
+                        수정
+                      </GlassButton>
+                    )}
+                    {submission.status === "REJECTED" && (
+                      <GlassButton
+                        size="sm"
+                        variant="secondary"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          loadRejectedSubmission(submission);
+                        }}
+                      >
+                        다시 편집
+                      </GlassButton>
+                    )}
                   </div>
                 ) : null}
               </div>

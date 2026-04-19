@@ -209,6 +209,7 @@ export default function CertificatesPage() {
   const { tournamentId } = useParams<{ tournamentId: string }>();
   const [data, setData] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedDivisionId, setSelectedDivisionId] = useState("");
   const [selectedEventId, setSelectedEventId] = useState("__all__");
   const [maxRank, setMaxRank] = useState(4);
@@ -222,7 +223,10 @@ export default function CertificatesPage() {
         setData(d);
         if (d.divisions.length > 0) setSelectedDivisionId(d.divisions[0].divisionId);
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error("[certificates] 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      })
       .finally(() => setLoading(false));
   }, [tournamentId]);
 
@@ -271,6 +275,14 @@ export default function CertificatesPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>
+        {error}
+      </div>
+    );
+  }
+
   if (!data) {
     return (
       <div style={{ padding: 32, textAlign: "center", color: "#64748b" }}>
@@ -287,12 +299,12 @@ export default function CertificatesPage() {
         <div className="no-print" style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <Link href={`/admin/tournaments/${tournamentId}`}>
-              <GlassButton size="sm">← 대회관리</GlassButton>
+              <GlassButton size="sm" variant="ghost">← 대회관리</GlassButton>
             </Link>
             <Link href={`/admin/tournaments/${tournamentId}/summary`}>
               <GlassButton size="sm" variant="secondary">📊 종합집계표</GlassButton>
             </Link>
-            <GlassButton size="sm" variant="secondary" onClick={() => window.print()}>
+            <GlassButton size="sm" variant="primary" onClick={() => window.print()}>
               🖨️ 인쇄
             </GlassButton>
           </div>

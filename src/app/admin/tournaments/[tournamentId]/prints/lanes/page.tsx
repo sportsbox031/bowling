@@ -86,6 +86,7 @@ export default function LanePrintPage() {
   const [squads, setSquads] = useState<Squad[]>([]);
   const [squadId, setSquadId] = useState("__all__");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -95,7 +96,10 @@ export default function LanePrintPage() {
         setData(d);
         if (!divId && d.divisions.length > 0) setDivId(d.divisions[0].id);
       })
-      .catch(() => {});
+      .catch((e) => {
+        console.error("[lanes] 토너먼트 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      });
   }, [divId, tournamentId]);
 
   useEffect(() => {
@@ -117,7 +121,10 @@ export default function LanePrintPage() {
         setAssignments(d.assignments ?? []);
         setSquads(d.squads ?? []);
       })
-      .catch(() => {})
+      .catch((e) => {
+        console.error("[lanes] 번들 데이터 로드 실패", e);
+        setError("데이터 로드 실패");
+      })
       .finally(() => setLoading(false));
   }, [tournamentId, divId, evtId]);
 
@@ -168,6 +175,10 @@ export default function LanePrintPage() {
   // Divide by maxPerLane for row height
   const rowMinHeight = Math.max(Math.floor(560 / maxPerLane), 36);
 
+  if (error) {
+    return <div style={{ padding: 32, textAlign: "center", color: "#ef4444" }}>{error}</div>;
+  }
+
   return (
     <>
       <style>{printStyles}</style>
@@ -176,12 +187,12 @@ export default function LanePrintPage() {
         <div className="no-print" style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", marginBottom: 16 }}>
             <Link href={`/admin/tournaments/${tournamentId}`}>
-              <GlassButton size="sm">← 대회관리</GlassButton>
+              <GlassButton size="sm" variant="ghost">← 대회관리</GlassButton>
             </Link>
             <Link href={`/admin/tournaments/${tournamentId}/scoreboard?divisionId=${divId}&eventId=${evtId}`}>
               <GlassButton size="sm" variant="secondary">📋 점수판</GlassButton>
             </Link>
-            <GlassButton size="sm" variant="secondary" onClick={() => window.print()}>
+            <GlassButton size="sm" variant="primary" onClick={() => window.print()}>
               🖨️ 인쇄
             </GlassButton>
           </div>

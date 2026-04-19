@@ -113,7 +113,7 @@ export default function AdminRequestDashboard() {
               <span style={{ fontSize: 13, color: "#64748b" }}>승인 대기 회원</span>
               <strong style={{ fontSize: 28, color: "#0f172a" }}>{summary.pendingUsers}명</strong>
               <Link href="/admin/coaches" style={{ textDecoration: "none" }}>
-                <GlassButton size="sm">지도자 관리로 이동</GlassButton>
+                <GlassButton size="sm" variant="secondary">지도자 관리로 이동</GlassButton>
               </Link>
             </GlassCard>
 
@@ -141,6 +141,14 @@ export default function AdminRequestDashboard() {
             <GlassCard variant="strong" style={{ display: "grid", gap: 6 }}>
               <span style={{ fontSize: 13, color: "#64748b" }}>대회 운영</span>
               <strong style={{ fontSize: 28, color: "#0f172a" }}>바로가기</strong>
+              <Link href="/admin/tournaments" style={{ textDecoration: "none" }}>
+                <GlassButton size="sm" variant="secondary">대회 관리로 이동</GlassButton>
+              </Link>
+            </GlassCard>
+
+            <GlassCard variant="strong" style={{ display: "grid", gap: 6 }}>
+              <span style={{ fontSize: 13, color: "#64748b" }}>5인조 교체 승인 대기</span>
+              <strong style={{ fontSize: 28, color: "#0f172a" }}>{fivesPendingItems.length}건</strong>
               <Link href="/admin/tournaments" style={{ textDecoration: "none" }}>
                 <GlassButton size="sm" variant="secondary">대회 관리로 이동</GlassButton>
               </Link>

@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { GlassBadge, GlassButton, GlassCard, GlassInput, GlassSelect } from "@/components/ui";
+import { exportPlayerList } from "@/lib/admin/excel-export";
 import PageLoading from "@/components/common/PageLoading";
 import { GENDER_LABELS, KIND_LABELS, formatDivisionLabel } from "@/lib/constants";
 import { normalizeFivesPhaseSplit } from "@/lib/fives-config";
@@ -101,6 +102,7 @@ export default function TournamentDetailPage() {
   const [busy, setBusy] = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [sectionLoading, setSectionLoading] = useState(false);
+  const [eventProgress, setEventProgress] = useState<Record<string, number>>({});
 
   const activeDivision = useMemo(
     () => divisions.find((division) => division.id === activeDivisionId) ?? null,
@@ -140,6 +142,22 @@ export default function TournamentDetailPage() {
     );
     setEvents(result.items ?? []);
   }, [activeDivisionId, tournamentId]);
+
+  const loadProgress = useCallback(async () => {
+    if (!tournamentId) return;
+    try {
+      const result = await api<{ items?: Array<{ eventId: string; completionPct: number }> }>(
+        `/api/admin/tournaments/${tournamentId}/progress`
+      );
+      const map: Record<string, number> = {};
+      for (const item of result.items ?? []) {
+        map[item.eventId] = item.completionPct;
+      }
+      setEventProgress(map);
+    } catch {
+      // 진행률 로드 실패는 조용히 무시 (핵심 기능 아님)
+    }
+  }, [tournamentId]);
 
   const loadApprovalCounts = useCallback(async () => {
     if (!tournamentId || !activeDivisionId) {
@@ -223,7 +241,7 @@ export default function TournamentDetailPage() {
     const loadDivisionData = async () => {
       setSectionLoading(true);
       try {
-        await Promise.all([loadEvents(), loadApprovalCounts()]);
+        await Promise.all([loadEvents(), loadApprovalCounts(), loadProgress()]);
       } catch {
         if (!cancelled) {
           showMessage("종별 데이터를 불러오지 못했습니다.", "error");
@@ -240,7 +258,7 @@ export default function TournamentDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [activeDivisionId, loadApprovalCounts, loadEvents]);
+  }, [activeDivisionId, loadApprovalCounts, loadEvents, loadProgress]);
 
   const saveDivision = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -334,10 +352,6 @@ export default function TournamentDetailPage() {
     }
   };
 
-  const triggerScoreboard = (eventId: string) => {
-    window.open(`/admin/tournaments/${tournamentId}/scoreboard?eventId=${eventId}&divisionId=${activeDivisionId}`, "_blank");
-  };
-
   if (bootstrapping && !tournament && divisions.length === 0) {
     return (
       <PageLoading
@@ -372,13 +386,32 @@ export default function TournamentDetailPage() {
             <span>📍 {tournament.region}</span>
             <span>🎳 레인 {tournament.laneStart}-{tournament.laneEnd}</span>
             <span>📅 {tournament.seasonYear}년</span>
-            <span style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: 12, display: "flex", gap: 8 }}>
+            <span style={{ borderLeft: "1px solid #e2e8f0", paddingLeft: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Link href={`/admin/tournaments/${tournamentId}/summary`}>
                 <GlassButton size="sm" variant="secondary">📊 종합집계표</GlassButton>
               </Link>
               <Link href={`/admin/tournaments/${tournamentId}/certificates`}>
                 <GlassButton size="sm" variant="secondary">🏅 상장 생성</GlassButton>
               </Link>
+              <GlassButton
+                size="sm"
+                variant="secondary"
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`/api/admin/tournaments/${tournamentId}/players`);
+                    const data = await res.json() as { items?: Array<{ group: string; region: string; affiliation: string; number: number; name: string; hand: string; divisionId: string }> };
+                    const players = (data.items ?? []).map((p) => {
+                      const div = divisions.find((d) => d.id === p.divisionId);
+                      return { ...p, divisionTitle: div?.title };
+                    });
+                    exportPlayerList(players, tournament?.title ?? "대회");
+                  } catch {
+                    showMessage("선수 명단 내보내기 실패", "error");
+                  }
+                }}
+              >
+                📥 선수명단 엑셀
+              </GlassButton>
             </span>
           </div>
         ) : null}
@@ -450,7 +483,7 @@ export default function TournamentDetailPage() {
                 <strong style={{ fontSize: 30, color: "#0f172a" }}>{approvalCounts.playerSubmissions}건</strong>
                 <span style={{ fontSize: 13, color: "#64748b" }}>현재 종별의 선수등록 제출 승인 대기 건수</span>
                 <Link href={`/admin/tournaments/${tournamentId}/player-submissions`} style={{ textDecoration: "none" }}>
-                  <GlassButton size="sm">바로 확인</GlassButton>
+                  <GlassButton size="sm" variant="secondary">바로 확인</GlassButton>
                 </Link>
               </GlassCard>
 
@@ -637,8 +670,34 @@ export default function TournamentDetailPage() {
                     <span>🔁 Table 이동 {event.tableShift >= 0 ? `+${event.tableShift}` : event.tableShift}</span>
                   </div>
 
+                  {event.kind !== "OVERALL" && eventProgress[event.id] !== undefined && (
+                    <div style={{ display: "grid", gap: 4 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#64748b" }}>
+                        <span>점수 입력</span>
+                        <span style={{ fontWeight: 700, color: eventProgress[event.id] === 100 ? "#16a34a" : "#6366f1" }}>
+                          {eventProgress[event.id]}%
+                        </span>
+                      </div>
+                      <div style={{ height: 6, background: "rgba(99,102,241,0.15)", borderRadius: 999, overflow: "hidden" }}>
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${eventProgress[event.id]}%`,
+                            background: eventProgress[event.id] === 100
+                              ? "linear-gradient(90deg, #16a34a, #22c55e)"
+                              : "linear-gradient(90deg, #6366f1, #8b5cf6)",
+                            borderRadius: 999,
+                            transition: "width 0.4s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <GlassButton size="sm" onClick={() => triggerScoreboard(event.id)}>운영 화면</GlassButton>
+                    <Link href={`/admin/tournaments/${tournamentId}/scoreboard?eventId=${event.id}&divisionId=${activeDivisionId}`} target="_blank" style={{ textDecoration: "none" }}>
+                      <GlassButton size="sm">운영 화면 ↗</GlassButton>
+                    </Link>
                     <GlassButton
                       variant="secondary"
                       size="sm"

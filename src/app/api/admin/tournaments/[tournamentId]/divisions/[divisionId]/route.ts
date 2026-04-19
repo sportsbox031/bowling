@@ -4,11 +4,11 @@ import { adminDb } from "@/lib/firebase/admin";
 import { invalidateCache } from "@/lib/api-cache";
 import { rebuildPublicTournamentAggregate } from "@/lib/aggregates/public-tournament";
 
-import { FieldPath } from "firebase-admin/firestore";
+import { FieldPath, CollectionReference, Query, QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const BATCH_SIZE = 300;
 
-const deleteCollection = async (collectionRef: any) => {
+const deleteCollection = async (collectionRef: CollectionReference) => {
   while (true) {
     const snapshot = await collectionRef
       .orderBy(FieldPath.documentId())
@@ -20,7 +20,7 @@ const deleteCollection = async (collectionRef: any) => {
     }
 
     const batch = collectionRef.firestore.batch();
-    snapshot.docs.forEach((doc: any) => {
+    snapshot.docs.forEach((doc: QueryDocumentSnapshot) => {
       batch.delete(doc.ref);
     });
 
@@ -31,8 +31,8 @@ const deleteCollection = async (collectionRef: any) => {
   }
 };
 
-const deletePlayersByDivision = async (divisionPlayersQuery: any) => {
-  let cursor: any = null;
+const deletePlayersByDivision = async (divisionPlayersQuery: Query) => {
+  let cursor: QueryDocumentSnapshot | null = null;
 
   while (true) {
     let query = divisionPlayersQuery.orderBy(FieldPath.documentId()).limit(BATCH_SIZE);
@@ -46,7 +46,7 @@ const deletePlayersByDivision = async (divisionPlayersQuery: any) => {
     }
 
     const batch = divisionPlayersQuery.firestore.batch();
-    snapshot.docs.forEach((doc: any) => {
+    snapshot.docs.forEach((doc: QueryDocumentSnapshot) => {
       batch.delete(doc.ref);
     });
 
@@ -59,8 +59,8 @@ const deletePlayersByDivision = async (divisionPlayersQuery: any) => {
   }
 };
 
-const deleteDivisionEvents = async (eventsRef: any) => {
-  let cursor: any = null;
+const deleteDivisionEvents = async (eventsRef: CollectionReference) => {
+  let cursor: QueryDocumentSnapshot | null = null;
 
   while (true) {
     let query = eventsRef.orderBy(FieldPath.documentId()).limit(BATCH_SIZE);
@@ -79,7 +79,7 @@ const deleteDivisionEvents = async (eventsRef: any) => {
     }
 
     const batch = eventsRef.firestore.batch();
-    snapshot.docs.forEach((doc: any) => {
+    snapshot.docs.forEach((doc: QueryDocumentSnapshot) => {
       batch.delete(doc.ref);
     });
 
@@ -92,12 +92,15 @@ const deleteDivisionEvents = async (eventsRef: any) => {
   }
 };
 
-const normalizeDivision = (value: any) => ({
-  code: typeof value?.code === "string" ? value.code.trim() : undefined,
-  title: typeof value?.title === "string" ? value.title.trim() : undefined,
-  ageLabel: typeof value?.ageLabel === "string" ? value.ageLabel.trim() : undefined,
-  gender: typeof value?.gender === "string" ? value.gender.toUpperCase() : undefined,
-});
+const normalizeDivision = (value: unknown) => {
+  const v = value as Record<string, unknown> | null | undefined;
+  return {
+    code: typeof v?.code === "string" ? v.code.trim() : undefined,
+    title: typeof v?.title === "string" ? v.title.trim() : undefined,
+    ageLabel: typeof v?.ageLabel === "string" ? v.ageLabel.trim() : undefined,
+    gender: typeof v?.gender === "string" ? v.gender.toUpperCase() : undefined,
+  };
+};
 
 const getDocRef = (database: NonNullable<typeof adminDb>, tournamentId: string, divisionId: string) =>
   database.collection("tournaments").doc(tournamentId).collection("divisions").doc(divisionId);

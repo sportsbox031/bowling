@@ -6,6 +6,7 @@ import { readEventScoreboardAggregate, rebuildEventScoreboardAggregate } from "@
 import { readOverallAggregate, rebuildOverallAggregate } from "@/lib/aggregates/overall";
 import { sortAssignmentsByPosition } from "@/lib/assignment-position";
 import { isFivesEventConfig } from "@/lib/fives-config";
+import { toDoc } from "@/lib/firebase/docUtils";
 
 export async function GET(
   req: NextRequest,
@@ -35,7 +36,7 @@ export async function GET(
     if (cached) return NextResponse.json(cached);
 
     const snap = await eventRef.collection("assignments").orderBy("gameNumber").get();
-    const assignments = sortAssignmentsByPosition(snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, any>) })) as any[]);
+    const assignments = sortAssignmentsByPosition(snap.docs.map(toDoc<{ playerId: string; gameNumber: number; laneNumber: number; squadId?: string; position?: number }>));
     const result = { assignments };
     setCache(cacheKey, result, 10000);
     return NextResponse.json(result);
@@ -72,8 +73,8 @@ export async function GET(
         rankRefreshedAt: typeof eventMeta.rankRefreshedAt === "string" ? eventMeta.rankRefreshedAt : null,
       },
       players: playersSnap.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() } as any))
-        .sort((a: any, b: any) => (a.number ?? 0) - (b.number ?? 0)),
+        .map(toDoc<{ number?: number; name?: string; affiliation?: string; divisionId?: string }>)
+        .sort((a, b) => (a.number ?? 0) - (b.number ?? 0)),
       participants: participantsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
       squads: squadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
     };
@@ -125,11 +126,11 @@ export async function GET(
 
   const eventMeta = eventMetaSnap.data() ?? {};
   const players = playersSnap.docs
-    .map((doc) => ({ id: doc.id, ...doc.data() } as any))
-    .sort((a: any, b: any) => (a.number ?? 0) - (b.number ?? 0));
+    .map(toDoc<{ number?: number; name?: string; affiliation?: string; divisionId?: string }>)
+    .sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
   const participants = participantsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   const squads = squadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const assignments = sortAssignmentsByPosition(assignmentsSnap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, any>) })) as any[]);
+  const assignments = sortAssignmentsByPosition(assignmentsSnap.docs.map(toDoc<{ playerId: string; gameNumber: number; laneNumber: number; squadId?: string; position?: number }>));
   const teams = teamsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const result = {

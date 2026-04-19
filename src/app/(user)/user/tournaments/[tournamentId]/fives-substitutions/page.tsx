@@ -1,5 +1,7 @@
+import Link from "next/link";
 import UserShell from "@/components/user/UserShell";
 import FivesSubstitutionManager from "@/components/user/FivesSubstitutionManager";
+import { GlassButton } from "@/components/ui";
 import { requireApprovedUserSession } from "@/lib/auth/user-guard";
 
 type Props = {
@@ -16,6 +18,13 @@ export default async function UserTournamentFivesSubstitutionPage({ params }: Pr
       title="후반 교체 제출"
       subtitle="승인된 5인조 팀의 후반 출전 5명을 제출합니다."
       style={{ alignItems: "flex-start", paddingTop: "4rem" }}
+      footer={(
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <Link href={`/user/tournaments/${params.tournamentId}`}>
+            <GlassButton variant="ghost">← 대회 제출 현황으로</GlassButton>
+          </Link>
+        </div>
+      )}
     >
       <FivesSubstitutionManager tournamentId={params.tournamentId} />
     </UserShell>
