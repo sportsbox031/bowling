@@ -9,6 +9,7 @@ node_modules
 !package-lock.json
 !tsconfig.json
 !next-env.d.ts
+!vercel.json
 bowling-system-firebase-adminsdk-*.json
 firebase-service-account.json
 
