@@ -14,11 +14,12 @@ export async function GET(req: NextRequest) {
   const snap = await adminDb
     .collection(`notifications/${session.uid}/items`)
     .where("read", "==", false)
-    .orderBy("createdAt", "desc")
     .limit(20)
     .get();
 
-  const items = snap.docs.map((doc) => doc.data());
+  const items = snap.docs
+    .map((doc) => doc.data())
+    .sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
   return NextResponse.json({ items });
 }
 
