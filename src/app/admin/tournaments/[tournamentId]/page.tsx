@@ -395,6 +395,29 @@ export default function TournamentDetailPage() {
               </Link>
               <GlassButton
                 size="sm"
+                variant="ghost"
+                onClick={async () => {
+                  const newTitle = prompt("복제할 대회명을 입력하세요:", `${tournament?.title ?? ""} (복사본)`);
+                  if (!newTitle?.trim()) return;
+                  try {
+                    const res = await api<{ newTournamentId: string; title: string; divisionCount: number; eventCount: number }>(
+                      `/api/admin/tournaments/${tournamentId}/clone`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ title: newTitle.trim() }),
+                      },
+                    );
+                    showMessage(`"${res.title}" 복제 완료 (종별 ${res.divisionCount}개, 세부종목 ${res.eventCount}개)`);
+                  } catch {
+                    showMessage("대회 복제 실패", "error");
+                  }
+                }}
+              >
+                📋 복제
+              </GlassButton>
+              <GlassButton
+                size="sm"
                 variant="secondary"
                 onClick={async () => {
                   try {

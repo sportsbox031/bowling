@@ -7,7 +7,7 @@ import { invalidateCache } from "@/lib/api-cache";
 import { snapToDoc } from "@/lib/firebase/docUtils";
 import type { FivesSubstitutionSubmission } from "@/lib/models-user";
 import { writeAuditLog } from "@/lib/admin/audit";
-import { createNotification } from "@/lib/admin/notify";
+import { createNotification, resolveSubmissionContext } from "@/lib/admin/notify";
 
 type Ctx = { params: { submissionId: string } };
 
@@ -40,6 +40,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   }
 
   const now = new Date().toISOString();
+  const ctx2 = await resolveSubmissionContext(adminDb, tournamentId, submission.divisionId, submission.eventId);
+
   if (action === "REJECT") {
     await submissionRef.set({
       status: "REJECTED",
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       targetType: "FIVES_SUBSTITUTION",
       targetId: ctx.params.submissionId,
       tournamentId,
-      message: `후반 교체 제출이 반려되었습니다.${body?.rejectionReason ? ` 사유: ${body.rejectionReason}` : ""}`,
+      message: `${ctx2} 후반 교체가 반려되었습니다.${body?.rejectionReason ? ` 사유: ${body.rejectionReason}` : ""}`,
     });
     return NextResponse.json({ ok: true, status: "REJECTED" });
   }
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest, ctx: Ctx) {
     targetType: "FIVES_SUBSTITUTION",
     targetId: ctx.params.submissionId,
     tournamentId,
-    message: "후반 교체 제출이 승인되었습니다.",
+    message: `${ctx2} 후반 교체가 승인되었습니다.`,
   });
 
   return NextResponse.json({

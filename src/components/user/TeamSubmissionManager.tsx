@@ -124,6 +124,7 @@ export default function TeamSubmissionManager({
   const [message, setMessage] = useState("");
   const [messageTone, setMessageTone] = useState<"info" | "error" | "success">("info");
   const [submitting, setSubmitting] = useState(false);
+  const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
   const submitLockRef = useRef(false);
 
   useEffect(() => {
@@ -370,6 +371,31 @@ export default function TeamSubmissionManager({
   const addDraft = () => setDrafts((current) => [...current, makeDraft(current.length)]);
   const removeDraft = (draftId: string) => setDrafts((current) => (current.length === 1 ? current : current.filter((draft) => draft.id !== draftId)));
 
+  const loadSubmittedForEdit = (submission: SubmissionItem) => {
+    setSelectedDivisionId(submission.divisionId);
+    setSelectedEventId(submission.eventId);
+    setSelectedOrganizationId(submission.organizationId);
+    setDrafts(
+      submission.teams.map((team, index) => ({
+        id: `edit-${submission.id}-${index}-${Date.now()}`,
+        entryGroup: team.entryGroup,
+        playerIds: [...team.playerIds],
+        firstHalfMemberIds: [...(team.firstHalfMemberIds ?? [])],
+        numberInput: "",
+      })),
+    );
+    setEditingSubmissionId(submission.id);
+    setMessageTone("info");
+    setMessage("팀편성 내용을 수정 중입니다. 수정 후 저장하면 기존 제출이 업데이트됩니다.");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingSubmissionId(null);
+    setDrafts([makeDraft(0)]);
+    setMessage("");
+  };
+
   const loadRejectedSubmission = (submission: SubmissionItem) => {
     setSelectedDivisionId(submission.divisionId);
     setSelectedEventId(submission.eventId);
@@ -453,26 +479,49 @@ export default function TeamSubmissionManager({
     submitLockRef.current = true;
     setMessage("");
     try {
-      const response = await fetch(`/api/user/tournaments/${selectedTournamentId}/team-submissions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          divisionId: selectedDivisionId,
-          eventId: selectedEventId,
-          organizationId: selectedOrganizationId,
-          teams: payloadTeams,
-        }),
-      });
-      if (!response.ok) throw new Error("팀편성 제출에 실패했습니다.");
-      const data = await response.json() as { item: SubmissionItem };
-      setSubmissions((current) => mergeUniqueSubmissions([data.item, ...current]));
-      setDrafts([makeDraft(0)]);
-      setMessageTone("success");
-      setMessage(
-        selectedEvent.kind === "FIVES"
-          ? "팀편성 제출이 완료되었습니다. 5인조 후반 교체는 전반 종료 후 별도로 제출할 수 있습니다."
-          : "팀편성 제출이 완료되었습니다.",
-      );
+      if (editingSubmissionId) {
+        const response = await fetch(
+          `/api/user/tournaments/${selectedTournamentId}/team-submissions/${editingSubmissionId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ teams: payloadTeams }),
+          },
+        );
+        if (!response.ok) throw new Error("팀편성 수정에 실패했습니다.");
+        setSubmissions((current) =>
+          current.map((s) =>
+            s.id === editingSubmissionId
+              ? { ...s, teams: payloadTeams.map((t) => ({ entryGroup: t.entryGroup ?? "A", playerIds: t.playerIds, firstHalfMemberIds: t.firstHalfMemberIds })) }
+              : s,
+          ),
+        );
+        setEditingSubmissionId(null);
+        setDrafts([makeDraft(0)]);
+        setMessageTone("success");
+        setMessage("팀편성이 수정되었습니다.");
+      } else {
+        const response = await fetch(`/api/user/tournaments/${selectedTournamentId}/team-submissions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            divisionId: selectedDivisionId,
+            eventId: selectedEventId,
+            organizationId: selectedOrganizationId,
+            teams: payloadTeams,
+          }),
+        });
+        if (!response.ok) throw new Error("팀편성 제출에 실패했습니다.");
+        const data = await response.json() as { item: SubmissionItem };
+        setSubmissions((current) => mergeUniqueSubmissions([data.item, ...current]));
+        setDrafts([makeDraft(0)]);
+        setMessageTone("success");
+        setMessage(
+          selectedEvent.kind === "FIVES"
+            ? "팀편성 제출이 완료되었습니다. 5인조 후반 교체는 전반 종료 후 별도로 제출할 수 있습니다."
+            : "팀편성 제출이 완료되었습니다.",
+        );
+      }
     } catch (error) {
       setMessageTone("error");
       setMessage((error as Error).message || "팀편성 제출에 실패했습니다.");
@@ -486,7 +535,9 @@ export default function TeamSubmissionManager({
     <div style={{ display: "grid", gap: 16 }}>
       <GlassCard variant="strong" style={{ display: "grid", gap: 14 }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 22, color: "#1e293b" }}>팀편성 제출</h2>
+          <h2 style={{ margin: 0, fontSize: 22, color: "#1e293b" }}>
+            {editingSubmissionId ? "팀편성 수정" : "팀편성 제출"}
+          </h2>
           <p style={{ margin: "8px 0 0", color: "#64748b", fontSize: 14, lineHeight: 1.7 }}>
             승인된 선수만 사용할 수 있으며, 선수등록 순서에 따라 1~6번은 A조, 7번 이후는 B조로 자동 구분됩니다.
             {" "}2인조, 3인조, 5인조는 인원이 부족해도 제출할 수 있지만 정원 미달 팀은 개인기록만 반영됩니다.
@@ -669,8 +720,15 @@ export default function TeamSubmissionManager({
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <GlassButton variant="secondary" onClick={addDraft} disabled={!hasEligiblePlayers}>팀 추가</GlassButton>
-          <GlassButton onClick={submit} isLoading={submitting} disabled={!hasEligiblePlayers}>팀편성 제출</GlassButton>
+          <div style={{ display: "flex", gap: 8 }}>
+            <GlassButton variant="secondary" onClick={addDraft} disabled={!hasEligiblePlayers}>팀 추가</GlassButton>
+            {editingSubmissionId && (
+              <GlassButton variant="ghost" onClick={cancelEdit}>수정 취소</GlassButton>
+            )}
+          </div>
+          <GlassButton onClick={submit} isLoading={submitting} disabled={!hasEligiblePlayers}>
+            {editingSubmissionId ? "수정 저장" : "팀편성 제출"}
+          </GlassButton>
         </div>
       </GlassCard>
 
@@ -712,6 +770,13 @@ export default function TeamSubmissionManager({
                 {submission.rejectionReason ? (
                   <div style={{ marginTop: 10, fontSize: 13, color: "#b45309" }}>
                     반려 사유: {submission.rejectionReason}
+                  </div>
+                ) : null}
+                {submission.status === "SUBMITTED" ? (
+                  <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end" }}>
+                    <GlassButton size="sm" variant="secondary" onClick={() => loadSubmittedForEdit(submission)}>
+                      수정
+                    </GlassButton>
                   </div>
                 ) : null}
                 {submission.status === "REJECTED" ? (
